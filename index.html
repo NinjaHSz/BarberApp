@@ -49,8 +49,8 @@
     <!-- Estilos CSS (Variáveis e Scrollbars) -->
     <style>
       :root {
-        --bg-950: #0a0a0a;
-        --bg-900: #171717;
+        --bg-950: #121212;
+        --bg-900: #1a1a1a;
         --bg-800: #262626;
         --accent-rgb: 245 158 11;
       }
@@ -59,6 +59,15 @@
         color: #f3f4f6;
         font-family: "Inter", sans-serif;
         overflow: hidden;
+      }
+      .bg-pattern {
+        background-color: var(--bg-950);
+        background-image: linear-gradient(
+            rgba(255, 255, 255, 0.02) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 40px 40px;
       }
       .custom-scroll::-webkit-scrollbar {
         width: 6px;
@@ -77,6 +86,14 @@
       }
       * {
         transition: border-color 0.2s, background-color 0.2s, color 0.1s;
+      }
+      /* Inversão de Cores no Hover para Botões Principais */
+      button.bg-amber-500:hover,
+      button[class*="bg-amber-500"]:hover {
+        background-color: var(--bg-950) !important;
+        color: rgb(var(--accent-rgb)) !important;
+        border-color: rgb(var(--accent-rgb)) !important;
+        box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.2);
       }
     </style>
   </head>

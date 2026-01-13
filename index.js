@@ -147,7 +147,7 @@ async function syncFromSheet(url) {
                             date: r.data,
                             time: r.horario,
                             client: r.cliente,
-                            service: r.procedimento || 'Geral',
+                            service: r.procedimento || 'A DEFINIR',
                             value: parseFloat(r.valor) || 0,
                             paymentMethod: r.forma_pagamento || 'N/A'
                         });
@@ -190,7 +190,7 @@ async function syncFromSheet(url) {
                         date: r.date,
                         time: r.time,
                         client: r.client,
-                        service: r.service || 'Geral',
+                        service: r.service || 'A DEFINIR',
                         value: isNaN(cleanVal) ? 0 : cleanVal,
                         paymentMethod: r.paymentMethod || 'N/A'
                     });
@@ -297,7 +297,7 @@ async function syncFromSheet(url) {
                         const dateStr = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
                         const timeStr = (cols[mapping.time] || '00:00').substring(0, 5);
                         const clientName = cols[mapping.client];
-                        const serviceName = cols[mapping.service] || 'Geral';
+                        const serviceName = cols[mapping.service] || 'A DEFINIR';
 
                         if (clientName && clientName.length > 1) {
                             const key = `${dateStr}_${timeStr}_${clientName}_${serviceName}`.toLowerCase();
@@ -439,7 +439,7 @@ const Sidebar = () => `
                 </div>
                 <div class="flex-1 min-w-0">
                     <!-- Nome do Barbeiro/Perfil -->
-                    <p class="text-sm font-semibold truncate text-white">Lucas do Corte</p>
+                    <p class="text-sm font-semibold truncate text-white uppercase">Lucas do Corte</p>
                     <!-- Label de Status da Conta -->
                     <p class="text-[10px] text-amber-500 font-bold uppercase tracking-widest">Premium Plan</p>
                 </div>
@@ -452,7 +452,7 @@ const NavLink = (page, icon, label) => {
     const isActive = state.currentPage === page;
     return `
         <button onclick="window.navigate('${page}')" 
-                class="flex items-center w-full px-4 py-3 rounded-xl transition-all duration-200 group 
+                class="flex items-center w-full px-4 py-3 rounded-xl transition-all duration-200 group border border-transparent
                 ${isActive ? 'bg-amber-500 text-dark-950 shadow-lg shadow-amber-500/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}">
             <i class="fas ${icon} w-6 text-lg ${isActive ? '' : 'group-hover:text-amber-500'}"></i>
             <span class="ml-3 font-semibold">${label}</span>
@@ -557,14 +557,13 @@ const Dashboard = () => {
                 <div class="text-center space-y-4">
                     <i class="fas fa-database text-6xl text-white/5 mb-4"></i>
                     <h2 class="text-2xl font-bold">Nenhum dado conectado</h2>
-                    <button onclick="navigate('setup')" class="bg-amber-500 text-dark-950 px-6 py-2 rounded-xl font-bold">Configurar Agora</button>
+                    <button onclick="navigate('setup')" class="bg-amber-500 text-dark-950 px-6 py-2 rounded-xl font-bold border border-transparent transition-all">Configurar Agora</button>
                 </div>
             </div>
         `;
     }
 
     window.renderCharts = () => {
-        if (state.charts.payment) state.charts.payment.destroy();
         if (state.charts.profit) state.charts.profit.destroy();
 
         const targetDay = parseInt(state.filters.day);
@@ -572,46 +571,6 @@ const Dashboard = () => {
         const targetYear = String(state.filters.year);
         const monthPrefix = `${targetYear}-${targetMonth}`;
         const dayPrefix = `${monthPrefix}-${String(targetDay).padStart(2, '0')}`;
-
-        // Filtro para o gráfico de pizza (respeita os filtros globais da página)
-        const paymentRecords = state.records.filter(r => {
-            return targetDay === 0 ? r.date.startsWith(monthPrefix) : r.date === dayPrefix;
-        });
-
-        const paymentStats = paymentRecords.reduce((acc, r) => {
-            const method = (r.paymentMethod || 'N/A').toUpperCase().trim();
-            acc[method] = (acc[method] || 0) + r.value;
-            return acc;
-        }, {});
-
-        const ctx1 = document.getElementById('paymentChart')?.getContext('2d');
-        if (ctx1) {
-            state.charts.payment = new Chart(ctx1, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(paymentStats),
-                    datasets: [{
-                        data: Object.values(paymentStats),
-                        backgroundColor: [
-                            state.theme.accent, // Destaque Principal
-                            '#38bdf8', // Blue 400
-                            '#818cf8', // Indigo 400
-                            '#fb7185', // Rose 400
-                            '#34d399', // Emerald 400
-                            '#94a3b8', // Slate 400
-                            '#475569'  // Slate 600
-                        ],
-                        borderWidth: 0,
-                        hoverOffset: 20
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    cutout: '70%',
-                    plugins: { legend: { position: 'bottom', labels: { color: '#64748b', font: { size: 10, weight: 'bold' }, padding: 20, usePointStyle: true } } }
-                }
-            });
-        }
 
         // --- Gráfico de Lucro com Filtro Próprio ---
         let profitRecords = [];
@@ -698,14 +657,8 @@ const Dashboard = () => {
                 ${KPICard('Faturamento do Ano', state.kpis.anual, 'fa-calendar-check')}
             </div>
 
-            <!-- Charts -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 pb-8">
-                <div class="glass-card p-6 sm:p-8 rounded-[2rem] h-[400px] sm:h-[450px] flex flex-col">
-                    <h3 class="text-lg font-bold mb-6 sm:mb-8">Formas de Pagamento</h3>
-                    <div class="flex-1 min-h-0 flex items-center justify-center">
-                        <canvas id="paymentChart"></canvas>
-                    </div>
-                </div>
+            <!-- Chart -->
+            <div class="grid grid-cols-1 gap-6 sm:gap-8 pb-8">
                 <div class="glass-card p-6 sm:p-8 rounded-[2rem] h-[400px] sm:h-[450px] flex flex-col">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
                         <h3 class="text-lg font-bold">Lucro Bruto</h3>
@@ -752,7 +705,7 @@ const RecordsPage = () => {
                 <div class="text-center space-y-4">
                     <i class="fas fa-table text-6xl text-white/5 mb-4"></i>
                     <h2 class="text-2xl font-bold">Sem dados sincronizados</h2>
-                    <button onclick="navigate('setup')" class="bg-amber-500 text-dark-950 px-6 py-2 rounded-xl font-bold">Conectar Planilha</button>
+                    <button onclick="navigate('setup')" class="bg-amber-500 text-dark-950 px-6 py-2 rounded-xl font-bold border border-transparent transition-all">Conectar Planilha</button>
                 </div>
             </div>
         `;
@@ -927,12 +880,12 @@ const RecordRow = (record) => {
             
             <div class="w-full md:flex-1 md:px-4 text-sm md:text-sm font-bold md:font-semibold flex justify-between md:block">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Cliente:</span>
-                <div class="truncate transition-colors ${!isEmpty ? 'group-hover:text-amber-500' : 'text-slate-600'}">${record.client}</div>
+                <div class="truncate transition-colors ${!isEmpty ? 'group-hover:text-amber-500 uppercase' : 'text-slate-600 uppercase'}">${record.client}</div>
             </div>
 
-            <div class="w-full md:flex-1 md:px-4 text-xs md:text-sm text-slate-400 flex justify-between md:block">
+            <div class="w-full md:flex-1 md:px-4 text-xs md:text-sm flex justify-between md:block">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Serviço:</span>
-                <div class="truncate ${isEmpty ? 'text-slate-600' : ''}">${record.service}</div>
+                <div class="truncate ${isEmpty ? 'text-slate-600' : (record.service === 'A DEFINIR' ? 'text-red-500 font-black animate-pulse' : 'text-white font-medium')} uppercase">${record.service}</div>
             </div>
 
             <div class="w-full md:w-28 text-sm md:text-sm font-bold md:font-bold ${isEmpty ? 'text-slate-600' : 'text-white md:text-amber-500/90'} flex justify-between md:block md:text-center">
@@ -943,17 +896,17 @@ const RecordRow = (record) => {
             <div class="w-full md:w-32 flex justify-between md:justify-center items-center">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Pagamento:</span>
                 <span class="px-2 py-0.5 rounded-lg text-[10px] font-black border border-white/5 bg-white/[0.03] text-slate-500 uppercase tracking-tighter ${isEmpty ? 'opacity-30' : ''}">
-                    ${record.paymentMethod}
+                    ${record.paymentMethod.toUpperCase()}
                 </span>
             </div>
 
             <div class="w-full md:w-24 flex justify-end gap-2 pt-4 md:pt-0 border-t md:border-0 border-white/5">
                 ${!isEmpty ? `
-                    <button onclick="window.editAppointment(${record.id})" 
+                    <button onclick="window.editAppointment('${record.id}')" 
                             class="w-9 h-9 md:w-8 md:h-8 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-95 shadow-sm flex items-center justify-center">
                         <i class="fas fa-edit text-xs"></i>
                     </button>
-                    <button onclick="window.cancelAppointment(${record.id})" 
+                    <button onclick="window.cancelAppointment('${record.id}')" 
                             class="w-9 h-9 md:w-8 md:h-8 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-95 shadow-sm flex items-center justify-center">
                         <i class="fas fa-trash-can text-xs"></i>
                     </button>
@@ -1090,15 +1043,19 @@ if (!window.hasGlobalClientPickerListener) {
             });
 
             if (res.ok) {
+                alert('✅ Agendamento concluído com sucesso!');
                 if (isEditing) {
                     state.editingRecord = null;
                     state.currentPage = 'records';
                 } else {
                     e.target.reset();
+                    state.clientSearch = ''; // Limpa busca após novo registro
                 }
                 syncFromSheet(state.sheetUrl); // Atualiza os dados locais
             } else {
-                alert('❌ Erro ao salvar no banco de dados.');
+                const errorData = await res.json();
+                console.error('Erro Supabase:', errorData);
+                alert(`❌ Erro ao salvar: ${errorData.message || errorData.hint || 'Verifique os dados.'}`);
             }
         } catch (err) {
             console.error(err);
@@ -1177,7 +1134,7 @@ if (!window.hasGlobalClientPickerListener) {
                                     class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
                                 <option value="">Selecione...</option>
                                 ${state.procedures.map(p => `
-                                    <option value="${p.nome}" data-price="${p.preco}" ${(initialValues.service || initialValues.procedimento) === p.nome ? 'selected' : ''}>${p.nome}</option>
+                                <option value="${p.nome}" data-price="${p.preco}" ${(initialValues.service || initialValues.procedimento) === p.nome ? 'selected' : ''} class="uppercase">${p.nome.toUpperCase()}</option>
                                 `).join('')}
                                 <option value="Outro" ${(initialValues.service || initialValues.procedimento) && !state.procedures.find(p => p.nome === (initialValues.service || initialValues.procedimento)) ? 'selected' : ''}>Outro / Personalizado</option>
                             </select>
@@ -1206,7 +1163,7 @@ if (!window.hasGlobalClientPickerListener) {
 
                     <div class="col-span-1 md:col-span-2 pt-6">
                         <button type="submit" ${state.clients.length === 0 ? 'disabled' : ''}
-                                class="w-full bg-amber-500 disabled:bg-white/5 disabled:text-white/20 hover:bg-amber-400 text-dark-950 font-black py-5 rounded-2xl shadow-xl shadow-amber-500/20 transform hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-widest">
+                                class="w-full bg-amber-500 disabled:bg-white/5 disabled:text-white/20 text-dark-950 font-black py-5 rounded-2xl border border-transparent shadow-xl shadow-amber-500/20 transform hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-widest">
                             ${isEditing ? 'Salvar Alterações' : 'Salvar Agendamento'}
                         </button>
                     </div>
@@ -1436,7 +1393,7 @@ const ClientsPage = () => {
                                     </select>
                                 </div>
                                 <!-- Botão Final de Cadastro -->
-                                <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl hover:bg-amber-400 transition-all uppercase tracking-widest text-sm shadow-xl shadow-amber-500/10 active:scale-95">
+                                <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl border border-transparent transition-all uppercase tracking-widest text-sm shadow-xl shadow-amber-500/10 active:scale-95">
                                     ${state.editingClient ? 'Salvar Alterações' : 'Cadastrar Cliente'}
                                 </button>
                             </form>
@@ -1514,7 +1471,7 @@ const ClientsPage = () => {
                                                 .filter(c => c.nome.toLowerCase().includes(state.managementSearch.toLowerCase()))
                                                 .map(c => `
                                                 <tr class="hover:bg-white/[0.01] transition-colors group">
-                                                    <td class="px-8 py-4 font-bold text-white">${c.nome}</td>
+                                                    <td class="px-8 py-4 font-bold text-white uppercase">${c.nome}</td>
                                                     <td class="px-8 py-4">
                                                         <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
                                                             ${c.plano === 'Mensal' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
@@ -1530,7 +1487,7 @@ const ClientsPage = () => {
                                                                     class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-90">
                                                                 <i class="fas fa-edit"></i>
                                                             </button>
-                                                            <button onclick="window.deleteClient(${c.id})" 
+                                                            <button onclick="window.deleteClient('${c.id}')" 
                                                                     class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90">
                                                                 <i class="fas fa-trash-alt"></i>
                                                             </button>
@@ -1548,10 +1505,10 @@ const ClientsPage = () => {
                                         .map(c => `
                                         <div class="p-6 space-y-4">
                                             <div class="flex justify-between items-start">
-                                                <div><p class="text-lg font-bold text-white">${c.nome}</p></div>
+                                                <div><p class="text-lg font-bold text-white uppercase">${c.nome}</p></div>
                                                 <div class="flex space-x-2">
                                                     <button onclick='window.editClient(${JSON.stringify(c)})' class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><i class="fas fa-edit"></i></button>
-                                                    <button onclick="window.deleteClient(${c.id})" class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center"><i class="fas fa-trash-alt"></i></button>
+                                                    <button onclick="window.deleteClient('${c.id}')" class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center"><i class="fas fa-trash-alt"></i></button>
                                                 </div>
                                             </div>
                                             <div class="flex items-center space-x-4">
@@ -1577,7 +1534,7 @@ const ClientsPage = () => {
                                                 .filter(p => p.nome.toLowerCase().includes(state.managementSearch.toLowerCase()))
                                                 .map(p => `
                                                 <tr class="hover:bg-white/[0.01] transition-colors group">
-                                                    <td class="px-8 py-4 font-bold text-white">${p.nome}</td>
+                                                    <td class="px-8 py-4 font-bold text-white uppercase">${p.nome}</td>
                                                     <td class="px-8 py-4 text-emerald-400 font-black">R$ ${p.preco.toFixed(2).replace('.', ',')}</td>
                                                     <td class="px-8 py-4 text-right">
                                                         <div class="flex justify-end space-x-2">
@@ -1585,7 +1542,7 @@ const ClientsPage = () => {
                                                                     class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-90">
                                                                 <i class="fas fa-edit"></i>
                                                             </button>
-                                                            <button onclick="window.deleteProcedure(${p.id})" 
+                                                            <button onclick="window.deleteProcedure('${p.id}')" 
                                                                     class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90">
                                                                 <i class="fas fa-trash-alt"></i>
                                                             </button>
@@ -1603,12 +1560,12 @@ const ClientsPage = () => {
                                         .map(p => `
                                         <div class="p-6 flex justify-between items-center">
                                             <div>
-                                                <p class="text-lg font-bold text-white">${p.nome}</p>
+                                                <p class="text-lg font-bold text-white uppercase">${p.nome}</p>
                                                 <p class="text-emerald-400 font-black">R$ ${p.preco.toFixed(2).replace('.', ',')}</p>
                                             </div>
                                             <div class="flex space-x-2">
                                                 <button onclick='window.editProcedure(${JSON.stringify(p)})' class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><i class="fas fa-edit"></i></button>
-                                                <button onclick="window.deleteProcedure(${p.id})" class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center"><i class="fas fa-trash-alt"></i></button>
+                                                <button onclick="window.deleteProcedure('${p.id}')" class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center"><i class="fas fa-trash-alt"></i></button>
                                             </div>
                                         </div>
                                     `).join('')}
@@ -1680,7 +1637,7 @@ const SetupPage = () => {
                         
                         <div class="flex gap-4">
                             <button onclick="window.validateConnection()" 
-                                    class="flex-1 bg-amber-500 text-dark-950 p-5 rounded-2xl font-bold text-lg hover:bg-amber-400 transition-colors">
+                                    class="flex-1 bg-amber-500 text-dark-950 p-5 rounded-2xl font-bold text-lg border border-transparent transition-all">
                                 ${state.isValidating ? 'Sincronizando...' : 'Conectar e Carregar'}
                             </button>
                             
@@ -1758,7 +1715,7 @@ function render() {
     const content = contentFn();
 
     app.innerHTML = `
-        <div class="flex h-full w-full bg-dark-950 text-white overflow-hidden">
+        <div class="flex h-full w-full bg-pattern text-white overflow-hidden">
             ${Sidebar()}
             <div class="flex-1 flex flex-col min-w-0 h-full relative">
                 ${Header()}
