@@ -602,11 +602,11 @@ const Dashboard = () => {
     setTimeout(() => window.renderCharts(), 0);
 
     return `
-        <div class="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div class="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div class="flex justify-between items-end">
                 <div>
-                    <h2 class="text-3xl font-display font-bold">Lucas do Corte - BI</h2>
-                    <p class="text-slate-500 mt-1">Gestão financeira e performance estratégica</p>
+                    <h2 class="text-2xl sm:text-3xl font-display font-bold">Lucas do Corte - BI</h2>
+                    <p class="text-slate-500 text-xs sm:text-sm mt-1">Gestão financeira e performance estratégica</p>
                 </div>
             </div>
 
@@ -618,17 +618,17 @@ const Dashboard = () => {
             </div>
 
             <!-- Charts -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-8">
-                <div class="glass-card p-8 rounded-[2rem] h-[450px] flex flex-col">
-                    <h3 class="text-lg font-bold mb-8">Formas de Pagamento</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 pb-8">
+                <div class="glass-card p-6 sm:p-8 rounded-[2rem] h-[400px] sm:h-[450px] flex flex-col">
+                    <h3 class="text-lg font-bold mb-6 sm:mb-8">Formas de Pagamento</h3>
                     <div class="flex-1 min-h-0 flex items-center justify-center">
                         <canvas id="paymentChart"></canvas>
                     </div>
                 </div>
-                <div class="glass-card p-8 rounded-[2rem] h-[450px] flex flex-col">
-                    <div class="flex justify-between items-center mb-8">
+                <div class="glass-card p-6 sm:p-8 rounded-[2rem] h-[400px] sm:h-[450px] flex flex-col">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
                         <h3 class="text-lg font-bold">Lucro Bruto</h3>
-                        <div class="flex bg-dark-950 p-1 rounded-xl border border-white/5 space-x-1">
+                        <div class="flex bg-dark-950 p-1 rounded-xl border border-white/5 space-x-1 overflow-x-auto max-w-full no-scrollbar">
                             ${['diario', 'mensal', 'anual', 'total'].map(f => `
                                 <button onclick="window.updateProfitFilter('${f}')" 
                                         class="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all
@@ -646,20 +646,20 @@ const Dashboard = () => {
 };
 
 const KPICard = (title, value, icon, trend, trendVal) => `
-    <div class="glass-card p-7 rounded-[2rem] group hover:border-amber-500/30 transition-all duration-500 relative overflow-hidden">
+    <div class="glass-card p-5 sm:p-7 rounded-[2rem] group hover:border-amber-500/30 transition-all duration-500 relative overflow-hidden">
         <div class="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all"></div>
-        <div class="flex justify-between items-start mb-6">
-            <div class="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
-                <i class="fas ${icon} text-2xl"></i>
+        <div class="flex justify-between items-start mb-4 sm:mb-6">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                <i class="fas ${icon} text-xl sm:text-2xl"></i>
             </div>
             <div class="flex flex-col items-end">
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${trend === 'grow' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}">
+                <span class="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${trend === 'grow' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}">
                     ${trendVal}
                 </span>
             </div>
         </div>
-        <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">${title}</p>
-        <h2 class="text-4xl font-display font-extrabold mt-2 tracking-tight">${value}</h2>
+        <p class="text-slate-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest">${title}</p>
+        <h2 class="text-2xl sm:text-4xl font-display font-extrabold mt-1 sm:mt-2 tracking-tight">${value}</h2>
     </div>
 `;
 const RecordsPage = () => {
@@ -735,18 +735,18 @@ const RecordsPage = () => {
     };
 
     return `
-        <div class="p-8 space-y-8 animate-in fade-in duration-500">
-             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div class="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
-                    <h2 class="text-3xl font-display font-bold">Histórico de Agendamentos</h2>
-                    <p class="text-slate-500 mt-1">Sincronização via Google Sheets</p>
+                    <h2 class="text-2xl sm:text-3xl font-display font-bold">Histórico de Agendamentos</h2>
+                    <p class="text-slate-500 text-xs sm:text-sm mt-1">Sincronização via Google Sheets</p>
                 </div>
-                <div class="relative w-full md:w-auto">
+                <div class="relative w-full sm:w-auto">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
                     <input type="text" 
                            placeholder="Buscar agendamento..." 
                            oninput="window.handleSearch(this)"
-                           class="bg-dark-900 border border-white/5 py-2.5 pl-11 pr-4 rounded-xl text-sm outline-none focus:border-amber-500/50 w-full md:w-80 transition-all font-medium">
+                           class="bg-dark-900 border border-white/5 py-2.5 pl-11 pr-4 rounded-xl text-sm outline-none focus:border-amber-500/50 w-full sm:w-80 transition-all font-medium">
                 </div>
             </div>
 
@@ -884,15 +884,15 @@ const ManagePage = () => {
     };
 
     return `
-        <div class="p-8 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div class="glass-card p-10 rounded-[3rem] border border-white/5">
-                <div class="flex items-center space-x-4 mb-10">
-                    <div class="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-                        <i class="fas ${isEditing ? 'fa-edit' : 'fa-calendar-plus'} text-3xl"></i>
+        <div class="p-4 sm:p-8 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div class="glass-card p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-white/5">
+                <div class="flex items-center space-x-4 mb-8 sm:mb-10">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+                        <i class="fas ${isEditing ? 'fa-edit' : 'fa-calendar-plus'} text-2xl sm:text-3xl"></i>
                     </div>
                     <div>
-                        <h2 class="text-4xl font-display font-black tracking-tight">${isEditing ? 'Editar Agendamento' : 'Novo Agendamento'}</h2>
-                        <p class="text-slate-500 font-medium">${isEditing ? 'Altere as informações abaixo' : 'Selecione um cliente para agendar'}</p>
+                        <h2 class="text-2xl sm:text-4xl font-display font-black tracking-tight">${isEditing ? 'Editar Agendamento' : 'Novo Agendamento'}</h2>
+                        <p class="text-slate-500 text-xs sm:text-sm font-medium">${isEditing ? 'Altere as informações abaixo' : 'Selecione um cliente para agendar'}</p>
                     </div>
                 </div>
 
@@ -1025,11 +1025,11 @@ const ClientsPage = () => {
     };
 
     return `
-        <div class="p-8 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+        <div class="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div class="flex justify-between items-start">
                 <div>
-                    <h2 class="text-3xl font-display font-bold">Gestão de Clientes</h2>
-                    <p class="text-slate-500 mt-1">Cadastre seus clientes para facilitar o agendamento</p>
+                    <h2 class="text-2xl sm:text-3xl font-display font-bold">Gestão de Clientes</h2>
+                    <p class="text-slate-500 text-xs sm:text-sm mt-1">Cadastre seus clientes para facilitar o agendamento</p>
                 </div>
             </div>
 
@@ -1080,39 +1080,67 @@ const ClientsPage = () => {
                             </h3>
                         </div>
                         <div class="max-h-[600px] overflow-y-auto custom-scroll">
-                            <table class="w-full text-left">
-                                <thead class="bg-white/[0.01] text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                    <tr>
-                                        <th class="px-8 py-4 border-b border-white/5">Nome</th>
-                                        <th class="px-8 py-4 border-b border-white/5">Plano</th>
-                                        <th class="px-8 py-4 border-b border-white/5">Telefone</th>
-                                        <th class="px-8 py-4 border-b border-white/5 text-right">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-white/5 text-sm">
-                                    ${state.clients.map(c => `
-                                        <tr class="hover:bg-white/[0.01] transition-colors group">
-                                            <td class="px-8 py-4 font-bold text-white">${c.nome}</td>
-                                            <td class="px-8 py-4">
-                                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
-                                                    ${c.plano === 'Mensal' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
-                                                      c.plano === 'Anual' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 
-                                                      'text-slate-500 border border-white/5'}">
-                                                    ${c.plano || 'Nenhum'}
-                                                </span>
-                                            </td>
-                                            <td class="px-8 py-4 text-slate-400 font-medium">${c.telefone || '---'}</td>
-                                            <td class="px-8 py-4 text-right">
-                                                <button onclick="window.deleteClient(${c.id})" 
-                                                        class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </td>
+                            <div class="hidden sm:block">
+                                <table class="w-full text-left">
+                                    <thead class="bg-white/[0.01] text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                        <tr>
+                                            <th class="px-8 py-4 border-b border-white/5">Nome</th>
+                                            <th class="px-8 py-4 border-b border-white/5">Plano</th>
+                                            <th class="px-8 py-4 border-b border-white/5">Telefone</th>
+                                            <th class="px-8 py-4 border-b border-white/5 text-right">Ações</th>
                                         </tr>
-                                    `).join('')}
-                                    ${state.clients.length === 0 ? '<tr><td colspan="3" class="p-20 text-center text-slate-500 font-bold italic">Nenhum cliente cadastrado ainda.</td></tr>' : ''}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody class="divide-y divide-white/5 text-sm">
+                                        ${state.clients.map(c => `
+                                            <tr class="hover:bg-white/[0.01] transition-colors group">
+                                                <td class="px-8 py-4 font-bold text-white">${c.nome}</td>
+                                                <td class="px-8 py-4">
+                                                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+                                                        ${c.plano === 'Mensal' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
+                                                          c.plano === 'Anual' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 
+                                                          'text-slate-500 border border-white/5'}">
+                                                        ${c.plano || 'Nenhum'}
+                                                    </span>
+                                                </td>
+                                                <td class="px-8 py-4 text-slate-400 font-medium">${c.telefone || '---'}</td>
+                                                <td class="px-8 py-4 text-right">
+                                                    <button onclick="window.deleteClient(${c.id})" 
+                                                            class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Mobile Client Cards -->
+                            <div class="sm:hidden divide-y divide-white/5">
+                                ${state.clients.map(c => `
+                                    <div class="p-6 space-y-4">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <p class="text-lg font-bold text-white">${c.nome}</p>
+                                                <p class="text-xs text-slate-500 font-medium">${c.telefone || 'Sem telefone'}</p>
+                                            </div>
+                                            <button onclick="window.deleteClient(${c.id})" 
+                                                    class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                                                <i class="fas fa-trash-alt text-sm"></i>
+                                            </button>
+                                        </div>
+                                        <div class="flex">
+                                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest
+                                                ${c.plano === 'Mensal' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
+                                                  c.plano === 'Anual' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 
+                                                  'text-slate-500 border border-white/5'}">
+                                                ${c.plano || 'Nenhum'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                                ${state.clients.length === 0 ? '<div class="p-10 text-center text-slate-500 font-bold italic text-sm">Nenhum cliente cadastrado.</div>' : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1160,8 +1188,8 @@ const SetupPage = () => {
     };
 
     return `
-        <div class="p-8 flex items-center justify-center min-h-[80vh] animate-in fade-in duration-500">
-            <div class="max-w-2xl w-full glass-card p-12 rounded-[3rem] border border-white/5 shadow-2xl">
+        <div class="p-4 sm:p-8 flex items-center justify-center min-h-[80vh] animate-in fade-in duration-500">
+            <div class="max-w-2xl w-full glass-card p-6 sm:p-12 rounded-[2rem] sm:rounded-[3rem] border border-white/5 shadow-2xl">
                 <div class="text-center space-y-6">
                     <h2 class="text-4xl font-display font-black">Configuração de Dados</h2>
                     <p class="text-slate-400">Cole a URL do Google Sheets ou do seu Apps Script Pro.</p>
