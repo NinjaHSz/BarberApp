@@ -28,7 +28,8 @@ const state = {
         accent: localStorage.getItem('themeAccent') || '#F59E0B',
         accentRgb: localStorage.getItem('themeAccentRgb') || '245 158 11'
     },
-    profitFilter: 'diario'
+    profitFilter: 'diario',
+    editingRecord: null
 };
 
 // --- Helper Functions ---
@@ -356,6 +357,7 @@ function updateInternalStats() {
 // --- Router and Navigation ---
 function navigate(page) {
     state.currentPage = page;
+    if (page !== 'manage') state.editingRecord = null;
     render();
 }
 
@@ -634,7 +636,6 @@ const KPICard = (title, value, icon, trend, trendVal) => `
         <h2 class="text-4xl font-display font-extrabold mt-2 tracking-tight">${value}</h2>
     </div>
 `;
-
 const RecordsPage = () => {
     if (!state.isIntegrated) {
         return `
@@ -654,17 +655,21 @@ const RecordsPage = () => {
     const monthPrefix = `${targetYear}-${targetMonth}`;
     const dayPrefix = `${monthPrefix}-${String(targetDay).padStart(2, '0')}`;
 
-    console.log(`[Filter] Exibindo: ${targetDay === 0 ? 'Mês inteiro' : dayPrefix}`);
-    if (state.records.length > 0 && state.records[0]._v) {
-        console.log(`[Sync] Versão do Motor de Dados: V${state.records[0]._v}`);
-    }
-
     const filteredRecords = state.records.filter(r => {
-        const matchesDate = targetDay === 0 ? r.date.startsWith(monthPrefix) : r.date === dayPrefix;
+        const matchesDate = (targetDay === 0) ? r.date.startsWith(monthPrefix) : r.date === dayPrefix;
         const matchesSearch = r.client.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
                              r.service.toLowerCase().includes(state.searchTerm.toLowerCase());
         return matchesDate && matchesSearch;
     });
+
+    window.editAppointment = (id) => {
+        const record = state.records.find(r => r.id === id);
+        if (record) {
+            state.editingRecord = record;
+            state.currentPage = 'manage';
+            render();
+        }
+    };
 
     window.cancelAppointment = async (id) => {
         if (!confirm('Deseja realmente cancelar este agendamento? Esta ação não pode ser desfeita.')) return;
@@ -685,7 +690,7 @@ const RecordsPage = () => {
                 alert('❌ Erro ao cancelar agendamento.');
             }
         } catch (err) {
-            alert('❌ Erve de conexão.');
+            alert('❌ Erro de conexão.');
         }
     };
 
@@ -705,39 +710,34 @@ const RecordsPage = () => {
 
     return `
         <div class="p-8 space-y-8 animate-in fade-in duration-500">
-             <div class="flex justify-between items-end">
+             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <h2 class="text-3xl font-display font-bold">Histórico de Agendamentos</h2>
                     <p class="text-slate-500 mt-1">Sincronização via Google Sheets</p>
                 </div>
-                <div class="relative">
+                <div class="relative w-full md:w-auto">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
                     <input type="text" 
-                           placeholder="Buscar..." 
+                           placeholder="Buscar agendamento..." 
                            oninput="window.handleSearch(this)"
-                           class="bg-dark-900 border border-white/5 py-2.5 pl-11 pr-4 rounded-xl text-sm outline-none focus:border-amber-500/50 w-80 transition-all font-medium">
+                           class="bg-dark-900 border border-white/5 py-2.5 pl-11 pr-4 rounded-xl text-sm outline-none focus:border-amber-500/50 w-full md:w-80 transition-all font-medium">
                 </div>
             </div>
 
-            <div class="glass-card rounded-[2rem] border border-white/5 overflow-hidden">
-                <div class="overflow-x-auto custom-scroll">
-                    <table class="w-full text-left min-w-[600px] md:min-w-full">
-                        <thead class="bg-white/[0.02] border-b border-white/5">
-                            <tr>
-                                <th class="px-4 md:px-8 py-5 text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest border-r border-white/5">Horário</th>
-                                <th class="px-4 md:px-8 py-5 text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest border-r border-white/5">Cliente</th>
-                                <th class="hidden lg:table-cell px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest border-r border-white/5">Procedimentos</th>
-                                <th class="px-4 md:px-8 py-5 text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest border-r border-white/5">Valor</th>
-                                <th class="hidden md:table-cell px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest border-r border-white/5">
-                                    <i class="fas fa-circle-dot mr-2 text-[10px]"></i>Pagamento
-                                </th>
-                                <th class="px-4 md:px-8 py-5 text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody" class="divide-y divide-white/5">
-                            ${filteredRecords.map(r => RecordRow(r)).join('')}
-                        </tbody>
-                    </table>
+            <!-- Tabela via Flexbox -->
+            <div class="space-y-4 md:space-y-0 md:bg-dark-900/30 md:rounded-[2rem] border border-white/5 overflow-hidden">
+                <!-- Header (Apenas Desktop) -->
+                <div class="hidden md:flex bg-white/[0.02] border-b border-white/5 px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">
+                    <div class="w-20 text-left">Horário</div>
+                    <div class="flex-1 text-left px-4">Cliente</div>
+                    <div class="flex-1 text-left px-4">Procedimentos</div>
+                    <div class="w-28">Valor</div>
+                    <div class="w-32">Pagamento</div>
+                    <div class="w-24 text-right">Ações</div>
+                </div>
+
+                <div id="tableBody" class="divide-y divide-white/5">
+                    ${filteredRecords.map(r => RecordRow(r)).join('')}
                 </div>
             </div>
         </div>
@@ -746,37 +746,59 @@ const RecordsPage = () => {
 
 const RecordRow = (record) => {
     return `
-        <tr class="hover:bg-white/[0.01] transition-colors group">
-            <td class="px-4 md:px-8 py-4 text-xs md:text-sm text-slate-400 font-medium border-r border-white/5">${record.time}</td>
-            <td class="px-4 md:px-8 py-4 text-xs md:text-sm font-semibold group-hover:text-amber-500 transition-colors border-r border-white/5">
-                <div class="truncate max-w-[100px] md:max-w-none">${record.client}</div>
-            </td>
-            <td class="hidden lg:table-cell px-8 py-4 text-sm text-slate-400 border-r border-white/5">${record.service}</td>
-            <td class="px-4 md:px-8 py-4 text-xs md:text-sm font-bold border-r border-white/5 text-amber-500/90">R$ ${record.value.toFixed(2)}</td>
-            <td class="hidden md:table-cell px-8 py-4 text-sm border-r border-white/5">
-                <span class="px-3 py-1 rounded-full text-[10px] font-black border border-white/5 bg-white/[0.03] text-slate-500 uppercase tracking-widest">
+        <div class="flex flex-col md:flex-row items-center md:items-center px-6 md:px-8 py-4 md:py-4 gap-4 md:gap-0 hover:bg-white/[0.01] transition-colors group relative md:static glass-card md:bg-transparent rounded-2xl md:rounded-none m-2 md:m-0 border md:border-0 border-white/5">
+            <div class="w-full md:w-20 text-xs md:text-sm text-amber-500 md:text-slate-400 font-black md:font-medium flex justify-between md:block">
+                <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Horário:</span>
+                ${record.time}
+            </div>
+            
+            <div class="w-full md:flex-1 md:px-4 text-sm md:text-sm font-bold md:font-semibold flex justify-between md:block">
+                <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Cliente:</span>
+                <div class="truncate transition-colors group-hover:text-amber-500">${record.client}</div>
+            </div>
+
+            <div class="w-full md:flex-1 md:px-4 text-xs md:text-sm text-slate-400 flex justify-between md:block">
+                <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Serviço:</span>
+                <div class="truncate">${record.service}</div>
+            </div>
+
+            <div class="w-full md:w-28 text-sm md:text-sm font-bold md:font-bold text-white md:text-amber-500/90 flex justify-between md:block md:text-center">
+                <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Valor:</span>
+                R$ ${record.value.toFixed(2)}
+            </div>
+
+            <div class="w-full md:w-32 flex justify-between md:justify-center items-center">
+                <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Pagamento:</span>
+                <span class="px-2 py-0.5 rounded-lg text-[10px] font-black border border-white/5 bg-white/[0.03] text-slate-500 uppercase tracking-tighter">
                     ${record.paymentMethod}
                 </span>
-            </td>
-            <td class="px-4 md:px-8 py-2 text-right">
-                <button onclick="window.cancelAppointment(${record.id})" 
-                        class="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-95 shadow-sm">
-                    <i class="fas fa-calendar-xmark"></i>
+            </div>
+
+            <div class="w-full md:w-24 flex justify-end gap-2 pt-4 md:pt-0 border-t md:border-0 border-white/5">
+                <button onclick="window.editAppointment(${record.id})" 
+                        class="w-9 h-9 md:w-8 md:h-8 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-95 shadow-sm flex items-center justify-center">
+                    <i class="fas fa-edit text-xs"></i>
                 </button>
-            </td>
-        </tr>
+                <button onclick="window.cancelAppointment(${record.id})" 
+                        class="w-9 h-9 md:w-8 md:h-8 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-95 shadow-sm flex items-center justify-center">
+                    <i class="fas fa-trash-can text-xs"></i>
+                </button>
+            </div>
+        </div>
     `;
 };
 
 const ManagePage = () => {
     if (!state.isIntegrated) return SetupPage();
 
+    const isEditing = !!state.editingRecord;
+
     window.saveNewRecord = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const btn = e.target.querySelector('button[type="submit"]');
         
-        const newRecord = {
+        const recordData = {
             data: formData.get('date'),
             horario: formData.get('time'),
             cliente: formData.get('client'),
@@ -789,20 +811,29 @@ const ManagePage = () => {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
 
         try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/agendamentos`, {
-                method: 'POST',
+            const url = isEditing && state.editingRecord.id 
+                ? `${SUPABASE_URL}/rest/v1/agendamentos?id=eq.${state.editingRecord.id}`
+                : `${SUPABASE_URL}/rest/v1/agendamentos`;
+            
+            const res = await fetch(url, {
+                method: isEditing ? 'PATCH' : 'POST',
                 headers: {
                     'apikey': SUPABASE_KEY,
                     'Authorization': 'Bearer ' + SUPABASE_KEY,
                     'Content-Type': 'application/json',
                     'Prefer': 'return=minimal'
                 },
-                body: JSON.stringify(newRecord)
+                body: JSON.stringify(recordData)
             });
 
             if (res.ok) {
-                alert('✅ Agendamento salvo com sucesso!');
-                e.target.reset();
+                alert(isEditing ? '✅ Agendamento atualizado!' : '✅ Agendamento salvo com sucesso!');
+                if (isEditing) {
+                    state.editingRecord = null;
+                    state.currentPage = 'records';
+                } else {
+                    e.target.reset();
+                }
                 syncFromSheet(state.sheetUrl); // Atualiza os dados locais
             } else {
                 alert('❌ Erro ao salvar no banco de dados.');
@@ -812,81 +843,87 @@ const ManagePage = () => {
             alert('❌ Erro de conexão.');
         } finally {
             btn.disabled = false;
-            btn.innerHTML = 'Salvar Agendamento';
+            btn.innerHTML = isEditing ? 'Salvar Alterações' : 'Salvar Agendamento';
         }
     };
 
     const today = new Date().toISOString().split('T')[0];
+    const initialValues = state.editingRecord || {
+        date: today,
+        time: '',
+        client: '',
+        service: '',
+        value: '',
+        paymentMethod: 'PIX'
+    };
 
     return `
         <div class="p-8 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div class="glass-card p-10 rounded-[3rem] border border-white/5">
                 <div class="flex items-center space-x-4 mb-10">
                     <div class="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-                        <i class="fas fa-calendar-plus text-3xl"></i>
+                        <i class="fas ${isEditing ? 'fa-edit' : 'fa-calendar-plus'} text-3xl"></i>
                     </div>
                     <div>
-                        <h2 class="text-4xl font-display font-black tracking-tight">Novo Agendamento</h2>
-                        <p class="text-slate-500 font-medium">Selecione um cliente para agendar</p>
+                        <h2 class="text-4xl font-display font-black tracking-tight">${isEditing ? 'Editar Agendamento' : 'Novo Agendamento'}</h2>
+                        <p class="text-slate-500 font-medium">${isEditing ? 'Altere as informações abaixo' : 'Selecione um cliente para agendar'}</p>
                     </div>
                 </div>
 
-                <form onsubmit="window.saveNewRecord(event)" class="grid grid-cols-2 gap-8">
+                <form onsubmit="window.saveNewRecord(event)" class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Data</label>
-                        <input type="date" name="date" required value="${today}"
+                        <input type="date" name="date" required value="${initialValues.date || initialValues.data}"
                                class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold">
                     </div>
 
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Horário</label>
-                        <input type="time" name="time" required
+                        <input type="time" name="time" required value="${initialValues.time || initialValues.horario}"
                                class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold">
                     </div>
 
-                    <div class="space-y-2 col-span-2">
+                    <div class="space-y-2 col-span-1 md:col-span-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Cliente</label>
                         <div class="relative">
                             <select name="client" required
                                     class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
                                 <option value="">Selecione um cliente...</option>
-                                ${state.clients.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('')}
+                                ${state.clients.map(c => `<option value="${c.nome}" ${(initialValues.client || initialValues.cliente) === c.nome ? 'selected' : ''}>${c.nome}</option>`).join('')}
                             </select>
                             <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
                         </div>
-                        ${state.clients.length === 0 ? '<p class="text-[10px] text-rose-500 mt-2 font-black uppercase tracking-widest">Nenhum cliente cadastrado. Use a aba "Clientes".</p>' : ''}
                     </div>
 
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Serviço/Procedimento</label>
-                        <input type="text" name="service" placeholder="Ex: Corte + Barba" required
+                        <input type="text" name="service" placeholder="Ex: Corte + Barba" required value="${initialValues.service || initialValues.procedimento}"
                                class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold">
                     </div>
 
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Valor (R$)</label>
-                        <input type="number" step="0.01" name="value" placeholder="0,00" required
+                        <input type="number" step="0.01" name="value" placeholder="0,00" required value="${initialValues.value || initialValues.valor}"
                                class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold">
                     </div>
 
-                    <div class="space-y-2 col-span-2">
+                    <div class="space-y-2 col-span-1 md:col-span-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Forma de Pagamento</label>
                         <div class="relative">
                             <select name="payment" required
                                     class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
-                                <option value="PIX">PIX</option>
-                                <option value="DINHEIRO">DINHEIRO</option>
-                                <option value="CARTÃO">CARTÃO DE CRÉDITO/DÉBITO</option>
-                                <option value="PLANO MENSAL">PLANO MENSAL</option>
+                                ${['PIX', 'DINHEIRO', 'CARTÃO', 'PLANO MENSAL'].map(p => `
+                                    <option value="${p}" ${(initialValues.paymentMethod || initialValues.forma_pagamento) === p ? 'selected' : ''}>${p}${p === 'CARTÃO' ? ' DE CRÉDITO/DÉBITO' : ''}</option>
+                                `).join('')}
                             </select>
                             <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
                         </div>
                     </div>
 
-                    <div class="col-span-2 pt-6">
+                    <div class="col-span-1 md:col-span-2 pt-6">
                         <button type="submit" ${state.clients.length === 0 ? 'disabled' : ''}
                                 class="w-full bg-amber-500 disabled:bg-white/5 disabled:text-white/20 hover:bg-amber-400 text-dark-950 font-black py-5 rounded-2xl shadow-xl shadow-amber-500/20 transform hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-widest">
-                            Salvar Agendamento
+                            ${isEditing ? 'Salvar Alterações' : 'Salvar Agendamento'}
                         </button>
                     </div>
                 </form>
