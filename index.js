@@ -29,7 +29,8 @@ const state = {
         accentRgb: localStorage.getItem('themeAccentRgb') || '245 158 11'
     },
     profitFilter: 'diario',
-    editingRecord: null
+    editingRecord: null,
+    editingClient: null
 };
 
 // --- Helper Functions ---
@@ -983,37 +984,42 @@ const ClientsPage = () => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const btn = e.target.querySelector('button[type="submit"]');
+        const isEditing = !!state.editingClient;
         
-        const newClient = {
+        const clientData = {
             nome: formData.get('nome'),
             telefone: formData.get('telefone') || null,
             plano: formData.get('plano') || 'Nenhum'
         };
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...';
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${isEditing ? 'Salvando...' : 'Cadastrando...'}`;
 
         try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes`, {
-                method: 'POST',
+            const url = isEditing 
+                ? `${SUPABASE_URL}/rest/v1/clientes?id=eq.${state.editingClient.id}`
+                : `${SUPABASE_URL}/rest/v1/clientes`;
+            
+            const res = await fetch(url, {
+                method: isEditing ? 'PATCH' : 'POST',
                 headers: {
                     'apikey': SUPABASE_KEY,
                     'Authorization': 'Bearer ' + SUPABASE_KEY,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
                 },
-                body: JSON.stringify(newClient)
+                body: JSON.stringify(clientData)
             });
 
             if (res.ok) {
-                alert('✅ Cliente cadastrado com sucesso!');
+                alert(`✅ Cliente ${isEditing ? 'atualizado' : 'cadastrado'} com sucesso!`);
+                state.editingClient = null;
                 e.target.reset();
                 fetchClients();
             } else {
                 const errorData = await res.json();
                 console.error('Erro Supabase:', errorData);
-                if (errorData.code === '42P01') {
-                    alert('❌ ERRO: A tabela "clientes" não foi criada no Supabase. Por favor, rode o comando SQL enviado no chat.');
-                } else if (errorData.code === '23505') {
+                if (errorData.code === '23505') {
                     alert('❌ ERRO: Este cliente já está cadastrado.');
                 } else {
                     alert('❌ Erro ao salvar: ' + (errorData.message || 'Falha no banco de dados.'));
@@ -1023,8 +1029,19 @@ const ClientsPage = () => {
             alert('❌ Erro de conexão.');
         } finally {
             btn.disabled = false;
-            btn.innerHTML = 'Cadastrar Cliente';
+            btn.innerHTML = isEditing ? 'Salvar Alterações' : 'Cadastrar Cliente';
         }
+    };
+
+    window.editClient = (client) => {
+        state.editingClient = client;
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.cancelEditClient = () => {
+        state.editingClient = null;
+        render();
     };
 
     window.deleteClient = async (id) => {
@@ -1054,19 +1071,30 @@ const ClientsPage = () => {
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Cadastro -->
+                <!-- Cadastro / Edição -->
                 <div class="lg:col-span-1">
                     <div class="glass-card p-8 rounded-[2rem] border border-white/5 sticky top-24">
-                        <h3 class="text-lg font-bold mb-6 text-amber-500 uppercase tracking-widest text-sm">Novo Cadastro</h3>
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-amber-500 uppercase tracking-widest text-sm">
+                                ${state.editingClient ? 'Editar Cliente' : 'Novo Cadastro'}
+                            </h3>
+                            ${state.editingClient ? `
+                                <button onclick="window.cancelEditClient()" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase tracking-widest">
+                                    Cancelar
+                                </button>
+                            ` : ''}
+                        </div>
                         <form onsubmit="window.saveNewClient(event)" class="space-y-6">
                             <div class="space-y-2">
                                 <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Nome Completo</label>
-                                <input type="text" name="nome" required placeholder="Ex: Lucas Ferreira"
+                                <input type="text" name="nome" required placeholder="Ex: Lucas Ferreira" 
+                                       value="${state.editingClient?.nome || ''}"
                                        class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold">
                             </div>
                             <div class="space-y-2">
                                 <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Telefone (Opcional)</label>
                                 <input type="text" name="telefone" placeholder="(00) 00000-0000"
+                                       value="${state.editingClient?.telefone || ''}"
                                        class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold">
                             </div>
 
@@ -1075,16 +1103,16 @@ const ClientsPage = () => {
                                 <div class="relative">
                                     <select name="plano" 
                                             class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
-                                        <option value="Nenhum">Nenhum Plano</option>
-                                        <option value="Mensal">Plano Mensal</option>
-                                        <option value="Anual">Plano Anual</option>
+                                        <option value="Nenhum" ${state.editingClient?.plano === 'Nenhum' ? 'selected' : ''}>Nenhum Plano</option>
+                                        <option value="Mensal" ${state.editingClient?.plano === 'Mensal' ? 'selected' : ''}>Plano Mensal</option>
+                                        <option value="Anual" ${state.editingClient?.plano === 'Anual' ? 'selected' : ''}>Plano Anual</option>
                                     </select>
                                     <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
                                 </div>
                             </div>
                             <button type="submit" 
                                     class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl hover:bg-amber-400 transition-all uppercase tracking-widest text-sm shadow-xl shadow-amber-500/10 active:scale-95">
-                                Cadastrar Cliente
+                                ${state.editingClient ? 'Salvar Alterações' : 'Cadastrar Cliente'}
                             </button>
                         </form>
                     </div>
@@ -1127,10 +1155,16 @@ const ClientsPage = () => {
                                                 </td>
                                                 <td class="px-8 py-4 text-slate-400 font-medium">${c.telefone || '---'}</td>
                                                 <td class="px-8 py-4 text-right">
-                                                    <button onclick="window.deleteClient(${c.id})" 
-                                                            class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
+                                                    <div class="flex justify-end space-x-2">
+                                                        <button onclick='window.editClient(${JSON.stringify(c)})' 
+                                                                class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-90">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button onclick="window.deleteClient(${c.id})" 
+                                                                class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         `).join('')}
@@ -1147,10 +1181,16 @@ const ClientsPage = () => {
                                                 <p class="text-lg font-bold text-white">${c.nome}</p>
                                                 <p class="text-xs text-slate-500 font-medium">${c.telefone || 'Sem telefone'}</p>
                                             </div>
-                                            <button onclick="window.deleteClient(${c.id})" 
-                                                    class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
-                                                <i class="fas fa-trash-alt text-sm"></i>
-                                            </button>
+                                            <div class="flex space-x-2">
+                                                <button onclick='window.editClient(${JSON.stringify(c)})' 
+                                                        class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                                                    <i class="fas fa-edit text-sm"></i>
+                                                </button>
+                                                <button onclick="window.deleteClient(${c.id})" 
+                                                        class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                                                    <i class="fas fa-trash-alt text-sm"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                         <div class="flex">
                                             <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest
