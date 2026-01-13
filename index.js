@@ -364,7 +364,7 @@ function navigate(page) {
 // --- Components ---
 
 const Sidebar = () => `
-    <aside class="w-64 bg-dark-900 border-r border-white/5 flex flex-col h-full transition-all duration-300">
+    <aside class="hidden md:flex w-64 bg-dark-900 border-r border-white/5 flex flex-col h-full transition-all duration-300">
         <div class="p-6">
             <h1 class="text-2xl font-display font-extrabold text-amber-500 tracking-tighter italic">
                 BARBER<span class="text-white">BI</span>
@@ -403,6 +403,28 @@ const NavLink = (page, icon, label) => {
     `;
 };
 
+const MobileNav = () => `
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-dark-900/90 backdrop-blur-xl border-t border-white/5 px-6 py-3 flex justify-between items-center z-50">
+        ${MobileNavLink('dashboard', 'fa-chart-line', 'Início')}
+        ${MobileNavLink('records', 'fa-table', 'Lista')}
+        ${MobileNavLink('manage', 'fa-calendar-plus', 'Agendar')}
+        ${MobileNavLink('clients', 'fa-users', 'Clientes')}
+        ${MobileNavLink('setup', 'fa-gears', 'Ajustes')}
+    </nav>
+`;
+
+const MobileNavLink = (page, icon, label) => {
+    const isActive = state.currentPage === page;
+    return `
+        <button onclick="window.navigate('${page}')" 
+                class="flex flex-col items-center space-y-1 transition-all
+                ${isActive ? 'text-amber-500' : 'text-slate-500'}">
+            <i class="fas ${icon} text-lg"></i>
+            <span class="text-[9px] font-black uppercase tracking-tighter">${label}</span>
+        </button>
+    `;
+};
+
 const Header = () => {
     window.updateFilter = (type, val) => {
         state.filters[type] = parseInt(val);
@@ -421,25 +443,29 @@ const Header = () => {
     }).format(today);
 
     return `
-        <header class="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-dark-950/80 backdrop-blur-xl sticky top-0 z-20">
-            <div class="flex items-center space-x-4">
+        <header class="h-16 md:h-16 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-dark-950/80 backdrop-blur-xl sticky top-0 z-20">
+            <div class="flex items-center space-x-2 md:space-x-4">
                 <!-- Filtro de Dia -->
-                <select onchange="window.updateFilter('day', this.value)" class="bg-dark-900 border border-white/10 text-xs font-bold rounded-lg px-3 py-1.5 outline-none focus:border-amber-500">
-                    ${days.map(d => `<option value="${d}" ${state.filters.day === d ? 'selected' : ''}>Dia ${String(d).padStart(2, '0')}</option>`).join('')}
+                <select onchange="window.updateFilter('day', this.value)" class="bg-dark-900 border border-white/10 text-[10px] md:text-xs font-bold rounded-lg px-2 md:px-3 py-1.5 outline-none focus:border-amber-500 w-16 md:w-auto">
+                    ${days.map(d => `<option value="${d}" ${state.filters.day === d ? 'selected' : ''}>${String(d).padStart(2, '0')}</option>`).join('')}
                 </select>
                 <!-- Filtro de Mês -->
-                <select onchange="window.updateFilter('month', this.value)" class="bg-dark-900 border border-white/10 text-xs font-bold rounded-lg px-3 py-1.5 outline-none focus:border-amber-500">
-                    ${months.map((m, i) => `<option value="${i+1}" ${state.filters.month === i+1 ? 'selected' : ''}>${m}</option>`).join('')}
+                <select onchange="window.updateFilter('month', this.value)" class="bg-dark-900 border border-white/10 text-[10px] md:text-xs font-bold rounded-lg px-2 md:px-3 py-1.5 outline-none focus:border-amber-500 w-24 md:w-auto">
+                    ${months.map((m, i) => `<option value="${i+1}" ${state.filters.month === i+1 ? 'selected' : ''}>${m.substring(0, 3)}</option>`).join('')}
                 </select>
                 <!-- Filtro de Ano -->
-                <select onchange="window.updateFilter('year', this.value)" class="bg-dark-900 border border-white/10 text-xs font-bold rounded-lg px-3 py-1.5 outline-none focus:border-amber-500">
-                    <option value="2025" ${state.filters.year === 2025 ? 'selected' : ''}>2025</option>
-                    <option value="2026" ${state.filters.year === 2026 ? 'selected' : ''}>2026</option>
+                <select onchange="window.updateFilter('year', this.value)" class="bg-dark-900 border border-white/10 text-[10px] md:text-xs font-bold rounded-lg px-2 md:px-3 py-1.5 outline-none focus:border-amber-500">
+                    <option value="2025" ${state.filters.year === 2025 ? 'selected' : ''}>25</option>
+                    <option value="2026" ${state.filters.year === 2026 ? 'selected' : ''}>26</option>
                 </select>
             </div>
-            <div class="flex items-center space-x-2 text-sm text-slate-400">
+            <div class="hidden sm:flex items-center space-x-2 text-xs md:text-sm text-slate-400">
                 <i class="fas fa-calendar"></i>
                 <span class="font-medium">${formattedDate}</span>
+            </div>
+            <!-- Logo Mobile -->
+            <div class="md:hidden flex items-center">
+                <h1 class="text-lg font-display font-extrabold text-amber-500 italic">B<span class="text-white">BI</span></h1>
             </div>
         </header>
     `;
@@ -1218,12 +1244,15 @@ function render() {
     const content = contentFn();
 
     app.innerHTML = `
-        ${Sidebar()}
-        <div class="flex-1 flex flex-col overflow-hidden h-full">
-            ${Header()}
-            <main class="flex-1 overflow-y-auto custom-scroll bg-dark-950">
-                ${content}
-            </main>
+        <div class="flex h-full w-full bg-dark-950 text-white overflow-hidden">
+            ${Sidebar()}
+            <div class="flex-1 flex flex-col min-w-0 h-full relative">
+                ${Header()}
+                <main class="flex-1 overflow-y-auto custom-scroll pb-24 md:pb-0">
+                    ${content}
+                </main>
+                ${MobileNav()}
+            </div>
         </div>
     `;
 }
