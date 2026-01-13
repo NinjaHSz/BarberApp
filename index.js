@@ -486,10 +486,13 @@ const Dashboard = () => {
                     datasets: [{
                         data: Object.values(paymentStats),
                         backgroundColor: [
-                            state.theme.accent,
-                            `rgba(${state.theme.accentRgb}, 0.7)`,
-                            `rgba(${state.theme.accentRgb}, 0.4)`,
-                            '#94a3b8', '#475569', '#1e293b'
+                            state.theme.accent, // Destaque Principal
+                            '#38bdf8', // Blue 400
+                            '#818cf8', // Indigo 400
+                            '#fb7185', // Rose 400
+                            '#34d399', // Emerald 400
+                            '#94a3b8', // Slate 400
+                            '#475569'  // Slate 600
                         ],
                         borderWidth: 0,
                         hoverOffset: 20
