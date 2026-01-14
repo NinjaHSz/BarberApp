@@ -920,7 +920,7 @@ const RecordsPage = () => {
                     });
                 } else {
                     // Se não há nada no banco para esse horário padrão, mostramos vazio
-                    recordsToDisplay.push({ time, client: '---', service: '---', value: 0, paymentMethod: 'PIX', isEmpty: true, date: dayPrefix });
+                    recordsToDisplay.push({ time, client: '---', service: 'A DEFINIR', value: 0, paymentMethod: 'PIX', isEmpty: true, date: dayPrefix });
                 }
             });
 
@@ -1825,10 +1825,13 @@ window.updateClientPlan = async (clientId, data) => {
             render();
             fetchClients();
         } else {
-            alert('Erro ao atualizar dados do plano.');
+            const errBody = await res.json().catch(() => ({}));
+            console.error('Erro Supabase:', errBody);
+            alert('Erro ao atualizar dados do plano. Verifique se a coluna "limite_cortes" existe no seu banco de dados.');
         }
     } catch (err) {
-        console.error(err);
+        console.error('Erro de conexão:', err);
+        alert('Erro de conexão ao atualizar plano.');
     }
 };
 
@@ -1876,7 +1879,8 @@ const PlansPage = () => {
             nome: name,
             telefone: formData.get('telefone'),
             plano: formData.get('plano'),
-            plano_inicio: formData.get('plano_inicio')
+            plano_inicio: formData.get('plano_inicio'),
+            limite_cortes: parseInt(formData.get('limite_cortes')) || 4
         };
 
         try {
@@ -1999,11 +2003,12 @@ const PlansPage = () => {
                 </div>
                 
                 <div class="hidden md:grid grid-cols-12 gap-4 px-8 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 bg-white/[0.01]">
-                    <div class="col-span-4 pl-2">Cliente</div>
+                    <div class="col-span-3 pl-2">Cliente</div>
                     <div class="col-span-2">Início Plan</div>
                     <div class="col-span-2">Ult. Pagamento</div>
+                    <div class="col-span-2">Limite Cortes</div>
                     <div class="col-span-2">Status</div>
-                    <div class="col-span-2 text-right pr-2">Ações</div>
+                    <div class="col-span-1 text-right pr-2">Ações</div>
                 </div>
 
                 <div class="bg-dark-900/30 rounded-b-[2rem] rounded-t-none border border-white/5 border-t-0 overflow-hidden min-h-[400px]">
@@ -2019,8 +2024,8 @@ const PlansPage = () => {
 
                                     return `
                                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-6 hover:bg-white/[0.02] transition-colors group plan-client-card" data-name="${c.nome}">
-                                    <!-- Cliente Info (Col 4) -->
-                                    <div class="md:col-span-4 flex items-center gap-3 cursor-pointer group/name" onclick="navigate('client-profile', '${c.id}')">
+                                    <!-- Cliente Info (Col 3) -->
+                                    <div class="md:col-span-3 flex items-center gap-3 cursor-pointer group/name" onclick="navigate('client-profile', '${c.id}')">
                                         <div class="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold shrink-0 group-hover/name:bg-amber-500 group-hover/name:text-dark-950 transition-all relative">
                                             ${c.nome.charAt(0)}
                                             ${c.novo_cliente ? `<div class="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-dark-900 animate-pulse"></div>` : ''}
@@ -2034,7 +2039,7 @@ const PlansPage = () => {
                                                 <p class="text-slate-500 font-bold uppercase tracking-widest truncate">${c.telefone || 'Sem telefone'}</p>
                                                 ${planStats ? `
                                                     <span class="text-slate-600 hidden md:inline">•</span>
-                                                    <span class="${planStats.usageCount >= 4 ? 'text-red-500' : 'text-emerald-500'} font-black hidden md:inline uppercase tracking-widest">${planStats.usageCount}/4 CORTES</span>
+                                                    <span class="${planStats.usageCount >= (c.limite_cortes || 4) ? 'text-red-500' : 'text-emerald-500'} font-black hidden md:inline uppercase tracking-widest">${planStats.usageCount}/${c.limite_cortes || 4} CORTES</span>
                                                 ` : ''}
                                             </div>
                                         </div>
@@ -2054,6 +2059,16 @@ const PlansPage = () => {
                                                class="w-full bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-2 py-2 outline-none focus:border-amber-500 transition-all text-white/70 cursor-pointer hover:border-white/10">
                                     </div>
 
+                                    <!-- Limite Cortes (Col 2) -->
+                                    <div class="md:col-span-2">
+                                        <div class="relative group/limit">
+                                            <input type="number" value="${c.limite_cortes || 4}" min="1" max="99"
+                                                   onchange="window.updateClientPlan('${c.id}', { limite_cortes: parseInt(this.value) || 4 })"
+                                                   class="w-full bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-8 py-2 outline-none focus:border-amber-500 transition-all text-white/70 text-center hover:border-white/10 appearance-none">
+                                            <i class="fas fa-scissors absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 group-hover/limit:text-amber-500 transition-colors"></i>
+                                        </div>
+                                    </div>
+
                                     <!-- Status (Col 2) -->
                                     <div class="md:col-span-2">
                                         <select onchange="window.updateClientPlan('${c.id}', { plano: this.value })" 
@@ -2064,8 +2079,8 @@ const PlansPage = () => {
                                         </select>
                                     </div>
 
-                                    <!-- Actions (Col 2) -->
-                                    <div class="md:col-span-2 flex justify-end gap-2">
+                                    <!-- Actions (Col 1) -->
+                                    <div class="md:col-span-1 flex justify-end gap-2">
                                         <button onclick="window.updateClientPlan('${c.id}', { plano: 'Pausado' })" 
                                                 class="w-9 h-9 rounded-xl bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-dark-950 transition-all flex items-center justify-center border border-yellow-500/20 active:scale-95 shadow-lg shadow-yellow-500/5"
                                                 title="Pausar Plano">
@@ -2121,6 +2136,14 @@ const PlansPage = () => {
                                     <input type="date" name="plano_inicio" required 
                                            value="${new Date().toISOString().split('T')[0]}"
                                            class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-white">
+                                </div>
+                                <div class="space-y-1 col-span-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Limite de Cortes no Ciclo</label>
+                                    <div class="relative">
+                                        <input type="number" name="limite_cortes" value="4" min="1" max="99"
+                                               class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-white pl-10">
+                                        <i class="fas fa-scissors absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -2753,12 +2776,15 @@ if (!window.hasGlobalHandlers) {
             const rDate = new Date(r.date + 'T00:00:00');
             return rDate >= currentCycleStart && rDate < nextCycleStart;
         }).length;
+
+        const limit = parseInt(client.limite_cortes) || 4;
         
         return {
             usageCount: visits,
             nextVisit: visits + 1,
-            isWithinLimit: visits < 4,
-            cycleDay: (diffDays % 30) + 1
+            isWithinLimit: visits < limit,
+            cycleDay: (diffDays % 30) + 1,
+            limit: limit
         };
     };
 
