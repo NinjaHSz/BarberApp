@@ -47,7 +47,8 @@ const state = {
     clientSearch: '',
     isClientDropdownOpen: false,
     showEmptySlots: true,
-    managementSearch: ''
+    managementSearch: '',
+    isEditModalOpen: false
 };
 
 // ==========================================
@@ -415,8 +416,8 @@ function navigate(page, time = null) {
     if (page === 'manage') {
         if (!state.editingRecord) {
             state.editingRecord = { 
-                horario: time || '', 
-                data: `${state.filters.year}-${String(state.filters.month).padStart(2, '0')}-${String(state.filters.day).padStart(2, '0')}`
+                time: time || '', 
+                date: `${state.filters.year}-${String(state.filters.month).padStart(2, '0')}-${String(state.filters.day).padStart(2, '0')}`
             };
         }
     } else {
@@ -746,8 +747,8 @@ const RecordsPage = () => {
     if (targetDay === 0) {
         // Se for "Mês Inteiro", mostramos apenas o que existe (comportamento original)
         recordsToDisplay = state.records.filter(r => r.date.startsWith(monthPrefix))
-            .filter(r => r.client.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
-                         r.service.toLowerCase().includes(state.searchTerm.toLowerCase()));
+            .filter(r => (r.client || '').toLowerCase().includes(state.searchTerm.toLowerCase()) || 
+                         (r.service || '').toLowerCase().includes(state.searchTerm.toLowerCase()));
     } else {
         // Se for um dia específico, usamos a lógica de planilha
         const existingForDay = state.records.filter(r => r.date === dayPrefix);
@@ -755,8 +756,8 @@ const RecordsPage = () => {
         // Se houver busca, filtramos apenas os existentes
         if (state.searchTerm) {
             recordsToDisplay = existingForDay.filter(r => 
-                r.client.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
-                r.service.toLowerCase().includes(state.searchTerm.toLowerCase())
+                (r.client || '').toLowerCase().includes(state.searchTerm.toLowerCase()) || 
+                (r.service || '').toLowerCase().includes(state.searchTerm.toLowerCase())
             );
         } else {
             // Criamos um set de IDs já exibidos para não duplicar
@@ -793,47 +794,6 @@ const RecordsPage = () => {
         }
     }
 
-    window.editAppointment = (id) => {
-        const record = state.records.find(r => r.id === id);
-        if (record) {
-            state.editingRecord = record;
-            state.currentPage = 'manage';
-            render();
-        }
-    };
-
-    window.cancelAppointment = async (id) => {
-        if (!confirm('Deseja realmente cancelar este agendamento? Esta ação não pode ser desfeita.')) return;
-
-        try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/agendamentos?id=eq.${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_KEY
-                }
-            });
-
-            if (res.ok) {
-                syncFromSheet(state.sheetUrl); // Recarrega os dados
-            } else {
-                alert('❌ Erro ao cancelar agendamento.');
-            }
-        } catch (err) {
-            alert('❌ Erro de conexão.');
-        }
-    };
-
-    window.handleSearch = (e) => {
-        state.searchTerm = e.value;
-        render(); // Re-renderiza para aplicar a lógica de planilha/lista
-    };
-
-    window.toggleEmptySlots = () => {
-        state.showEmptySlots = !state.showEmptySlots;
-        render();
-    };
-
     return `
         <div class="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in duration-500">
              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
@@ -865,7 +825,7 @@ const RecordsPage = () => {
                 <div class="hidden md:flex bg-white/[0.02] border-b border-white/5 px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">
                     <div class="w-20 text-left">Horário</div>
                     <div class="flex-1 text-left px-4">Cliente</div>
-                    <div class="flex-1 text-left px-4">Procedimentos</div>
+                    <div class="flex-1 text-center px-4">Procedimentos</div>
                     <div class="w-28">Valor</div>
                     <div class="w-32">Pagamento</div>
                     <div class="w-24 text-right">Ações</div>
@@ -879,12 +839,114 @@ const RecordsPage = () => {
     `;
 };
 
+const EditModal = () => {
+    const r = state.editingRecord;
+    if (!r) return '';
+
+    return `
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div class="glass-card w-[98%] sm:w-full max-w-lg max-h-[95vh] overflow-y-auto custom-scroll rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl relative animate-in zoom-in-95 duration-300">
+                <div class="sticky top-0 z-10 p-5 sm:p-8 border-b border-white/5 flex justify-between items-center bg-dark-900/95 backdrop-blur-md">
+                    <div class="flex items-center gap-3 sm:gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg sm:text-xl font-bold">Editar Agendamento</h3>
+                            <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest truncate max-w-[150px] sm:max-w-none">${r.client || r.cliente}</p>
+                        </div>
+                    </div>
+                    <button onclick="window.closeEditModal()" class="w-10 h-10 rounded-xl hover:bg-white/5 flex items-center justify-center transition-all shrink-0">
+                        <i class="fas fa-times text-slate-500"></i>
+                    </button>
+                </div>
+                
+                <form onsubmit="window.saveNewRecord(event)" class="p-5 sm:p-8 space-y-5">
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Cliente</label>
+                            <button type="button" onclick="window.setToBreak(true)" class="text-[10px] font-black uppercase tracking-widest text-amber-500 hover:text-amber-400 transition-all">
+                                <i class="fas fa-coffee mr-1"></i> Marcar como Pausa
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input type="text" 
+                                   id="clientSearchInputModal"
+                                   placeholder="Digite para pesquisar..."
+                                   autocomplete="off"
+                                   required
+                                   value="${state.clientSearch || ''}"
+                                   onfocus="window.openClientDropdownModal()"
+                                   oninput="window.filterClientsModal(this.value)"
+                                   onkeydown="if(event.key === 'Enter') event.preventDefault()"
+                                   class="w-full bg-dark-900 border border-white/5 py-3 pl-11 pr-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-sm">
+                            
+                            <input type="hidden" name="client" value="${state.clientSearch || ''}">
+
+                            <div id="clientDropdownModal" class="hidden absolute z-[110] left-0 right-0 mt-2 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scroll p-2">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Data</label>
+                            <input type="date" name="date" required value="${r.date || r.data}"
+                                   class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-sm">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Horário</label>
+                            <input type="time" name="time" required value="${r.time || r.horario}"
+                                   class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-sm">
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Serviço</label>
+                        <select name="service" required onchange="window.updatePriceByService(this.value)"
+                                class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-sm appearance-none">
+                            <option value="">Selecione...</option>
+                            ${state.procedures.map(p => `
+                                <option value="${p.nome}" ${(r.service || r.procedimento) === p.nome ? 'selected' : ''}>${p.nome.toUpperCase()}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Valor (R$)</label>
+                        <input type="number" step="0.01" name="value" value="${r.value || r.valor || ''}"
+                               class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-sm">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Pagamento</label>
+                        <select name="payment" required
+                                class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-sm appearance-none">
+                            ${['PIX', 'DINHEIRO', 'CARTÃO', 'PLANO MENSAL', 'CORTESIA'].map(p => `
+                                <option value="${p}" ${(r.paymentMethod || r.forma_pagamento) === p ? 'selected' : ''}>${p}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl border border-transparent shadow-lg shadow-amber-500/10 active:scale-95 uppercase tracking-widest text-xs transition-all">
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+};
+
 const RecordRow = (record) => {
     const isEmpty = !!record.isEmpty;
+    const isBreak = record.client === 'PAUSA';
     const isDayZero = state.filters.day === 0;
 
     return `
-        <div class="flex flex-col md:flex-row items-center md:items-center px-6 md:px-8 py-4 md:py-4 gap-4 md:gap-0 hover:bg-white/[0.01] transition-colors group relative md:static glass-card md:bg-transparent rounded-2xl md:rounded-none m-2 md:m-0 border md:border-0 border-white/5 ${isEmpty ? 'opacity-40' : ''}">
+        <div class="flex flex-col md:flex-row items-center md:items-center px-6 md:px-8 py-4 md:py-4 gap-4 md:gap-0 hover:bg-white/[0.01] transition-colors group relative md:static glass-card md:bg-transparent rounded-2xl md:rounded-none m-2 md:m-0 border md:border-0 border-white/5 ${isEmpty ? 'opacity-40' : ''} ${isBreak ? 'bg-white/[0.02] border-white/10' : ''}">
             <div class="w-full md:w-20 text-xs md:text-sm ${isEmpty ? 'text-slate-500' : 'text-amber-500 md:text-slate-400'} font-black md:font-medium flex justify-between md:block">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Horário:</span>
                 ${record.time.substring(0, 5)}
@@ -892,23 +954,27 @@ const RecordRow = (record) => {
             
             <div class="w-full md:flex-1 md:px-4 text-sm md:text-sm font-bold md:font-semibold flex justify-between md:block">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Cliente:</span>
-                <div class="truncate transition-colors ${!isEmpty ? 'group-hover:text-amber-500 uppercase' : 'text-slate-600 uppercase'}">${record.client}</div>
+                <div class="truncate transition-colors ${isBreak ? 'text-slate-500 font-black' : (!isEmpty ? 'group-hover:text-amber-500 uppercase' : 'text-slate-600 uppercase')}">
+                    ${isBreak ? '<i class="fas fa-circle-minus mr-2"></i> PAUSA / BLOQUEIO' : record.client}
+                </div>
             </div>
 
-            <div class="w-full md:flex-1 md:px-4 text-xs md:text-sm flex justify-between md:block">
+            <div class="w-full md:flex-1 md:px-4 text-xs md:text-sm flex justify-between md:block md:text-center">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Serviço:</span>
-                <div class="truncate ${isEmpty ? 'text-slate-600' : (record.service === 'A DEFINIR' ? 'text-red-500 font-black animate-pulse' : 'text-white font-medium')} uppercase">${record.service}</div>
+                <div class="${isBreak ? 'text-slate-600 italic' : (isEmpty ? 'text-slate-600' : (record.service === 'A DEFINIR' ? 'text-red-500 font-black animate-pulse' : 'text-white font-medium'))} uppercase break-words md:truncate">
+                    ${isBreak ? 'HORÁRIO RESERVADO' : record.service}
+                </div>
             </div>
 
-            <div class="w-full md:w-28 text-sm md:text-sm font-bold md:font-bold ${isEmpty ? 'text-slate-600' : 'text-white md:text-amber-500/90'} flex justify-between md:block md:text-center">
+            <div class="w-full md:w-28 text-sm md:text-sm font-bold md:font-bold ${isBreak || isEmpty ? 'text-slate-600/50' : 'text-white md:text-amber-500/90'} flex justify-between md:block md:text-center">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Valor:</span>
-                ${isEmpty ? '---' : `R$ ${record.value.toFixed(2)}`}
+                ${isEmpty || isBreak ? '---' : `R$ ${record.value.toFixed(2)}`}
             </div>
 
             <div class="w-full md:w-32 flex justify-between md:justify-center items-center">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Pagamento:</span>
-                <span class="px-2 py-0.5 rounded-lg text-[10px] font-black border border-white/5 bg-white/[0.03] text-slate-500 uppercase tracking-tighter ${isEmpty ? 'opacity-30' : ''}">
-                    ${record.paymentMethod.toUpperCase()}
+                <span class="px-2 py-0.5 rounded-lg text-[10px] font-black border border-white/5 bg-white/[0.03] text-slate-500 uppercase tracking-tighter ${isEmpty || isBreak ? 'opacity-30' : ''}">
+                    ${isBreak ? 'N/A' : record.paymentMethod.toUpperCase()}
                 </span>
             </div>
 
@@ -938,154 +1004,17 @@ const RecordRow = (record) => {
  */
 const ManagePage = () => {
     if (!state.isIntegrated) return SetupPage();
-
-    const isEditing = !!(state.editingRecord && state.editingRecord.id);
-
-    // Inicializa a busca se estiver editando
-    if (isEditing && !state.clientSearch) {
-        state.clientSearch = state.editingRecord.client || state.editingRecord.cliente;
-    }
-
-// --- Helper para Pesquisa de Clientes ---
-window.openClientDropdown = () => {
-    const dropdown = document.getElementById('clientDropdown');
-    const input = document.getElementById('clientSearchInput');
-    if (dropdown && input) {
-        const val = input.value;
-        const filtered = state.clients.filter(c => c.nome.toLowerCase().includes(val.toLowerCase()));
-        
-        dropdown.innerHTML = filtered.map(c => `
-            <div onclick="window.selectClient('${c.nome.replace(/'/g, "\\'")}')" 
-                 class="p-3 hover:bg-amber-500/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
-                <span class="font-bold text-slate-300 group-hover:text-white">${c.nome}</span>
-                ${c.plano && c.plano !== 'Nenhum' ? `<span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">${c.plano}</span>` : ''}
-            </div>
-        `).join('') || `<div class="p-4 text-center text-slate-500 text-xs italic">Nenhum cliente encontrado.</div>`;
-        
-        dropdown.classList.remove('hidden');
-        state.isClientDropdownOpen = true;
-    }
-};
-
-window.filterClients = (val) => {
-    state.clientSearch = val;
-    const dropdown = document.getElementById('clientDropdown');
-    const hiddenInput = document.querySelector('input[name="client"]');
-    if (hiddenInput) hiddenInput.value = val;
-    
-    if (dropdown) {
-        const filtered = state.clients.filter(c => c.nome.toLowerCase().includes(val.toLowerCase()));
-        dropdown.innerHTML = filtered.map(c => `
-            <div onclick="window.selectClient('${c.nome.replace(/'/g, "\\'")}')" 
-                 class="p-3 hover:bg-amber-500/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
-                <span class="font-bold text-slate-300 group-hover:text-white">${c.nome}</span>
-                ${c.plano && c.plano !== 'Nenhum' ? `<span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">${c.plano}</span>` : ''}
-            </div>
-        `).join('') || `<div class="p-4 text-center text-slate-500 text-xs italic">Nenhum cliente encontrado.</div>`;
-        dropdown.classList.remove('hidden');
-    }
-};
-
-window.selectClient = (name) => {
-    state.clientSearch = name;
-    state.isClientDropdownOpen = false;
-    
-    const input = document.getElementById('clientSearchInput');
-    const hiddenInput = document.querySelector('input[name="client"]');
-    const dropdown = document.getElementById('clientDropdown');
-    
-    if (input) input.value = name;
-    if (hiddenInput) hiddenInput.value = name;
-    if (dropdown) dropdown.classList.add('hidden');
-};
-
-// Global mousedown once
-if (!window.hasGlobalClientPickerListener) {
-    document.addEventListener('mousedown', (e) => {
-        const dropdown = document.getElementById('clientDropdown');
-        if (dropdown && !dropdown.classList.contains('hidden')) {
-            if (!e.target.closest('#clientSearchInput') && !e.target.closest('#clientDropdown')) {
-                dropdown.classList.add('hidden');
-                state.isClientDropdownOpen = false;
-            }
-        }
-    });
-    window.hasGlobalClientPickerListener = true;
-}
-
-    window.updatePriceByService = (serviceName) => {
-        const proc = state.procedures.find(p => p.nome === serviceName);
-        if (proc) {
-            const priceInput = document.querySelector('input[name="value"]');
-            if (priceInput) priceInput.value = proc.preco;
-        }
-    };
-
-    window.saveNewRecord = async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const btn = e.target.querySelector('button[type="submit"]');
-        
-        const recordData = {
-            data: formData.get('date'),
-            horario: formData.get('time'),
-            cliente: formData.get('client'),
-            procedimento: formData.get('service'),
-            valor: parseFloat(formData.get('value')) || 0,
-            forma_pagamento: formData.get('payment')
-        };
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-
-        try {
-            const url = isEditing && state.editingRecord.id 
-                ? `${SUPABASE_URL}/rest/v1/agendamentos?id=eq.${state.editingRecord.id}`
-                : `${SUPABASE_URL}/rest/v1/agendamentos`;
-            
-            const res = await fetch(url, {
-                method: isEditing ? 'PATCH' : 'POST',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_KEY,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify(recordData)
-            });
-
-            if (res.ok) {
-                alert('✅ Agendamento concluído com sucesso!');
-                if (isEditing) {
-                    state.editingRecord = null;
-                    state.currentPage = 'records';
-                } else {
-                    e.target.reset();
-                    state.clientSearch = ''; // Limpa busca após novo registro
-                }
-                syncFromSheet(state.sheetUrl); // Atualiza os dados locais
-            } else {
-                const errorData = await res.json();
-                console.error('Erro Supabase:', errorData);
-                alert(`❌ Erro ao salvar: ${errorData.message || errorData.hint || 'Verifique os dados.'}`);
-            }
-        } catch (err) {
-            console.error(err);
-            alert('❌ Erro de conexão.');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = isEditing ? 'Salvar Alterações' : 'Salvar Agendamento';
-        }
-    };
+    const isEditing = !!(state.editingRecord && (state.editingRecord.id || state.editingRecord.cliente));
 
     const today = new Date().toISOString().split('T')[0];
-    const initialValues = state.editingRecord || {
+    const initialValues = {
         date: today,
         time: '',
         client: '',
         service: '',
         value: '',
-        paymentMethod: 'PIX'
+        paymentMethod: 'PIX',
+        ...(state.editingRecord || {})
     };
 
     return `
@@ -1104,18 +1033,23 @@ if (!window.hasGlobalClientPickerListener) {
                 <form onsubmit="window.saveNewRecord(event)" class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Data</label>
-                        <input type="date" name="date" required value="${initialValues.date || initialValues.data}"
+                        <input type="date" name="date" required value="${initialValues.date}"
                                class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold">
                     </div>
 
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Horário</label>
-                        <input type="time" name="time" required value="${initialValues.time || initialValues.horario}"
+                        <input type="time" name="time" required value="${initialValues.time}"
                                class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold">
                     </div>
 
                     <div class="space-y-2 col-span-1 md:col-span-2">
-                        <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Cliente</label>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Cliente</label>
+                            <button type="button" onclick="window.setToBreak(false)" class="text-[10px] font-black uppercase tracking-widest text-amber-500 hover:text-amber-400 transition-all">
+                                <i class="fas fa-coffee mr-1"></i> Marcar como Pausa do Barbeiro
+                            </button>
+                        </div>
                         <div class="relative">
                             <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
                             <input type="text" 
@@ -1736,6 +1670,8 @@ function render() {
                 </main>
                 ${MobileNav()}
             </div>
+            <!-- Overlay de Edição (Global) -->
+            ${state.isEditModalOpen ? EditModal() : ''}
         </div>
     `;
 
@@ -1751,8 +1687,214 @@ function render() {
     }
 }
 
-// Global exposure
-window.navigate = navigate;
+// ==========================================
+// 8. EVENT HANDLERS (HANDLERS GLOBAIS)
+// ==========================================
+if (!window.hasGlobalHandlers) {
+    window.navigate = navigate;
+
+    window.editAppointment = (id) => {
+        const record = state.records.find(r => String(r.id) === String(id));
+        if (record) {
+            state.editingRecord = record;
+            state.clientSearch = record.client;
+            state.isEditModalOpen = true;
+            render();
+        }
+    };
+
+    window.closeEditModal = () => {
+        state.isEditModalOpen = false;
+        state.editingRecord = null;
+        render();
+    };
+
+    window.cancelAppointment = async (id) => {
+        if (!confirm('Deseja realmente cancelar este agendamento?')) return;
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/agendamentos?id=eq.${id}`, {
+                method: 'DELETE',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+            });
+            if (res.ok) syncFromSheet(state.sheetUrl);
+            else alert('Erro ao cancelar.');
+        } catch (err) { alert('Erro de conexão.'); }
+    };
+
+    window.handleSearch = (e) => {
+        state.searchTerm = (e.target || e).value;
+        render();
+    };
+
+    window.toggleEmptySlots = () => {
+        state.showEmptySlots = !state.showEmptySlots;
+        render();
+    };
+
+    // --- Helpers de Busca de Clientes (Global) ---
+    window.openClientDropdown = () => {
+        const dropdown = document.getElementById('clientDropdown');
+        const input = document.getElementById('clientSearchInput');
+        if (dropdown && input) {
+            const val = input.value;
+            const filtered = state.clients.filter(c => c.nome.toLowerCase().includes(val.toLowerCase()));
+            dropdown.innerHTML = filtered.map(c => `
+                <div onclick="window.selectClient('${c.nome.replace(/'/g, "\\'")}')" 
+                     class="p-3 hover:bg-amber-500/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
+                    <span class="font-bold text-slate-300 group-hover:text-white">${c.nome}</span>
+                </div>
+            `).join('') || `<div class="p-4 text-center text-slate-500 text-xs italic">Nenhum cliente encontrado.</div>`;
+            dropdown.classList.remove('hidden');
+        }
+    };
+
+    window.filterClients = (val) => {
+        state.clientSearch = val;
+        const dropdown = document.getElementById('clientDropdown');
+        const hidden = document.querySelector('input[name="client"]');
+        if (hidden) hidden.value = val;
+        if (dropdown) {
+            const filtered = state.clients.filter(c => c.nome.toLowerCase().includes(val.toLowerCase()));
+            dropdown.innerHTML = filtered.map(c => `
+                <div onclick="window.selectClient('${c.nome.replace(/'/g, "\\'")}')" 
+                     class="p-3 hover:bg-amber-500/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
+                    <span class="font-bold text-slate-300 group-hover:text-white">${c.nome}</span>
+                </div>
+            `).join('') || `<div class="p-4 text-center text-slate-500 text-xs italic">Nenhum cliente encontrado.</div>`;
+            dropdown.classList.remove('hidden');
+        }
+    };
+
+    window.selectClient = (name) => {
+        state.clientSearch = name;
+        const input = document.getElementById('clientSearchInput');
+        const hidden = document.querySelector('input[name="client"]');
+        if (input) input.value = name;
+        if (hidden) hidden.value = name;
+        document.getElementById('clientDropdown')?.classList.add('hidden');
+    };
+
+    // --- Helpers para o Modal de Edição ---
+    window.openClientDropdownModal = () => {
+        const dropdown = document.getElementById('clientDropdownModal');
+        const input = document.getElementById('clientSearchInputModal');
+        if (dropdown && input) {
+            const val = input.value;
+            const filtered = state.clients.filter(c => c.nome.toLowerCase().includes(val.toLowerCase()));
+            dropdown.innerHTML = filtered.map(c => `
+                <div onclick="window.selectClientModal('${c.nome.replace(/'/g, "\\'")}')" 
+                     class="p-3 hover:bg-amber-500/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
+                    <span class="font-bold text-slate-300 group-hover:text-white">${c.nome}</span>
+                </div>
+            `).join('') || `<div class="p-4 text-center text-slate-500 text-xs italic">Nenhum cliente encontrado.</div>`;
+            dropdown.classList.remove('hidden');
+        }
+    };
+
+    window.filterClientsModal = (val) => {
+        state.clientSearch = val;
+        const dropdown = document.getElementById('clientDropdownModal');
+        const hidden = document.querySelector('#clientSearchInputModal')?.parentElement?.querySelector('input[name="client"]');
+        if (hidden) hidden.value = val;
+        if (dropdown) {
+            const filtered = state.clients.filter(c => c.nome.toLowerCase().includes(val.toLowerCase()));
+            dropdown.innerHTML = filtered.map(c => `
+                <div onclick="window.selectClientModal('${c.nome.replace(/'/g, "\\'")}')" 
+                     class="p-3 hover:bg-amber-500/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
+                    <span class="font-bold text-slate-300 group-hover:text-white">${c.nome}</span>
+                </div>
+            `).join('') || `<div class="p-4 text-center text-slate-500 text-xs italic">Nenhum cliente encontrado.</div>`;
+            dropdown.classList.remove('hidden');
+        }
+    };
+
+    window.selectClientModal = (name) => {
+        state.clientSearch = name;
+        const input = document.getElementById('clientSearchInputModal');
+        const hidden = document.querySelector('#clientSearchInputModal')?.parentElement?.querySelector('input[name="client"]');
+        if (input) input.value = name;
+        if (hidden) hidden.value = name;
+        document.getElementById('clientDropdownModal')?.classList.add('hidden');
+    };
+
+    window.updatePriceByService = (serviceName) => {
+        const proc = state.procedures.find(p => p.nome === serviceName);
+        if (proc) {
+            const input = document.querySelector('input[name="value"]');
+            if (input) input.value = proc.preco;
+        }
+    };
+
+    window.saveNewRecord = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const btn = e.target.querySelector('button[type="submit"]');
+        const isEditing = !!(state.editingRecord && state.editingRecord.id);
+        
+        const recordData = {
+            data: formData.get('date'),
+            horario: formData.get('time'),
+            cliente: formData.get('client'),
+            procedimento: formData.get('service'),
+            valor: parseFloat(formData.get('value')) || 0,
+            forma_pagamento: formData.get('payment')
+        };
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+        try {
+            const url = isEditing ? `${SUPABASE_URL}/rest/v1/agendamentos?id=eq.${state.editingRecord.id}` : `${SUPABASE_URL}/rest/v1/agendamentos`;
+            const res = await fetch(url, {
+                method: isEditing ? 'PATCH' : 'POST',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                body: JSON.stringify(recordData)
+            });
+
+            if (res.ok) {
+                alert('✅ Sucesso!');
+                state.editingRecord = null;
+                state.isEditModalOpen = false;
+                state.currentPage === 'manage' ? navigate('records') : render();
+                syncFromSheet(state.sheetUrl);
+            } else {
+                const err = await res.json();
+                alert(`Erro: ${err.message}`);
+            }
+        } catch (err) { alert('Erro de conexão.'); }
+        finally { 
+            btn.disabled = false; 
+            btn.innerHTML = isEditing ? 'Salvar Alterações' : 'Salvar Agendamento'; 
+        }
+    };
+
+    window.setToBreak = (isModal = true) => {
+        const suffix = isModal ? 'Modal' : '';
+        const input = document.getElementById(`clientSearchInput${suffix}`);
+        const hidden = document.querySelector(isModal ? '#clientSearchInputModal' : '#clientSearchInput')?.parentElement?.querySelector('input[name="client"]');
+        const service = document.querySelector(isModal ? '#clientDropdownModal' : '#clientDropdown')?.parentElement?.parentElement?.parentElement?.querySelector('select[name="service"]');
+        const value = document.querySelector(isModal ? '#clientDropdownModal' : '#clientDropdown')?.parentElement?.parentElement?.parentElement?.querySelector('input[name="value"]');
+        const payment = document.querySelector(isModal ? '#clientDropdownModal' : '#clientDropdown')?.parentElement?.parentElement?.parentElement?.querySelector('select[name="payment"]');
+
+        if (input) input.value = 'PAUSA';
+        if (hidden) hidden.value = 'PAUSA';
+        if (service) service.value = 'BLOQUEADO';
+        if (value) value.value = '0';
+        if (payment) payment.value = 'CORTESIA';
+    };
+
+    // Click global para fechar dropdowns
+    document.addEventListener('mousedown', (e) => {
+        if (!e.target.closest('#clientSearchInput') && !e.target.closest('#clientDropdown')) {
+            document.getElementById('clientDropdown')?.classList.add('hidden');
+        }
+        if (!e.target.closest('#clientSearchInputModal') && !e.target.closest('#clientDropdownModal')) {
+            document.getElementById('clientDropdownModal')?.classList.add('hidden');
+        }
+    });
+
+    window.hasGlobalHandlers = true;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     applyTheme();
