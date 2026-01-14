@@ -48,7 +48,12 @@ const state = {
     isClientDropdownOpen: false,
     showEmptySlots: true,
     managementSearch: '',
-    isEditModalOpen: false
+    isEditModalOpen: false,
+    planSearchTerm: '',
+    selectedClientId: null,
+    paymentHistory: [], // Histórico de pagamentos de planos
+    paymentsFetchedForClientId: null, // Controle de cache para evitar loops
+    isAddPlanModalOpen: false // Estado do modal de adicionar plano
 };
 
 // ==========================================
@@ -113,6 +118,30 @@ async function fetchProcedures() {
         }
     } catch (err) {
         console.error("Erro ao buscar procedimentos:", err);
+    }
+}
+
+/**
+ * Busca o histórico de pagamentos de planos de um cliente específico
+ */
+async function fetchPaymentHistory(clientId) {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/pagamentos_planos?cliente_id=eq.${clientId}&select=*&order=data_pagamento.desc`, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_KEY
+            }
+        });
+        if (res.ok) {
+            state.paymentHistory = await res.json();
+            state.paymentsFetchedForClientId = clientId; // Marca como carregado para este cliente
+            // Não chamar render() aqui para evitar loop infinito
+        }
+    } catch (err) {
+        console.error("Erro ao buscar histórico de pagamentos:", err);
+        // Em caso de erro, marca como carregado mesmo assim para não travar
+        state.paymentHistory = [];
+        state.paymentsFetchedForClientId = clientId; 
     }
 }
 
@@ -407,10 +436,13 @@ function updateInternalStats() {
  * Altera a página atual e re-renderiza a UI
  * @param {string} page - Nome da página (dashboard, records, manage, etc)
  */
-function navigate(page, time = null) {
+function navigate(page, data = null) {
     if (page === 'manage') {
-        window.openAddModal(time || '', `${state.filters.year}-${String(state.filters.month).padStart(2, '0')}-${String(state.filters.day).padStart(2, '0')}`);
+        window.openAddModal(data || '', `${state.filters.year}-${String(state.filters.month).padStart(2, '0')}-${String(state.filters.day).padStart(2, '0')}`);
         return;
+    }
+    if (page === 'client-profile') {
+        state.selectedClientId = data;
     }
     state.currentPage = page;
     state.clientSearch = ''; // Limpa a busca ao navegar
@@ -435,6 +467,7 @@ const Sidebar = () => `
             ${NavLink('records', 'fa-table', 'Agendamentos')}
             ${NavLink('manage', 'fa-calendar-plus', 'Agendar')}
             ${NavLink('clients', 'fa-sliders', 'Gestão')}
+            ${NavLink('plans', 'fa-id-card', 'Planos')}
             ${NavLink('setup', 'fa-gears', 'Configuração')}
         </nav>
         <div class="p-4 border-t border-white/5">
@@ -471,6 +504,7 @@ const MobileNav = () => `
         ${MobileNavLink('records', 'fa-table', 'Lista')}
         ${MobileNavLink('manage', 'fa-calendar-plus', 'Agendar')}
         ${MobileNavLink('clients', 'fa-sliders', 'Gestão')}
+        ${MobileNavLink('plans', 'fa-id-card', 'Planos')}
         ${MobileNavLink('setup', 'fa-gears', 'Ajustes')}
     </nav>
 `;
@@ -522,8 +556,12 @@ const Header = () => {
         <header class="h-16 md:h-16 border-b border-white/5 flex items-center justify-between px-3 md:px-8 bg-dark-950/80 backdrop-blur-xl sticky top-0 z-20">
             <div class="flex items-center space-x-1.5 md:space-x-4">
                 <!-- Filtro de Dia -->
-                <select onchange="window.updateFilter('day', this.value)" class="bg-dark-900 border border-white/10 text-[10px] md:text-xs font-bold rounded-lg px-2 md:px-3 py-1.5 outline-none focus:border-amber-500 w-14 md:w-auto">
-                    ${days.map(d => `<option value="${d}" ${state.filters.day === d ? 'selected' : ''}>${String(d).padStart(2, '0')}</option>`).join('')}
+                <select onchange="window.updateFilter('day', this.value)" class="bg-dark-900 border border-white/10 text-[10px] md:text-xs font-bold rounded-lg px-2 md:px-3 py-1.5 outline-none focus:border-amber-500 w-20 md:w-auto">
+                    ${days.map(d => {
+                        const dayDate = new Date(state.filters.year, state.filters.month - 1, d);
+                        const weekday = dayDate.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase().substring(0, 3);
+                        return `<option value="${d}" ${state.filters.day === d ? 'selected' : ''}>${weekday} ${String(d).padStart(2, '0')}</option>`;
+                    }).join('')}
                 </select>
                 <!-- Filtro de Mês -->
                 <select onchange="window.updateFilter('month', this.value)" class="bg-dark-900 border border-white/10 text-[10px] md:text-xs font-bold rounded-lg px-1.5 md:px-3 py-1.5 outline-none focus:border-amber-500 w-16 md:w-auto">
@@ -990,6 +1028,13 @@ const RecordRow = (record) => {
                      class="truncate transition-all outline-none rounded px-1 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 ${isBreak ? 'text-slate-500 font-black' : (isEmpty ? 'text-slate-500 group-hover:text-amber-500 uppercase' : 'group-hover:text-amber-500 uppercase')}">
                     ${isBreak ? '<i class="fas fa-circle-minus mr-2"></i> PAUSA / BLOQUEIO' : record.client}
                 </div>
+                ${!isEmpty && !isBreak ? `
+                    <button onclick="event.stopPropagation(); const c = state.clients.find(cli => cli.nome.toLowerCase() === '${record.client.replace(/'/g, "\\'").toLowerCase()}'); if (c) navigate('client-profile', c.id); else alert('Perfil não cadastrado para este nome.');" 
+                            class="hidden md:flex absolute -right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-amber-500/50 hover:text-amber-500 transition-all z-[10]"
+                            title="Ver Perfil">
+                        <i class="fas fa-external-link-alt text-[10px]"></i>
+                    </button>
+                ` : ''}
                 <!-- Dropdown Autocomplete Inline (Client) -->
                 <div id="inlineAutocomplete_client_${rowId}" class="hidden absolute left-0 right-0 top-full mt-2 bg-dark-800 border border-white/20 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] max-h-48 overflow-y-auto p-1.5 z-[500] backdrop-blur-3xl lg:min-w-[200px]"></div>
             </div>
@@ -1210,7 +1255,9 @@ const ClientsPage = () => {
         const clientData = {
             nome: formData.get('nome'),
             telefone: formData.get('telefone') || null,
-            plano: formData.get('plano') || 'Nenhum'
+            plano: formData.get('plano') || 'Nenhum',
+            plano_inicio: formData.get('plano_inicio') || null,
+            plano_pagamento: formData.get('plano_pagamento') || null
         };
 
         btn.disabled = true;
@@ -1367,7 +1414,7 @@ const ClientsPage = () => {
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Cadastro / Edição -->
                 <div class="lg:col-span-1">
-                    <div class="glass-card p-8 rounded-[2rem] border border-white/5 sticky top-24">
+                    <div class="glass-card p-8 rounded-[2rem] border border-white/5">
                         ${isClients ? `
                             <div class="flex justify-between items-center mb-6">
                                 <h3 class="text-lg font-bold text-amber-500 uppercase tracking-widest text-sm">
@@ -1394,12 +1441,26 @@ const ClientsPage = () => {
                                 </div>
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Tipo de Plano</label>
-                                    <select name="plano" 
+                                    <select name="plano" onchange="document.getElementById('plan-dates-container').classList.toggle('hidden', this.value === 'Nenhum')"
                                             class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
                                         <option value="Nenhum" ${state.editingClient?.plano === 'Nenhum' ? 'selected' : ''}>Nenhum Plano</option>
                                         <option value="Mensal" ${state.editingClient?.plano === 'Mensal' ? 'selected' : ''}>Plano Mensal</option>
                                         <option value="Anual" ${state.editingClient?.plano === 'Anual' ? 'selected' : ''}>Plano Anual</option>
                                     </select>
+                                </div>
+                                <div id="plan-dates-container" class="grid grid-cols-2 gap-4 ${(!state.editingClient?.plano || state.editingClient?.plano === 'Nenhum') ? 'hidden' : ''}">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Início do Plano</label>
+                                        <input type="date" name="plano_inicio" 
+                                               value="${state.editingClient?.plano_inicio || ''}"
+                                               class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-xs">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Último Pagamento</label>
+                                        <input type="date" name="plano_pagamento" 
+                                               value="${state.editingClient?.plano_pagamento || ''}"
+                                               class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-xs">
+                                    </div>
                                 </div>
                                 <!-- Botão Final de Cadastro -->
                                 <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl border border-transparent transition-all uppercase tracking-widest text-sm shadow-xl shadow-amber-500/10 active:scale-95">
@@ -1480,7 +1541,7 @@ const ClientsPage = () => {
                                                 .filter(c => c.nome.toLowerCase().includes(state.managementSearch.toLowerCase()))
                                                 .map(c => `
                                                 <tr class="hover:bg-white/[0.01] transition-colors group">
-                                                    <td class="px-8 py-4 font-bold text-white uppercase">${c.nome}</td>
+                                                    <td class="px-8 py-4 font-bold text-white uppercase cursor-pointer hover:text-amber-500 transition-colors" onclick="navigate('client-profile', '${c.id}')">${c.nome}</td>
                                                     <td class="px-8 py-4">
                                                         <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
                                                             ${c.plano === 'Mensal' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
@@ -1514,7 +1575,9 @@ const ClientsPage = () => {
                                         .map(c => `
                                         <div class="p-6 space-y-4">
                                             <div class="flex justify-between items-start">
-                                                <div><p class="text-lg font-bold text-white uppercase">${c.nome}</p></div>
+                                                <div onclick="navigate('client-profile', '${c.id}')" class="cursor-pointer group/name">
+                                                    <p class="text-lg font-bold text-white uppercase group-hover/name:text-amber-500 transition-colors">${c.nome}</p>
+                                                </div>
                                                 <div class="flex space-x-2">
                                                     <button onclick='window.editClient(${JSON.stringify(c)})' class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><i class="fas fa-edit"></i></button>
                                                     <button onclick="window.deleteClient('${c.id}')" class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center"><i class="fas fa-trash-alt"></i></button>
@@ -1583,6 +1646,648 @@ const ClientsPage = () => {
                             ${(isClients ? state.clients : state.procedures).filter(x => x.nome.toLowerCase().includes(state.managementSearch.toLowerCase())).length === 0 ? '<div class="p-20 text-center text-slate-500 font-bold italic">Nenhum registro encontrado.</div>' : ''}
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+/**
+ * PÁGINA: Gestão de Planos
+ */
+const PlansPage = () => {
+    window.updateClientPlan = async (clientId, data) => {
+        const payload = typeof data === 'string' ? { plano: data } : data;
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?id=eq.${clientId}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const client = state.clients.find(c => c.id == clientId);
+                if (client) Object.assign(client, payload);
+                render();
+                fetchClients();
+            } else {
+                alert('Erro ao atualizar dados do plano.');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    window.handlePlanSearch = (val) => {
+        state.planSearchTerm = val;
+        // render(); // Removido para evitar perda de foco
+        
+        // Filtra via DOM
+        document.querySelectorAll('.plan-client-card').forEach(card => {
+            const name = card.dataset.name || '';
+            if (name.toLowerCase().includes(val.toLowerCase())) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Atualiza estado de vazio se necessário (opcional, pode ser complexo de fazer puramente via DOM sem contar visíveis)
+    };
+
+    window.toggleAddPlanModal = (show) => {
+        state.isAddPlanModalOpen = show;
+        render();
+    };
+
+    window.saveNewPlanClient = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+        const name = formData.get('nome');
+        const existingClient = state.clients.find(c => c.nome.toLowerCase() === name.trim().toLowerCase());
+
+        const payload = {
+            nome: name,
+            telefone: formData.get('telefone'),
+            plano: formData.get('plano'),
+            plano_inicio: formData.get('plano_inicio')
+        };
+
+        try {
+            let url = `${SUPABASE_URL}/rest/v1/clientes`;
+            let method = 'POST';
+            
+            if (existingClient) {
+                url += `?id=eq.${existingClient.id}`;
+                method = 'PATCH';
+                // Preservar ID e dados antigos se necessário, mas neste fluxo estamos definindo o plano
+                // Se o telefone estiver vazio no form e o cliente já tiver, podemos manter o antigo?
+                // Vamos assumir que o form é a verdade, mas se vazio, usa o antigo
+                if (!payload.telefone && existingClient.telefone) payload.telefone = existingClient.telefone;
+            }
+
+            const res = await fetch(url, {
+                method: method,
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                state.isAddPlanModalOpen = false;
+                fetchClients(); // Recarrega a lista
+            } else {
+                alert('Erro ao salvar dados do cliente.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Erro de conexão.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    };
+
+    window.filterPlanModalSuggestions = (val) => {
+        const list = document.getElementById('plan-modal-suggestions');
+        if (!list) return;
+        
+        if (!val) {
+            list.classList.add('hidden');
+            return;
+        }
+        
+        const matches = state.clients
+            .filter(c => c.nome.toLowerCase().includes(val.toLowerCase()))
+            .slice(0, 5); // Limita a 5 sugestões
+        
+        if (matches.length === 0) {
+            list.classList.add('hidden');
+            return;
+        }
+        
+        list.innerHTML = matches.map(c => `
+            <div onclick="window.selectPlanModalClient('${c.nome}', '${c.telefone || ''}')" 
+                 class="p-4 hover:bg-white/5 cursor-pointer transition-colors flex justify-between items-center group/item border-b border-white/5 last:border-0">
+                <span class="font-bold text-white text-sm group-hover/item:text-amber-500 transition-colors">${c.nome}</span>
+                <span class="text-[10px] text-slate-500 font-mono bg-white/5 px-2 py-1 rounded-lg">${c.telefone || 'Sem tel'}</span>
+            </div>
+        `).join('');
+        list.classList.remove('hidden');
+    };
+
+    window.selectPlanModalClient = (nome, telefone) => {
+        const form = document.querySelector('#plan-modal-form');
+        if (form) {
+            form.nome.value = nome;
+            form.telefone.value = telefone;
+        }
+        document.getElementById('plan-modal-suggestions').classList.add('hidden');
+    };
+
+    const clientsWithPlans = state.clients.filter(c => c.plano && c.plano !== 'Nenhum');
+    const clientsWithoutPlans = state.clients.filter(c => !c.plano || c.plano === 'Nenhum');
+
+    return `
+        <div class="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-display font-bold">Gestão de Planos</h2>
+                    <p class="text-slate-500 text-xs sm:text-sm mt-1">Administre os clientes que possuem planos de fidelidade</p>
+                </div>
+                <div class="hidden sm:flex items-center gap-4">
+                    <button onclick="window.toggleAddPlanModal(true)" class="bg-amber-500 text-dark-950 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-lg shadow-amber-500/20">
+                        <i class="fas fa-plus mr-2"></i> Novo Plano
+                    </button>
+                    <div class="bg-amber-500/10 text-amber-500 px-4 py-2 rounded-2xl border border-amber-500/20 flex items-center gap-3">
+                        <i class="fas fa-chart-pie"></i>
+                        <span class="text-xs font-black uppercase tracking-widest">${clientsWithPlans.length} Clientes Ativos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h3 class="text-lg font-bold text-amber-500 uppercase tracking-widest text-sm flex items-center gap-2 ml-2">
+                        <i class="fas fa-crown"></i> Assinantes Ativos
+                    </h3>
+                    <div class="relative w-full sm:w-80">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text" 
+                               placeholder="Filtrar assinantes..." 
+                               oninput="window.handlePlanSearch(this.value)"
+                               value="${state.planSearchTerm}"
+                               class="w-full bg-dark-900 border border-white/5 py-2.5 pl-11 pr-4 rounded-xl text-xs outline-none focus:border-amber-500 transition-all font-medium">
+                    </div>
+                </div>
+                
+                <div class="bg-dark-900/30 rounded-[2rem] border border-white/5 overflow-hidden min-h-[400px]">
+                    ${clientsWithPlans.length === 0 ? `
+                        <div class="h-[400px] flex flex-col items-center justify-center text-slate-500 space-y-4">
+                            <i class="fas fa-user-slash text-4xl opacity-20"></i>
+                            <p class="italic text-sm">Nenhum cliente com plano ativo.</p>
+                        </div>
+                    ` : `
+                        <div class="divide-y divide-white/5 max-h-[700px] overflow-y-auto custom-scroll">
+                            ${clientsWithPlans
+                                .filter(c => !state.planSearchTerm || c.nome.toLowerCase().includes(state.planSearchTerm.toLowerCase()))
+                                .map(c => {
+                                    const planStats = (() => {
+                                        if (!c.plano_inicio || c.plano === 'Pausado') return null;
+                                        const start = new Date(c.plano_inicio + 'T00:00:00');
+                                        const today = new Date();
+                                        today.setHours(0,0,0,0);
+                                        
+                                        const diffTime = Math.abs(today - start);
+                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                                        const cycleDay = (diffDays % 30) || 30; // Dia 1 a 30
+                                        
+                                        // Calcular início do ciclo atual
+                                        const currentCycleStart = new Date(start);
+                                        currentCycleStart.setDate(start.getDate() + (Math.floor(diffDays / 30) * 30));
+                                        
+                                        // Contar visitas neste ciclo
+                                        const visits = state.records.filter(r => 
+                                            r.client === c.nome && 
+                                            new Date(r.date + 'T00:00:00') >= currentCycleStart &&
+                                            new Date(r.date + 'T00:00:00') <= today
+                                        ).length;
+                                        
+                                        return { cycleDay, visits };
+                                    })();
+
+                                    return `
+                                <div class="plan-client-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between hover:bg-white/[0.02] transition-colors group gap-6" data-name="${c.nome}">
+                                    <div onclick="navigate('client-profile', '${c.id}')" class="flex items-center gap-3 w-full md:w-auto cursor-pointer group/name">
+                                        <div class="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold shrink-0 group-hover/name:bg-amber-500 group-hover/name:text-dark-950 transition-all">
+                                            ${c.nome.charAt(0)}
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="font-bold text-white group-hover/name:text-amber-500 transition-colors truncate">${c.nome}</p>
+                                            <div class="flex items-center gap-2 text-[10px]">
+                                                <p class="text-slate-500 font-bold uppercase tracking-widest truncate">${c.telefone || 'Sem telefone'}</p>
+                                                ${planStats ? `
+                                                    <span class="text-slate-600">•</span>
+                                                    <span class="text-amber-500 font-black">DIA ${planStats.cycleDay}/30</span>
+                                                    <span class="text-slate-600">•</span>
+                                                    <span class="${planStats.visits >= 4 ? 'text-red-500' : 'text-emerald-500'} font-black">${planStats.visits}/4 CORTES</span>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full md:flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div class="space-y-1">
+                                            <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest block ml-1">Início do Plano</label>
+                                            <input type="date" value="${c.plano_inicio || ''}" 
+                                                   onchange="window.updateClientPlan('${c.id}', { plano_inicio: this.value })"
+                                                   class="w-full bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-amber-500 transition-all text-white/70">
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest block ml-1">Último Pagamento</label>
+                                            <input type="date" value="${c.plano_pagamento || ''}" 
+                                                   onchange="window.updateClientPlan('${c.id}', { plano_pagamento: this.value })"
+                                                   class="w-full bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-amber-500 transition-all text-white/70">
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest block ml-1">Status/Tipo</label>
+                                            <div class="flex items-center gap-2">
+                                                <select onchange="window.updateClientPlan('${c.id}', { plano: this.value })" 
+                                                        class="flex-1 bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none focus:border-amber-500 transition-all cursor-pointer">
+                                                    <option value="Mensal" ${c.plano === 'Mensal' ? 'selected' : ''}>Mensal</option>
+                                                    <option value="Anual" ${c.plano === 'Anual' ? 'selected' : ''}>Anual</option>
+                                                    <option value="Pausado" ${c.plano === 'Pausado' ? 'selected' : ''}>Pausado</option>
+                                                </select>
+                                                <button onclick="window.updateClientPlan('${c.id}', { plano: 'Pausado' })" 
+                                                        class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-dark-950 transition-all flex items-center justify-center border border-amber-500/20 active:scale-95"
+                                                        title="Pausar Plano">
+                                                    <i class="fas fa-pause text-xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;}).join('')}
+                        </div>
+                    `}
+                </div>
+            </div>
+
+            <!-- Modal de Adicionar Novo Assinante -->
+            ${state.isAddPlanModalOpen ? `
+                <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div class="bg-dark-900 border border-white/10 rounded-[2rem] w-full max-w-md p-8 shadow-2xl relative animate-in zoom-in-95 duration-200">
+                        <button onclick="window.toggleAddPlanModal(false)" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                        
+                        <h3 class="text-2xl font-display font-bold text-white mb-2">Novo Assinante</h3>
+                        <p class="text-slate-500 text-sm mb-6">Cadastre um novo cliente já com o plano ativo.</p>
+                        
+                        <form id="plan-modal-form" onsubmit="window.saveNewPlanClient(event)" class="space-y-4" autocomplete="off">
+                            <div class="space-y-1 relative">
+                                <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Nome do Cliente</label>
+                                <input type="text" name="nome" required placeholder="Digite para buscar..." 
+                                       oninput="window.filterPlanModalSuggestions(this.value)"
+                                       onfocus="window.filterPlanModalSuggestions(this.value)"
+                                       class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-white">
+                                
+                                <!-- Lista de Sugestões Customizada -->
+                                <div id="plan-modal-suggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-dark-900 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Telefone / WhatsApp</label>
+                                <input type="text" name="telefone" placeholder="(00) 00000-0000"
+                                       class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-white">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Plano</label>
+                                    <select name="plano" required
+                                            class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-white cursor-pointer appearance-none">
+                                        <option value="Mensal">Mensal</option>
+                                        <option value="Anual">Anual</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Início do Plano</label>
+                                    <input type="date" name="plano_inicio" required 
+                                           value="${new Date().toISOString().split('T')[0]}"
+                                           class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-white">
+                                </div>
+                            </div>
+                            
+                            <div class="pt-4">
+                                <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl hover:shadow-lg hover:shadow-amber-500/20 transition-all uppercase tracking-widest text-xs">
+                                    Cadastrar Assinante
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+};
+
+/**
+ * PÁGINA: Perfil Detalhado do Cliente
+ */
+const ClientProfilePage = () => {
+    const client = state.clients.find(c => c.id == state.selectedClientId);
+    if (!client) {
+        return `
+            <div class="p-8 h-full flex flex-col items-center justify-center text-center space-y-4">
+                <i class="fas fa-user-slash text-6xl text-white/5"></i>
+                <h2 class="text-2xl font-bold text-slate-400">Cliente não encontrado</h2>
+                <button onclick="navigate('plans')" class="bg-amber-500 text-dark-950 px-6 py-2 rounded-xl font-bold">Voltar aos Planos</button>
+            </div>
+        `;
+    }
+
+    // Carregar histórico de pagamentos ao abrir o perfil (apenas uma vez)
+    // Agora verifica se JÁ buscou para este cliente específico, independente se voltou vazio ou não
+    if (state.paymentsFetchedForClientId !== client.id) {
+        fetchPaymentHistory(client.id).then(() => render());
+        return `
+            <div class="p-8 h-full flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in duration-300">
+                <div class="w-16 h-16 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
+                <p class="text-slate-400 font-bold animate-pulse">Carregando perfil...</p>
+            </div>
+        `;
+    }
+
+    // Função para salvar edição inline do cliente
+    window.saveClientEdit = async (field, value) => {
+        try {
+            const updateData = { [field]: value };
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?id=eq.${client.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(updateData)
+            });
+            if (res.ok) {
+                Object.assign(client, updateData);
+                fetchClients();
+            } else {
+                alert('Erro ao atualizar cliente.');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    // Função para adicionar novo pagamento
+    window.addPayment = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const btn = e.target.querySelector('button[type="submit"]');
+        
+        const paymentData = {
+            cliente_id: client.id,
+            data_pagamento: formData.get('data_pagamento'),
+            valor: parseFloat(formData.get('valor')) || 0,
+            tipo_plano: formData.get('tipo_plano'),
+            forma_pagamento: formData.get('forma_pagamento'),
+            observacao: formData.get('observacao') || null
+        };
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/pagamentos_planos`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(paymentData)
+            });
+
+            if (res.ok) {
+                e.target.reset();
+                fetchPaymentHistory(client.id);
+                // Atualizar a data do último pagamento no cliente
+                await window.updateClientPlan(client.id, { plano_pagamento: paymentData.data_pagamento });
+            } else {
+                alert('Erro ao registrar pagamento.');
+            }
+        } catch (err) {
+            alert('Erro de conexão.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Registrar Pagamento';
+        }
+    };
+
+    window.deletePayment = async (paymentId) => {
+        if (!confirm('Deseja excluir este registro de pagamento?')) return;
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/pagamentos_planos?id=eq.${paymentId}`, {
+                method: 'DELETE',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+            });
+            fetchPaymentHistory(client.id);
+        } catch (err) { alert('Erro ao excluir pagamento.'); }
+    };
+
+    // Filtrar agendamentos desse cliente
+    const clientRecords = state.records.filter(r => 
+        (r.client || '').toLowerCase() === (client.nome || '').toLowerCase()
+    ).sort((a, b) => new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time));
+
+    const totalSpent = clientRecords.reduce((acc, r) => acc + (parseFloat(r.value) || 0), 0);
+    
+    // Filtra apenas agendamentos passados ou de hoje para definir a "Última Visita"
+    const today = new Date().toISOString().split('T')[0];
+    const pastRecords = clientRecords.filter(r => r.date <= today);
+    const lastVisit = pastRecords.length > 0 ? pastRecords[0].date : 'Nunca';
+
+    return `
+        <div class="p-4 sm:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <!-- Header do Perfil -->
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+                <div class="w-24 h-24 md:w-32 md:h-32 rounded-[2.5rem] bg-amber-500/10 flex items-center justify-center text-amber-500 text-3xl md:text-5xl font-black border-2 border-amber-500/20 shadow-2xl shadow-amber-500/5">
+                    ${(client.nome || '?').charAt(0)}
+                </div>
+                <div class="flex-1 text-center md:text-left space-y-4">
+                    <div>
+                        <div class="flex flex-wrap justify-center md:justify-start items-center gap-3">
+                            <input type="text" 
+                                   value="${client.nome}" 
+                                   onblur="window.saveClientEdit('nome', this.value)"
+                                   class="text-3xl md:text-4xl font-display font-black text-white bg-transparent border-b-2 border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-2 -mx-2">
+                            ${client.plano !== 'Nenhum' ? `
+                                <span class="px-3 py-1 bg-amber-500 text-dark-950 text-[10px] font-black uppercase rounded-lg shadow-lg shadow-amber-500/20">
+                                    CLIENTE PREMIUM
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="text-slate-500 font-bold uppercase tracking-widest text-xs mt-1 flex items-center justify-center md:justify-start gap-2">
+                            <i class="fas fa-phone"></i>
+                            <input type="text" 
+                                   value="${client.telefone || ''}" 
+                                   placeholder="Adicionar telefone"
+                                   onblur="window.saveClientEdit('telefone', this.value)"
+                                   class="bg-transparent border-b border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-1">
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap justify-center md:justify-start gap-4 pt-2">
+                        <button onclick="navigate('plans')" class="px-6 py-2 bg-dark-900 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-all border border-white/5 uppercase tracking-widest">
+                            <i class="fas fa-arrow-left mr-2"></i> Voltar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados do Plano (se houver) -->
+            ${client.plano !== 'Nenhum' ? `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-card p-6 rounded-[2rem] border border-amber-500/10 relative overflow-hidden group">
+                        <div class="absolute -right-4 -top-4 w-20 h-20 bg-amber-500/5 rounded-full blur-xl"></div>
+                        <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Tipo de Plano</p>
+                        <h4 class="text-2xl font-black text-white">${client.plano}</h4>
+                    </div>
+                    <div class="glass-card p-6 rounded-[2rem] border border-white/5">
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Início da Assinatura</p>
+                        <h4 class="text-2xl font-black text-white">${client.plano_inicio ? new Date(client.plano_inicio + 'T00:00:00').toLocaleDateString('pt-BR') : '---'}</h4>
+                    </div>
+                    <div class="glass-card p-6 rounded-[2rem] border border-white/5">
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Último Pagamento</p>
+                        <h4 class="text-2xl font-black text-white">${client.plano_pagamento ? new Date(client.plano_pagamento + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não registrado'}</h4>
+                    </div>
+                </div>
+            ` : ''}
+
+            <!-- KPIs do Cliente -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Total Investido</p>
+                    <h3 class="text-2xl md:text-3xl font-display font-black text-amber-500">R$ ${totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                </div>
+                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Visitas Totais</p>
+                    <h3 class="text-2xl md:text-3xl font-display font-black text-white">${clientRecords.length}</h3>
+                </div>
+                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Ticket Médio</p>
+                    <h3 class="text-2xl md:text-3xl font-display font-black text-white">R$ ${(clientRecords.length ? totalSpent / clientRecords.length : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                </div>
+                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Última Visita</p>
+                    <h3 class="text-2xl md:text-3xl font-display font-black text-white">${lastVisit !== 'Nunca' ? new Date(lastVisit + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem registros'}</h3>
+                </div>
+            </div>
+
+            <!-- Histórico de Pagamentos (apenas para clientes com plano) -->
+            ${client.plano !== 'Nenhum' ? `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Formulário para Novo Pagamento -->
+                    <div class="lg:col-span-1">
+                        <div class="glass-card p-6 rounded-[2rem] border border-white/5">
+                            <h3 class="text-lg font-bold text-amber-500 uppercase tracking-widest text-sm mb-6">Registrar Pagamento</h3>
+                            <form onsubmit="window.addPayment(event)" class="space-y-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Data do Pagamento</label>
+                                    <input type="date" name="data_pagamento" required 
+                                           value="${new Date().toISOString().split('T')[0]}"
+                                           class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-xs">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Valor Pago</label>
+                                    <input type="number" name="valor" required step="0.01" min="0" placeholder="0.00"
+                                           class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Tipo de Plano</label>
+                                    <select name="tipo_plano" required
+                                            class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
+                                        <option value="Mensal" ${client.plano === 'Mensal' ? 'selected' : ''}>Mensal</option>
+                                        <option value="Anual" ${client.plano === 'Anual' ? 'selected' : ''}>Anual</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Forma de Pagamento</label>
+                                    <select name="forma_pagamento" required
+                                            class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
+                                        <option value="Pix">Pix</option>
+                                        <option value="Dinheiro">Dinheiro</option>
+                                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                        <option value="Cartão de Débito">Cartão de Débito</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Observação (Opcional)</label>
+                                    <textarea name="observacao" rows="2" placeholder="Ex: Pagamento referente ao mês de Janeiro"
+                                              class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-medium text-sm resize-none"></textarea>
+                                </div>
+                                <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-3 rounded-xl transition-all uppercase tracking-widest text-xs shadow-xl shadow-amber-500/10 active:scale-95">
+                                    Registrar Pagamento
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Pagamentos -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <h3 class="text-lg font-bold text-white uppercase tracking-widest text-sm ml-2">Histórico de Pagamentos</h3>
+                        <div class="bg-dark-900/30 rounded-[2rem] border border-white/5 overflow-hidden">
+                            ${state.paymentHistory.length === 0 ? `
+                                <div class="p-12 text-center text-slate-500 italic">Nenhum pagamento registrado ainda.</div>
+                            ` : `
+                                <div class="divide-y divide-white/5">
+                                    ${state.paymentHistory.map(p => `
+                                        <div class="px-8 py-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
+                                            <div class="flex items-center gap-6">
+                                                <div class="text-amber-500 font-black text-sm w-28">${new Date(p.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
+                                                <div>
+                                                    <p class="text-white font-bold text-sm uppercase">${p.tipo_plano} • <span class="text-amber-500">${p.forma_pagamento || '-'}</span></p>
+                                                    ${p.observacao ? `<p class="text-[10px] text-slate-500 font-medium mt-1">${p.observacao}</p>` : ''}
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <div class="text-lg font-black text-emerald-400">R$ ${parseFloat(p.valor).toFixed(2)}</div>
+                                                <button onclick="window.deletePayment('${p.id}')" 
+                                                        class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover:opacity-100"
+                                                        title="Excluir Pagamento">
+                                                    <i class="fas fa-trash-can text-xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+
+            <!-- Histórico de Serviços -->
+            <div class="space-y-4">
+                <h3 class="text-lg font-bold text-white uppercase tracking-widest text-sm ml-2">Histórico de Visitas</h3>
+                <div class="bg-dark-900/30 rounded-[2rem] border border-white/5 overflow-hidden">
+                    ${clientRecords.length === 0 ? `
+                        <div class="p-12 text-center text-slate-500 italic">Este cliente ainda não possui agendamentos registrados.</div>
+                    ` : `
+                        <div class="divide-y divide-white/5 overflow-x-auto">
+                            ${clientRecords.map(r => `
+                                <div class="px-8 py-4 flex items-center justify-between hover:bg-white/[0.02] min-w-[500px]">
+                                    <div class="flex items-center gap-6">
+                                        <div class="text-amber-500 font-black text-sm w-24">${new Date(r.date + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
+                                        <div>
+                                            <p class="text-white font-bold text-sm uppercase">${r.service}</p>
+                                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">${r.time} • ${r.paymentMethod}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-black text-white">R$ ${(parseFloat(r.value) || 0).toFixed(2)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
                 </div>
             </div>
         </div>
@@ -1705,6 +2410,8 @@ const pages = {
     records: RecordsPage,
     manage: ManagePage,
     clients: ClientsPage,
+    plans: PlansPage,
+    'client-profile': ClientProfilePage,
     setup: SetupPage
 };
 
@@ -1728,7 +2435,7 @@ function render() {
     const content = contentFn();
 
     app.innerHTML = `
-        <div class="flex h-full w-full bg-pattern text-white overflow-hidden">
+        <div class="flex h-full w-full bg-pattern text-white">
             ${Sidebar()}
             <div class="flex-1 flex flex-col min-w-0 h-full relative">
                 ${Header()}
