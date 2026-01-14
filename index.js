@@ -924,8 +924,8 @@ const RecordRow = (record) => {
                     </button>
                 ` : `
                     <button onclick="window.navigate('manage', '${record.time}')" 
-                            class="w-full md:w-auto px-4 py-2 md:py-1 rounded-lg bg-white/5 text-slate-500 hover:bg-amber-500/10 hover:text-amber-500 text-[10px] font-bold uppercase transition-all">
-                        Agendar
+                            class="w-full md:w-auto px-4 py-2 md:py-1 rounded-lg bg-amber-500 text-dark-950 hover:bg-white hover:text-amber-600 text-[10px] font-black uppercase transition-all shadow-lg shadow-amber-500/10 active:scale-95 border border-transparent">
+                        Agendar Horário
                     </button>
                 `}
             </div>
