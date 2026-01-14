@@ -939,7 +939,7 @@ const RecordRow = (record) => {
 const ManagePage = () => {
     if (!state.isIntegrated) return SetupPage();
 
-    const isEditing = !!state.editingRecord;
+    const isEditing = !!(state.editingRecord && state.editingRecord.id);
 
     // Inicializa a busca se estiver editando
     if (isEditing && !state.clientSearch) {
@@ -1208,7 +1208,7 @@ const ClientsPage = () => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const btn = e.target.querySelector('button[type="submit"]');
-        const isEditing = !!state.editingClient;
+        const isEditing = !!(state.editingClient && state.editingClient.id);
         
         const clientData = {
             nome: formData.get('nome'),
@@ -1280,7 +1280,7 @@ const ClientsPage = () => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const btn = e.target.querySelector('button[type="submit"]');
-        const isEditing = !!state.editingProcedure;
+        const isEditing = !!(state.editingProcedure && state.editingProcedure.id);
         
         const procedureData = {
             nome: formData.get('nome'),
