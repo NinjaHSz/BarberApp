@@ -997,6 +997,27 @@ const EditModal = () => {
     `;
 };
 
+    window.viewProfileByName = (name) => {
+        if (event) event.stopPropagation();
+        if (!name) return;
+        // Tenta encontrar match exato ou parcial insensível a case
+        const client = state.clients.find(c => c.nome.trim().toLowerCase() === name.trim().toLowerCase());
+        
+        if (client) {
+            navigate('client-profile', client.id);
+        } else {
+            // Fallback: Tenta encontrar nome similar se não achou exato
+             const similar = state.clients.find(c => c.nome.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(c.nome.toLowerCase()));
+             if (similar) {
+                if(confirm(`Perfil exato não encontrado. Deseja ver o perfil de "${similar.nome}"?`)) {
+                    navigate('client-profile', similar.id);
+                }
+             } else {
+                alert('Perfil de cliente não encontrado na base de dados.');
+             }
+        }
+    };
+
 const RecordRow = (record) => {
     const isEmpty = !!record.isEmpty;
     const isBreak = record.client === 'PAUSA';
@@ -1026,10 +1047,13 @@ const RecordRow = (record) => {
                      oninput="window.showInlineAutocomplete(this)"
                      onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
                      class="truncate transition-all outline-none rounded px-1 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 ${isBreak ? 'text-slate-500 font-black' : (isEmpty ? 'text-slate-500 group-hover:text-amber-500 uppercase' : 'group-hover:text-amber-500 uppercase')}">
-                    ${isBreak ? '<i class="fas fa-circle-minus mr-2"></i> PAUSA / BLOQUEIO' : record.client}
+                    ${isBreak ? '<i class="fas fa-circle-minus mr-2"></i> PAUSA / BLOQUEIO' : (() => {
+                        const isNew = state.clients.find(cli => cli.nome === record.client)?.novo_cliente;
+                        return `<span>${record.client}</span>${isNew ? '<span class="ml-2 bg-amber-500/20 text-amber-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ''}`;
+                    })()}
                 </div>
                 ${!isEmpty && !isBreak ? `
-                    <button onclick="event.stopPropagation(); const c = state.clients.find(cli => cli.nome.toLowerCase() === '${record.client.replace(/'/g, "\\'").toLowerCase()}'); if (c) navigate('client-profile', c.id); else alert('Perfil não cadastrado para este nome.');" 
+                    <button onclick="window.viewProfileByName('${record.client.replace(/'/g, "\\'")}')" 
                             class="hidden md:flex absolute -right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-amber-500/50 hover:text-amber-500 transition-all z-[10]"
                             title="Ver Perfil">
                         <i class="fas fa-external-link-alt text-[10px]"></i>
@@ -1257,7 +1281,8 @@ const ClientsPage = () => {
             telefone: formData.get('telefone') || null,
             plano: formData.get('plano') || 'Nenhum',
             plano_inicio: formData.get('plano_inicio') || null,
-            plano_pagamento: formData.get('plano_pagamento') || null
+            plano_pagamento: formData.get('plano_pagamento') || null,
+            novo_cliente: formData.get('novo_cliente') === 'on'
         };
 
         btn.disabled = true;
@@ -1462,6 +1487,16 @@ const ClientsPage = () => {
                                                class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-xs">
                                     </div>
                                 </div>
+                                
+                                <!-- Toggle Novo Cliente -->
+                                <div class="flex items-center gap-3 bg-dark-900 border border-white/5 p-4 rounded-xl mb-4">
+                                    <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+                                        <input type="checkbox" name="novo_cliente" id="novo_cliente_toggle" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer translate-x-1 top-1 transition-transform checked:translate-x-5 checked:border-amber-500" ${state.editingClient?.novo_cliente ? 'checked' : ''}/>
+                                        <label for="novo_cliente_toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-800 cursor-pointer border border-white/5"></label>
+                                    </div>
+                                    <label for="novo_cliente_toggle" class="text-xs font-bold text-white uppercase tracking-widest cursor-pointer">Marcar como Novo Cliente</label>
+                                </div>
+
                                 <!-- Botão Final de Cadastro -->
                                 <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl border border-transparent transition-all uppercase tracking-widest text-sm shadow-xl shadow-amber-500/10 active:scale-95">
                                     ${state.editingClient ? 'Salvar Alterações' : 'Cadastrar Cliente'}
@@ -1541,7 +1576,9 @@ const ClientsPage = () => {
                                                 .filter(c => c.nome.toLowerCase().includes(state.managementSearch.toLowerCase()))
                                                 .map(c => `
                                                 <tr class="hover:bg-white/[0.01] transition-colors group">
-                                                    <td class="px-8 py-4 font-bold text-white uppercase cursor-pointer hover:text-amber-500 transition-colors" onclick="navigate('client-profile', '${c.id}')">${c.nome}</td>
+                                                    <td class="px-8 py-4 font-bold text-white uppercase cursor-pointer hover:text-amber-500 transition-colors" onclick="navigate('client-profile', '${c.id}')">
+                                                        ${c.nome} ${c.novo_cliente ? '<span class="ml-2 bg-amber-500/20 text-amber-500 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ''}
+                                                    </td>
                                                     <td class="px-8 py-4">
                                                         <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
                                                             ${c.plano === 'Mensal' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
@@ -1874,11 +1911,15 @@ const PlansPage = () => {
                                     return `
                                 <div class="plan-client-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between hover:bg-white/[0.02] transition-colors group gap-6" data-name="${c.nome}">
                                     <div onclick="navigate('client-profile', '${c.id}')" class="flex items-center gap-3 w-full md:w-auto cursor-pointer group/name">
-                                        <div class="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold shrink-0 group-hover/name:bg-amber-500 group-hover/name:text-dark-950 transition-all">
+                                        <div class="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold shrink-0 group-hover/name:bg-amber-500 group-hover/name:text-dark-950 transition-all relative">
                                             ${c.nome.charAt(0)}
+                                            ${c.novo_cliente ? `<div class="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-dark-900 animate-pulse"></div>` : ''}
                                         </div>
                                         <div class="min-w-0">
-                                            <p class="font-bold text-white group-hover/name:text-amber-500 transition-colors truncate">${c.nome}</p>
+                                            <div class="flex items-center gap-2">
+                                                <p class="font-bold text-white group-hover/name:text-amber-500 transition-colors truncate">${c.nome}</p>
+                                                ${c.novo_cliente ? `<span class="bg-amber-500 text-dark-950 text-[8px] font-black px-1.5 rounded uppercase tracking-wider">Novo</span>` : ''}
+                                            </div>
                                             <div class="flex items-center gap-2 text-[10px]">
                                                 <p class="text-slate-500 font-bold uppercase tracking-widest truncate">${c.telefone || 'Sem telefone'}</p>
                                                 ${planStats ? `
@@ -2099,11 +2140,13 @@ const ClientProfilePage = () => {
         (r.client || '').toLowerCase() === (client.nome || '').toLowerCase()
     ).sort((a, b) => new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time));
 
-    const totalSpent = clientRecords.reduce((acc, r) => acc + (parseFloat(r.value) || 0), 0);
-    
-    // Filtra apenas agendamentos passados ou de hoje para definir a "Última Visita"
+    // Filtra apenas agendamentos passados ou de hoje para estatísticas
     const today = new Date().toISOString().split('T')[0];
     const pastRecords = clientRecords.filter(r => r.date <= today);
+    
+    // Calcula total investido apenas com base nos agendamentos realizados/passados
+    const totalSpent = pastRecords.reduce((acc, r) => acc + (parseFloat(r.value) || 0), 0);
+    
     const lastVisit = pastRecords.length > 0 ? pastRecords[0].date : 'Nunca';
 
     return `
@@ -2170,12 +2213,12 @@ const ClientProfilePage = () => {
                     <h3 class="text-2xl md:text-3xl font-display font-black text-amber-500">R$ ${totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                 </div>
                 <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Visitas Totais</p>
-                    <h3 class="text-2xl md:text-3xl font-display font-black text-white">${clientRecords.length}</h3>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Visitas Realizadas</p>
+                    <h3 class="text-2xl md:text-3xl font-display font-black text-white">${pastRecords.length}</h3>
                 </div>
                 <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
                     <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Ticket Médio</p>
-                    <h3 class="text-2xl md:text-3xl font-display font-black text-white">R$ ${(clientRecords.length ? totalSpent / clientRecords.length : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                    <h3 class="text-2xl md:text-3xl font-display font-black text-white">R$ ${(pastRecords.length ? totalSpent / pastRecords.length : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                 </div>
                 <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
                     <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Última Visita</p>
