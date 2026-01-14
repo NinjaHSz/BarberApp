@@ -54,7 +54,14 @@ const state = {
     paymentHistory: [], // Histórico de pagamentos de planos
     paymentsFetchedForClientId: null, // Controle de cache para evitar loops
     isAddPlanModalOpen: false, // Estado do modal de adicionar plano
-    allPlanPayments: [] // Cache global de pagamentos de planos para dashboard
+    allPlanPayments: [], // Cache global de pagamentos de planos para dashboard
+    expenses: [], // Nova base de saídas/contas a pagar
+    cards: [], // Base de cartões de crédito
+    editingExpense: null,
+    isExpenseModalOpen: false,
+    editingCard: null,
+    isCardModalOpen: false,
+    selectedCardId: null
 };
 
 // ==========================================
@@ -188,6 +195,40 @@ async function fetchAllPlanPayments() {
             updateInternalStats();
         }
     } catch (e) { console.error('Erro ao buscar todos pagamentos:', e); }
+}
+
+/**
+ * Busca saídas/contas a pagar do Supabase
+ */
+async function fetchExpenses() {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/saidas?select=*&order=vencimento.asc`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
+        if (res.ok) {
+            state.expenses = await res.json();
+            render();
+        }
+    } catch (err) {
+        console.error('Erro ao buscar saídas:', err);
+    }
+}
+
+/**
+ * Busca cartões cadastrados no Supabase
+ */
+async function fetchCards() {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/cartoes?select=*&order=nome.asc`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+        });
+        if (res.ok) {
+            state.cards = await res.json();
+            render();
+        }
+    } catch (err) {
+        console.error('Erro ao buscar cartões:', err);
+    }
 }
 
 window.renewPlan = async (clientId) => {
@@ -495,8 +536,15 @@ function navigate(page, data = null) {
         window.openAddModal(data || '', `${state.filters.year}-${String(state.filters.month).padStart(2, '0')}-${String(state.filters.day).padStart(2, '0')}`);
         return;
     }
-    if (page === 'client-profile') {
-        state.selectedClientId = data;
+    if (page === 'expenses') {
+        fetchExpenses();
+        fetchCards();
+    }
+    if (page === 'cards') {
+        fetchCards();
+    }
+    if (page === 'card-profile') {
+        state.selectedCardId = data;
     }
     state.currentPage = page;
     state.clientSearch = ''; // Limpa a busca ao navegar
@@ -521,6 +569,8 @@ const Sidebar = () => `
             ${NavLink('records', 'fa-table', 'Agendamentos')}
             ${NavLink('clients', 'fa-sliders', 'Gestão')}
             ${NavLink('plans', 'fa-id-card', 'Planos')}
+            ${NavLink('expenses', 'fa-arrow-trend-down', 'Saídas')}
+            ${NavLink('cards', 'fa-credit-card', 'Cartões')}
             ${NavLink('setup', 'fa-gears', 'Configuração')}
         </nav>
         <div class="p-4 border-t border-white/5">
@@ -557,6 +607,7 @@ const MobileNav = () => `
         ${MobileNavLink('records', 'fa-table', 'Lista')}
         ${MobileNavLink('clients', 'fa-sliders', 'Gestão')}
         ${MobileNavLink('plans', 'fa-id-card', 'Planos')}
+        ${MobileNavLink('expenses', 'fa-arrow-trend-down', 'Saídas')}
         ${MobileNavLink('setup', 'fa-gears', 'Ajustes')}
     </nav>
 `;
@@ -605,7 +656,7 @@ const Header = () => {
     }).format(today);
 
     return `
-        <header class="h-16 md:h-16 border-b border-white/5 flex items-center justify-between px-3 md:px-8 bg-dark-950/80 backdrop-blur-xl sticky top-0 z-20">
+        <header class="h-14 md:h-14 border-b border-white/5 flex items-center justify-between px-3 md:px-8 bg-dark-950/80 backdrop-blur-xl sticky top-0 z-20">
             <div class="flex items-center space-x-1.5 md:space-x-4">
                 <!-- Filtro de Dia -->
                 <select onchange="window.updateFilter('day', this.value)" class="bg-dark-900 border border-white/10 text-[10px] md:text-xs font-bold rounded-lg px-2 md:px-3 py-1.5 outline-none focus:border-amber-500 w-20 md:w-auto">
@@ -793,7 +844,7 @@ const Dashboard = () => {
     setTimeout(() => window.renderCharts(), 0);
 
     return `
-        <div class="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div class="px-4 pt-6 sm:px-6 sm:pt-6 lg:px-8 lg:pt-6 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div class="flex justify-between items-end">
                 <div>
                     <!-- Título Principal Dashboard -->
@@ -801,6 +852,12 @@ const Dashboard = () => {
                     <!-- Subtítulo ou Descrição -->
                     <p class="text-slate-500 text-xs sm:text-sm mt-1">Gestão financeira e performance estratégica</p>
                 </div>
+                <!-- Botão SAÍDAS -->
+                <button onclick="window.navigate('expenses')" 
+                        class="bg-rose-500/10 text-rose-500 px-6 py-2.5 rounded-xl font-bold border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all flex items-center gap-2 shadow-lg shadow-rose-500/5 group">
+                    <i class="fas fa-arrow-trend-down group-hover:-translate-y-0.5 transition-transform"></i>
+                    SAÍDAS
+                </button>
             </div>
 
             <!-- KPIs -->
@@ -962,11 +1019,11 @@ const RecordsPage = () => {
     }
 
     return `
-        <div class="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+        <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 sm:space-y-8 animate-in fade-in duration-500">
              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-display font-bold">Histórico de Agendamentos</h2>
-                    <p class="text-slate-500 text-xs sm:text-sm mt-1">Sincronização via Google Sheets</p>
+                    <h2 class="text-2xl sm:text-3xl font-display font-bold">Histórico</h2>
+                    <p class="text-slate-500 text-xs sm:text-sm mt-1">Sincronização Ativa</p>
                 </div>
                 <div class="relative w-full sm:w-auto flex flex-col sm:flex-row gap-2 items-center">
                     <button onclick="navigate('manage')" 
@@ -1019,7 +1076,7 @@ const EditModal = () => {
     return `
         <div class="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
             <div class="glass-card w-[98%] sm:w-full max-w-lg max-h-[95vh] overflow-y-auto custom-scroll rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl relative animate-in zoom-in-95 duration-300">
-                <div class="sticky top-0 z-10 p-5 sm:p-8 border-b border-white/5 flex justify-between items-center bg-dark-900/95 backdrop-blur-md">
+                <div class="sticky top-0 z-10 p-4 sm:p-5 border-b border-white/5 flex justify-between items-center bg-dark-900/95 backdrop-blur-md">
                     <div class="flex items-center gap-3 sm:gap-4">
                         <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
                             <i class="fas ${isNew ? 'fa-calendar-plus' : 'fa-edit'}"></i>
@@ -1034,7 +1091,7 @@ const EditModal = () => {
                     </button>
                 </div>
                 
-                <form onsubmit="window.saveNewRecord(event)" class="p-5 sm:p-8 space-y-5">
+                <form onsubmit="window.saveNewRecord(event)" class="p-4 sm:p-5 space-y-5">
                     <div class="space-y-1">
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Cliente</label>
@@ -1531,7 +1588,7 @@ const ClientsPage = () => {
     const isClients = state.clientView === 'clients';
 
     return `
-        <div class="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+        <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 class="text-2xl sm:text-3xl font-display font-bold">Gestão Local</h2>
@@ -1969,11 +2026,11 @@ const PlansPage = () => {
     });
 
     return `
-        <div class="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+        <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div class="flex justify-between items-end">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-display font-bold">Gestão de Planos</h2>
-                    <p class="text-slate-500 text-xs sm:text-sm mt-1">Administre os clientes que possuem planos de fidelidade</p>
+                    <h2 class="text-2xl sm:text-3xl font-display font-bold">Planos</h2>
+                    <p class="text-slate-500 text-xs sm:text-sm mt-1">Gestão de Assinaturas</p>
                 </div>
                 <div class="hidden sm:flex items-center gap-4">
                     <button onclick="window.toggleAddPlanModal(true)" class="bg-amber-500 text-dark-950 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-lg shadow-amber-500/20">
@@ -2097,7 +2154,7 @@ const PlansPage = () => {
             <!-- Modal de Adicionar Novo Assinante -->
             ${state.isAddPlanModalOpen ? `
                 <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div class="bg-dark-900 border border-white/10 rounded-[2rem] w-full max-w-md p-8 shadow-2xl relative animate-in zoom-in-95 duration-200">
+                    <div class="bg-dark-900 border border-white/10 rounded-[2rem] w-full max-w-md p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
                         <button onclick="window.toggleAddPlanModal(false)" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
                             <i class="fas fa-times text-xl"></i>
                         </button>
@@ -2519,6 +2576,688 @@ const ClientProfilePage = () => {
 };
 
 /**
+ * PÁGINA: Perfil do Cartão (Visualização Detalhada)
+ */
+const CardProfilePage = () => {
+    const cardId = state.selectedCardId;
+    const card = state.cards.find(c => c.id === cardId);
+
+    if (!card) return `
+        <div class="px-4 pt-10 text-center">
+            <h2 class="text-2xl font-bold">Cartão não encontrado</h2>
+            <button onclick="navigate('cards')" class="mt-4 bg-amber-500 text-dark-950 px-6 py-2 rounded-xl">Voltar para Cartões</button>
+        </div>
+    `;
+
+    // Filtra gastos associados a este cartão (pelo nome na descrição)
+    const cardExpenses = state.expenses.filter(e => 
+        e.descricao && e.descricao.toUpperCase().includes(card.nome.toUpperCase())
+    );
+
+    const targetMonth = state.filters.month;
+    const targetYear = state.filters.year;
+    const monthPrefix = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
+    
+    const monthlyExpenses = cardExpenses.filter(e => e.vencimento.startsWith(monthPrefix));
+    const totalSpentMonth = monthlyExpenses.reduce((acc, e) => acc + (parseFloat(e.valor) || 0), 0);
+    const availableLimit = (parseFloat(card.limite) || 0) - totalSpentMonth;
+
+    window.saveCardEdit = async (field, value) => {
+        try {
+            if (field === 'limite') value = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+            if (field === 'fechamento' || field === 'vencimento') value = parseInt(value) || 1;
+
+            const updateData = { [field]: value };
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/cartoes?id=eq.${card.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+            if (res.ok) {
+                Object.assign(card, updateData);
+                fetchCards();
+                render();
+            }
+        } catch (err) { console.error(err); }
+    };
+
+    return `
+        <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <!-- Header do Cartão -->
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+                <div class="w-24 h-24 md:w-32 md:h-32 rounded-[2.5rem] bg-amber-500/10 flex items-center justify-center text-amber-500 text-3xl md:text-5xl font-black border-2 border-amber-500/20 shadow-2xl shadow-amber-500/5">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="flex-1 text-center md:text-left space-y-4">
+                    <div>
+                        <div class="flex flex-wrap justify-center md:justify-start items-center gap-3">
+                            <input type="text" 
+                                   value="${card.nome}" 
+                                   onblur="window.saveCardEdit('nome', this.value.toUpperCase())"
+                                   class="text-3xl md:text-4xl font-display font-black text-white bg-transparent border-b-2 border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-2 -mx-2 uppercase">
+                        </div>
+                        <div class="text-slate-500 font-bold uppercase tracking-widest text-xs mt-1 flex items-center justify-center md:justify-start gap-2">
+                            <i class="fas fa-university"></i>
+                            <input type="text" 
+                                   value="${card.banco || ''}" 
+                                   placeholder="Adicionar Banco"
+                                   onblur="window.saveCardEdit('banco', this.value.toUpperCase())"
+                                   class="bg-transparent border-b border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-1 uppercase">
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap justify-center md:justify-start gap-4 pt-2">
+                        <button onclick="navigate('cards')" class="px-6 py-2 bg-dark-900 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-all border border-white/5 uppercase tracking-widest">
+                            <i class="fas fa-arrow-left mr-2"></i> Voltar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard do Cartão -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="glass-card p-6 rounded-[2rem] border border-white/5 relative overflow-hidden group">
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Limite Total</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-black text-slate-500">R$</span>
+                        <input type="text" 
+                               value="${(parseFloat(card.limite) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}" 
+                               onblur="window.saveCardEdit('limite', this.value)"
+                               class="text-2xl font-black text-white bg-transparent border-none outline-none w-full">
+                    </div>
+                </div>
+                <div class="glass-card p-6 rounded-[2rem] border border-amber-500/10 relative overflow-hidden group">
+                    <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Limite Disponível (Est.)</p>
+                    <h4 class="text-2xl font-black ${availableLimit < 0 ? 'text-rose-500' : 'text-emerald-500'}">R$ ${availableLimit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</h4>
+                </div>
+                <div class="glass-card p-6 rounded-[2rem] border border-white/5">
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Fechamento / Vencimento</p>
+                    <div class="flex items-center gap-2">
+                        <input type="number" 
+                               value="${card.fechamento}" 
+                               onblur="window.saveCardEdit('fechamento', this.value)"
+                               class="text-2xl font-black text-white bg-transparent border-none outline-none w-12 text-center">
+                        <span class="text-slate-500 font-bold">/</span>
+                        <input type="number" 
+                               value="${card.vencimento}" 
+                               onblur="window.saveCardEdit('vencimento', this.value)"
+                               class="text-2xl font-black text-amber-500 bg-transparent border-none outline-none w-12 text-center">
+                    </div>
+                </div>
+                <div class="glass-card p-6 rounded-[2rem] border border-white/5">
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Gasto no Mês</p>
+                    <h4 class="text-2xl font-black text-rose-500">R$ ${totalSpentMonth.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</h4>
+                </div>
+            </div>
+
+            <!-- Listagem de Gastos Recentes -->
+            <div class="space-y-4">
+                <h3 class="text-lg font-bold text-slate-300 uppercase tracking-widest text-sm flex items-center gap-2 ml-2">
+                    <i class="fas fa-list-ul"></i> Gastos Recentes (${cardExpenses.length})
+                </h3>
+                
+                <div class="bg-dark-900/30 rounded-[2rem] border border-white/5">
+                    <div class="divide-y divide-white/5">
+                        ${cardExpenses.length === 0 ? `
+                            <div class="p-10 text-center text-slate-500 italic">Nenhum gasto vinculado a este cartão.</div>
+                        ` : cardExpenses.slice(0, 5).map(e => `
+                            <div class="flex items-center justify-between px-8 py-4 hover:bg-white/[0.02] transition-all">
+                                <div>
+                                    <p class="text-sm font-bold text-white uppercase">${e.descricao}</p>
+                                    <p class="text-[10px] text-slate-500 font-bold">${new Date(e.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-black ${e.paga ? 'text-emerald-500' : 'text-rose-500'}">R$ ${(parseFloat(e.valor) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                    <span class="text-[9px] font-black uppercase tracking-widest ${e.paga ? 'text-emerald-500/50' : 'text-rose-500/50'}">${e.paga ? 'PAGO' : 'PENDENTE'}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+const ExpensesPage = () => {
+    const targetMonth = state.filters.month;
+    const targetYear = state.filters.year;
+    const monthPrefix = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
+
+    // Filtra as despesas pelo mês selecionado no Header
+    const filteredExpenses = state.expenses.filter(e => e.vencimento.startsWith(monthPrefix));
+    
+    const totalPago = filteredExpenses.filter(e => e.paga).reduce((acc, e) => acc + (parseFloat(e.valor) || 0), 0);
+    const totalAPagar = filteredExpenses.filter(e => !e.paga).reduce((acc, e) => acc + (parseFloat(e.valor) || 0), 0);
+    const totalGeral = totalPago + totalAPagar;
+
+    window.toggleExpensePayment = async (id, currentStatus) => {
+        const expense = state.expenses.find(e => e.id === id);
+        if (!expense) return;
+
+        const newStatus = !currentStatus;
+        const today = new Date().toISOString().split('T')[0];
+
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/saidas?id=eq.${id}`, {
+                method: 'PATCH',
+                headers: { 
+                    'apikey': SUPABASE_KEY, 
+                    'Authorization': 'Bearer ' + SUPABASE_KEY, 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    paga: newStatus,
+                    data_pagamento: newStatus ? today : null
+                })
+            });
+            if (res.ok) fetchExpenses();
+        } catch (err) { console.error(err); }
+    };
+
+    window.deleteExpense = async (id) => {
+        if (!confirm('Excluir esta conta permanentemente?')) return;
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/saidas?id=eq.${id}`, {
+                method: 'DELETE',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+            });
+            if (res.ok) fetchExpenses();
+        } catch (err) { console.error(err); }
+    };
+
+    window.openExpenseModal = (expense = null) => {
+        state.editingExpense = expense || { vencimento: monthPrefix + '-01', descricao: '', valor: 0, paga: false };
+        state.isExpenseModalOpen = true;
+        render();
+    };
+
+    window.closeExpenseModal = () => {
+        state.isExpenseModalOpen = false;
+        state.editingExpense = null;
+        render();
+    };
+
+    window.saveExpense = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = {
+            vencimento: formData.get('vencimento'),
+            descricao: formData.get('descricao').toUpperCase(),
+            valor: parseFloat(formData.get('valor')) || 0,
+            paga: formData.get('paga') === 'on'
+        };
+        if (data.paga) data.data_pagamento = new Date().toISOString().split('T')[0];
+
+        const id = state.editingExpense.id;
+        const method = id ? 'PATCH' : 'POST';
+        const url = id ? `${SUPABASE_URL}/rest/v1/saidas?id=eq.${id}` : `${SUPABASE_URL}/rest/v1/saidas`;
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 
+                    'apikey': SUPABASE_KEY, 
+                    'Authorization': 'Bearer ' + SUPABASE_KEY, 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                window.closeExpenseModal();
+                fetchExpenses();
+            }
+        } catch (err) { console.error(err); }
+    };
+
+    window.saveExpenseInline = async (el) => {
+        const id = el.dataset.id;
+        const field = el.dataset.field;
+        let value = el.innerText.trim();
+
+        if (field === 'valor') {
+            value = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+        } else if (field === 'descricao') {
+            value = value.toUpperCase();
+        } else if (field === 'vencimento' || field === 'data_pagamento') {
+            // Conversão de DD/MM/YYYY para YYYY-MM-DD
+            if (value === '---') {
+                value = null;
+            } else {
+                const parts = value.split('/');
+                if (parts.length === 3) {
+                    value = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                } else {
+                    // Se não estiver no formato correto, ignora ou tenta manter o anterior
+                    fetchExpenses();
+                    return;
+                }
+            }
+        }
+
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/saidas?id=eq.${id}`, {
+                method: 'PATCH',
+                headers: { 
+                    'apikey': SUPABASE_KEY, 
+                    'Authorization': 'Bearer ' + SUPABASE_KEY, 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ [field]: value })
+            });
+            if (res.ok) {
+                fetchExpenses();
+            }
+        } catch (err) { console.error('Erro no salvamento inline de saída:', err); }
+    };
+
+    const monthsLong = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+    return `
+        <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 animate-in fade-in duration-500 pb-32">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 text-sm">
+                <div>
+                    <h2 class="text-3xl font-display font-black">Saídas <span class="text-rose-500">${monthsLong[targetMonth-1]}</span></h2>
+                    <p class="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1">Fluxo de Caixa</p>
+                </div>
+                
+                <div class="flex flex-wrap gap-4 w-full md:w-auto">
+                    <div class="bg-rose-500/10 border border-rose-500/20 px-6 py-3 rounded-2xl flex flex-col justify-center">
+                        <span class="text-[9px] font-black uppercase text-rose-500/60 tracking-tighter">Total Pago</span>
+                        <span class="text-lg font-black text-rose-500">R$ ${totalPago.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="bg-amber-500/10 border border-amber-500/20 px-6 py-3 rounded-2xl flex flex-col justify-center">
+                        <span class="text-[9px] font-black uppercase text-amber-500/60 tracking-tighter">Total a Pagar</span>
+                        <span class="text-lg font-black text-amber-500">R$ ${totalAPagar.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <button onclick="window.openExpenseModal()" class="bg-rose-500 text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 transition-all shadow-xl shadow-rose-500/20 border border-rose-400/50 flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nova Conta
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabela de Saídas Responsiva -->
+            <div class="space-y-4 md:space-y-0 md:bg-dark-900/30 md:rounded-[2rem] border border-white/5">
+                <!-- Header (Apenas Desktop) -->
+                <div class="hidden md:flex bg-white/[0.02] border-b border-white/5 px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">
+                    <div class="w-32 text-left">Vencimento</div>
+                    <div class="flex-1 text-left px-4">Descrição</div>
+                    <div class="w-32 text-right px-4">Valor</div>
+                    <div class="w-24 text-center px-4">Paga</div>
+                    <div class="w-32 text-center px-4">Status</div>
+                    <div class="w-32 text-center px-4">Pagamento</div>
+                    <div class="w-24 text-right">Ações</div>
+                </div>
+
+                <div class="divide-y divide-white/5">
+                    ${filteredExpenses.length === 0 ? `
+                        <div class="px-8 py-20 text-center text-slate-500 italic">Nenhuma conta registrada para este mês.</div>
+                    ` : filteredExpenses.map(e => `
+                        <div class="flex flex-col md:flex-row items-start md:items-center px-6 md:px-8 py-6 md:py-4 hover:bg-white/[0.02] transition-colors group gap-4 md:gap-0">
+                            <!-- Vencimento (Editável) -->
+                            <div class="w-full md:w-32 flex items-center justify-between md:justify-start gap-3">
+                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Vencimento</span>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full ${e.paga ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}"></div>
+                                    <div contenteditable="true" 
+                                         data-id="${e.id}" 
+                                         data-field="vencimento"
+                                         onblur="window.saveExpenseInline(this)"
+                                         onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                         class="font-bold text-sm text-slate-300 px-2 py-1 rounded-lg outline-none focus:bg-white/5 transition-all">
+                                        ${new Date(e.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Descrição (Editável com Sugestão) -->
+                            <div class="flex-1 w-full md:px-4 relative group">
+                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase block mb-1">Descrição</span>
+                                <div contenteditable="true" 
+                                     data-id="${e.id}" 
+                                     data-field="descricao"
+                                     onblur="setTimeout(() => document.getElementById('expenseAutocomplete_${e.id}')?.classList.add('hidden'), 200); window.saveExpenseInline(this)"
+                                     oninput="window.showExpenseAutocomplete(this)"
+                                     onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                     class="font-bold text-sm text-white uppercase tracking-tight outline-none focus:bg-white/5 px-2 py-1 rounded-lg transition-all w-full">
+                                    ${e.descricao}
+                                </div>
+                                <div id="expenseAutocomplete_${e.id}" class="hidden absolute z-[110] left-0 right-0 mt-2 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scroll p-2"></div>
+                            </div>
+
+                            <!-- Valor (Editável) -->
+                            <div class="w-full md:w-32 md:text-right md:px-4">
+                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase block mb-1">Valor</span>
+                                <div contenteditable="true" 
+                                     data-id="${e.id}" 
+                                     data-field="valor"
+                                     onblur="window.saveExpenseInline(this)"
+                                     onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                     class="font-black text-sm text-white outline-none focus:bg-white/5 px-2 py-1 rounded-lg transition-all inline-block md:block">
+                                    ${(parseFloat(e.valor) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                </div>
+                            </div>
+
+                            <!-- Checkbox Paga -->
+                            <div class="w-full md:w-24 flex items-center justify-between md:justify-center md:px-4">
+                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Paga</span>
+                                <button onclick="window.toggleExpensePayment(${e.id}, ${e.paga})" 
+                                        class="w-10 h-10 rounded-xl transition-all flex items-center justify-center border ${e.paga ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' : 'bg-dark-900 border-white/10 text-slate-600 hover:border-amber-500/50 hover:text-amber-500'}">
+                                    <i class="fas ${e.paga ? 'fa-check' : 'fa-times'}"></i>
+                                </button>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="w-full md:w-32 flex items-center justify-between md:justify-center md:px-4">
+                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Status</span>
+                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${e.paga ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}">
+                                    ${e.paga ? 'Paga' : 'A Vencer'}
+                                </span>
+                            </div>
+
+                            <!-- Data Pagamento (Editável) -->
+                            <div class="w-full md:w-32 flex items-center justify-between md:justify-center md:px-4">
+                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Pagamento</span>
+                                <div contenteditable="true" 
+                                     data-id="${e.id}" 
+                                     data-field="data_pagamento"
+                                     onblur="window.saveExpenseInline(this)"
+                                     onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                     class="text-slate-500 text-xs font-bold px-2 py-1 rounded-lg outline-none focus:bg-white/5 transition-all text-center">
+                                    ${e.data_pagamento ? new Date(e.data_pagamento + 'T12:00:00').toLocaleDateString('pt-BR') : '---'}
+                                </div>
+                            </div>
+
+                            <!-- Ações -->
+                            <div class="w-full md:w-24 flex items-center justify-end gap-2">
+                                <button onclick="window.deleteExpense(${e.id})" class="w-10 h-10 md:w-8 md:h-8 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border border-rose-500/20">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                    
+                    ${filteredExpenses.length > 0 ? `
+                    <div class="bg-white/[0.01] px-8 py-6 flex justify-between items-center border-t border-white/5">
+                        <span class="text-xs font-black uppercase tracking-widest text-slate-500">Total do Período</span>
+                        <span class="text-xl font-black text-white">R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+
+            <!-- Modal de Saída -->
+            ${state.isExpenseModalOpen ? `
+                <div class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div class="glass-card w-full max-w-md rounded-[2.5rem] border border-white/10 shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
+                        <div class="py-4 px-6 border-b border-white/5 flex justify-between items-center bg-dark-900/50">
+                            <h3 class="text-xl font-bold">${state.editingExpense?.id ? 'Editar Conta' : 'Nova Conta'}</h3>
+                            <button onclick="window.closeExpenseModal()" class="w-10 h-10 rounded-xl hover:bg-white/5 flex items-center justify-center text-slate-500">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <form onsubmit="window.saveExpense(event)" class="p-5 space-y-5">
+                            <div class="space-y-2 relative">
+                                <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Descrição</label>
+                                <input type="text" name="descricao" required id="expenseModalDesc"
+                                       value="${state.editingExpense?.descricao || ''}" 
+                                       placeholder="EX: ALUGUEL, LUZ, CARTÃO..."
+                                       autocomplete="off"
+                                       oninput="window.showExpenseAutocomplete(this, true)"
+                                       onblur="setTimeout(() => document.getElementById('expenseAutocomplete_modal')?.classList.add('hidden'), 200)"
+                                       class="w-full bg-dark-950 border border-white/5 p-4 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold uppercase text-sm">
+                                <div id="expenseAutocomplete_modal" class="hidden absolute z-[120] left-0 right-0 mt-2 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scroll p-2"></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Vencimento</label>
+                                    <input type="date" name="vencimento" required value="${state.editingExpense?.vencimento || ''}"
+                                           class="w-full bg-dark-950 border border-white/5 p-4 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-sm">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Valor (R$)</label>
+                                    <input type="number" step="0.01" name="valor" required value="${state.editingExpense?.valor || ''}"
+                                           class="w-full bg-dark-950 border border-white/5 p-4 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-sm">
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3 p-4 bg-dark-950 rounded-xl border border-white/5">
+                                <input type="checkbox" name="paga" id="expensePaga" ${state.editingExpense?.paga ? 'checked' : ''} class="w-5 h-5 rounded border-white/10 bg-dark-900 text-emerald-500 focus:ring-0">
+                                <label for="expensePaga" class="text-sm font-bold text-slate-300">Marcar como JÁ PAGA</label>
+                            </div>
+                            <button type="submit" class="w-full bg-rose-500 text-white font-black py-4 rounded-xl border border-transparent shadow-lg shadow-rose-500/20 active:scale-95 uppercase tracking-widest text-xs transition-all mt-4">
+                                ${state.editingExpense?.id ? 'Salvar Alterações' : 'Salvar Conta'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+};
+
+/**
+ * PÁGINA: Gestão de Cartões
+ */
+const CardsPage = () => {
+    window.openCardModal = (card = null) => {
+        state.editingCard = card || { nome: '', banco: '', limite: 0, fechamento: 1, vencimento: 5 };
+        state.isCardModalOpen = true;
+        render();
+    };
+
+    window.closeCardModal = () => {
+        state.isCardModalOpen = false;
+        state.editingCard = null;
+        render();
+    };
+
+    window.saveCard = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = {
+            nome: formData.get('nome').toUpperCase(),
+            banco: formData.get('banco').toUpperCase(),
+            limite: parseFloat(formData.get('limite')) || 0,
+            fechamento: parseInt(formData.get('fechamento')),
+            vencimento: parseInt(formData.get('vencimento'))
+        };
+
+        const id = state.editingCard.id;
+        const method = id ? 'PATCH' : 'POST';
+        const url = id ? `${SUPABASE_URL}/rest/v1/cartoes?id=eq.${id}` : `${SUPABASE_URL}/rest/v1/cartoes`;
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 
+                    'apikey': SUPABASE_KEY, 
+                    'Authorization': 'Bearer ' + SUPABASE_KEY, 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                window.closeCardModal();
+                fetchCards();
+            }
+        } catch (err) { console.error(err); }
+    };
+
+    window.deleteCard = async (id) => {
+        if (!confirm('Excluir este cartão?')) return;
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/cartoes?id=eq.${id}`, {
+                method: 'DELETE',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+            });
+            if (res.ok) fetchCards();
+        } catch (err) { console.error(err); }
+    };
+
+    window.saveCardInline = async (el) => {
+        const id = el.dataset.id;
+        const field = el.dataset.field;
+        let value = el.innerText.trim();
+
+        if (field === 'limite') {
+            value = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+        } else if (field === 'nome' || field === 'banco') {
+            value = value.toUpperCase();
+        } else if (field === 'fechamento' || field === 'vencimento') {
+            value = parseInt(value) || 1;
+        }
+
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/cartoes?id=eq.${id}`, {
+                method: 'PATCH',
+                headers: { 
+                    'apikey': SUPABASE_KEY, 
+                    'Authorization': 'Bearer ' + SUPABASE_KEY, 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ [field]: value })
+            });
+            if (res.ok) {
+                fetchCards();
+            }
+        } catch (err) { console.error('Erro no salvamento inline de cartão:', err); }
+    };
+
+    return `
+        <div class="px-4 pt-6 sm:px-6 sm:pt-6 lg:px-8 lg:pt-6 space-y-6 animate-in fade-in duration-500 pb-32">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 text-sm">
+                <div>
+                    <h2 class="text-3xl font-display font-black">Meus Cartões</h2>
+                    <p class="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1">Limites e Cartões Ativos</p>
+                </div>
+                <button onclick="window.openCardModal()" class="bg-amber-500 text-dark-950 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-amber-400 transition-all shadow-xl shadow-amber-500/20 border border-amber-400 flex items-center gap-2">
+                    <i class="fas fa-plus"></i> Cadastrar Cartão
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                ${state.cards.length === 0 ? `
+                    <div class="col-span-full py-12 text-center text-slate-500 italic font-bold">Nenhum cartão cadastrado. Clique no botão acima para adicionar.</div>
+                ` : state.cards.map(c => `
+                    <div onclick="navigate('card-profile', ${c.id})" class="glass-card p-6 rounded-[2rem] border border-white/10 relative group overflow-hidden flex flex-col justify-between cursor-pointer hover:border-amber-500/50 transition-all" style="border-image: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%) 1;">
+                        <div class="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl group-hover:bg-amber-500/10 transition-all"></div>
+                        
+                        <div class="flex justify-between items-start relative z-10">
+                            <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-amber-500">
+                                <i class="fas fa-credit-card text-xl"></i>
+                            </div>
+                            <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                                <button onclick="event.stopPropagation(); window.openCardModal(${JSON.stringify(c).replace(/"/g, '&quot;')})" class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-dark-950 transition-all flex items-center justify-center border border-amber-500/20">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); window.deleteCard(${c.id})" class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center border border-rose-500/20">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="relative z-10 space-y-1">
+                            <h3 contenteditable="true" 
+                                onclick="event.stopPropagation()"
+                                data-id="${c.id}" 
+                                data-field="banco"
+                                onblur="window.saveCardInline(this)"
+                                onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] outline-none px-1 rounded hover:bg-white/5">${c.banco || 'NOME DO BANCO'}</h3>
+                            <h2 contenteditable="true" 
+                                onclick="event.stopPropagation()"
+                                data-id="${c.id}" 
+                                data-field="nome"
+                                onblur="window.saveCardInline(this)"
+                                onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                class="text-2xl font-black text-white uppercase outline-none px-1 rounded hover:bg-white/5 truncate">${c.nome}</h2>
+                        </div>
+
+                        <div class="flex justify-between items-end relative z-10 border-t border-white/5 pt-4">
+                            <div onclick="event.stopPropagation()">
+                                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Limite Total</p>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-sm font-black text-white/50">R$</span>
+                                    <span contenteditable="true" 
+                                          data-id="${c.id}" 
+                                          data-field="limite"
+                                          onblur="window.saveCardInline(this)"
+                                          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                          class="text-xl font-black text-white outline-none px-1 rounded hover:bg-white/5">
+                                        ${(parseFloat(c.limite) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-right" onclick="event.stopPropagation()">
+                                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Vence dia</p>
+                                <span contenteditable="true" 
+                                      data-id="${c.id}" 
+                                      data-field="vencimento"
+                                      onblur="window.saveCardInline(this)"
+                                      onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                      class="text-2xl font-black text-amber-500 outline-none px-1 rounded hover:bg-white/5">
+                                    ${String(c.vencimento).padStart(2, '0')}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <!-- Modal de Cartão -->
+            ${state.isCardModalOpen ? `
+                <div class="fixed inset-0 z-[110] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div class="glass-card w-[98%] sm:w-full max-w-md rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl animate-in zoom-in-95 duration-300 overflow-y-auto max-h-[95vh] custom-scroll">
+                        <div class="py-4 px-6 border-b border-white/5 flex justify-between items-center bg-dark-900/50 sticky top-0 z-10 backdrop-blur-md">
+                            <h3 class="text-xl font-bold">${state.editingCard?.id ? 'Editar Cartão' : 'Novo Cartão'}</h3>
+                            <button onclick="window.closeCardModal()" class="w-10 h-10 rounded-xl hover:bg-white/5 flex items-center justify-center text-slate-500">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <form onsubmit="window.saveCard(event)" class="p-5 space-y-5">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Nome do Cartão (Apelido)</label>
+                                <input type="text" name="nome" required value="${state.editingCard?.nome || ''}" placeholder="EX: NUBANK PF, INTER..."
+                                       class="w-full bg-dark-950 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold uppercase text-sm">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Banco / Emissor</label>
+                                <input type="text" name="banco" value="${state.editingCard?.banco || ''}" placeholder="EX: ITAÚ, BRADESCO..."
+                                       class="w-full bg-dark-950 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold uppercase text-sm">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Limite (R$)</label>
+                                <input type="number" step="0.01" name="limite" required value="${state.editingCard?.limite || ''}"
+                                       class="w-full bg-dark-950 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-sm">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Dia Fechamento</label>
+                                    <input type="number" name="fechamento" min="1" max="31" required value="${state.editingCard?.fechamento || 1}"
+                                           class="w-full bg-dark-950 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-sm">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Dia Vencimento</label>
+                                    <input type="number" name="vencimento" min="1" max="31" required value="${state.editingCard?.vencimento || 5}"
+                                           class="w-full bg-dark-950 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-sm">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl border border-transparent shadow-lg shadow-amber-500/20 active:scale-95 uppercase tracking-widest text-xs transition-all mt-2">
+                            ${state.editingCard?.id ? 'Salvar Alterações' : 'Cadastrar Cartão'}
+                        </button>
+                    </form>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+};
+
+/**
  * PÁGINA: Configurações e Tema
  */
 const SetupPage = () => {
@@ -2636,7 +3375,10 @@ const pages = {
     clients: ClientsPage,
     plans: PlansPage,
     'client-profile': ClientProfilePage,
-    setup: SetupPage
+    setup: SetupPage,
+    expenses: ExpensesPage,
+    cards: CardsPage,
+    'card-profile': CardProfilePage
 };
 
 // ==========================================
@@ -3151,6 +3893,45 @@ window.handleEnterSelection = (e, dropdownId) => {
                 e.target.dataset.beganTyping = "true";
                 // Se for backspace, apenas limpamos e paramos por aqui para não apagar o "nada" que sobrou
                 if (isBackspace) e.preventDefault();
+            }
+        }
+    };
+
+    window.showExpenseAutocomplete = (el, isModal = false) => {
+        const id = isModal ? 'modal' : el.dataset.id;
+        const val = (isModal ? el.value : el.innerText).trim().toLowerCase();
+        const dropdown = document.getElementById(`expenseAutocomplete_${id}`);
+        if (!dropdown) return;
+
+        if (val.length < 1) { dropdown.classList.add('hidden'); return; }
+
+        const matches = state.cards.filter(c => c.nome.toLowerCase().includes(val)).slice(0, 5);
+
+        if (matches.length === 0) { dropdown.classList.add('hidden'); return; }
+
+        dropdown.innerHTML = matches.map(card => `
+            <div class="px-3 py-2 hover:bg-amber-500 hover:text-dark-950 cursor-pointer rounded-lg transition-colors font-bold uppercase truncate text-[11px]"
+                 onmousedown="window.selectExpenseCard('${id}', '${card.nome}', ${isModal})">
+                <i class="fas fa-credit-card mr-2 text-[10px] text-amber-500/50"></i>
+                ${card.nome}
+            </div>
+        `).join('');
+        dropdown.classList.remove('hidden');
+    };
+
+    window.selectExpenseCard = (id, value, isModal = false) => {
+        if (isModal) {
+            const el = document.getElementById('expenseModalDesc');
+            if (el) el.value = value;
+            const dropdown = document.getElementById(`expenseAutocomplete_${id}`);
+            if (dropdown) dropdown.classList.add('hidden');
+        } else {
+            const el = document.querySelector(`[data-field="descricao"][data-id="${id}"]`);
+            if (el) {
+                el.innerText = value;
+                const dropdown = document.getElementById(`expenseAutocomplete_${id}`);
+                if (dropdown) dropdown.classList.add('hidden');
+                window.saveExpenseInline(el);
             }
         }
     };
