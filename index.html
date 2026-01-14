@@ -108,6 +108,20 @@
         cursor: text;
         background: rgba(255, 255, 255, 0.05);
       }
+      /* Esconder ícone nativo do input date */
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+      }
+      input[type="date"] {
+        position: relative;
+      }
     </style>
   </head>
   <body class="flex h-screen w-full overflow-hidden m-0">

@@ -7,6 +7,7 @@ Este documento registra as diretrizes de design, funcionalidades e comportamento
 ### 1. Gestão de Saídas (Financeiro)
 
 - Redesenho da página de Saídas para um modelo gerencial focado em vencimentos e pagamentos.
+- **Dashboard de Filtros:** Implementada barra de busca por descrição/cartão e filtro por status (Todos, Pagos, Pendentes) para localização rápida de lançamentos.
 - **Nova Coluna "Cartão/Outro":** Adicionada antes da descrição, permitindo identificar a origem do pagamento com autocomplete inteligente dos cartões cadastrados.
 - **Descrição Compacta:** A descrição agora é truncada por padrão para economizar espaço e expande automaticamente ao passar o mouse (hover) sobre a célula.
 - **Status via Menu (Select):** O campo de status agora é um menu de seleção (Pendente/Pago), removendo a necessidade de uma coluna separada de checkmark.
@@ -20,6 +21,7 @@ Este documento registra as diretrizes de design, funcionalidades e comportamento
 - Todas as células editáveis devem permitir edição rápida clicando diretamente nelas.
 - **Regra de Foco:** Ao clicar em uma célula ou focar nela, o texto deve ser selecionado automaticamente.
 - **Substituição Instantânea:** Se o usuário digitar qualquer caractere ou pressionar Backspace imediatamente após o foco, o valor antigo deve sumir completamente, deixando apenas o novo caractere ou o campo vazio.
+- **Autocomplete com Enter:** Se houver sugestões de autocomplete visíveis (clientes, procedimentos ou cartões), pressionar `Enter` deve selecionar automaticamente a primeira opção da lista.
 
 ### 3. Responsividade e UI
 

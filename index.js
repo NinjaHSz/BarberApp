@@ -61,7 +61,11 @@ const state = {
     isExpenseModalOpen: false,
     editingCard: null,
     isCardModalOpen: false,
-    selectedCardId: null
+    selectedCardId: null,
+    expenseSearchTerm: '',
+    expenseStatusFilter: 'TODOS',
+    expenseSort: 'vencimento_asc',
+    expensePeriodFilter: 'mensal'
 };
 
 // ==========================================
@@ -2621,17 +2625,37 @@ const CardProfilePage = () => {
         </div>
     `;
 
-    // Filtra gastos associados a este cartão (pelo nome na descrição)
-    const cardExpenses = state.expenses.filter(e => 
-        e.descricao && e.descricao.toUpperCase().includes(card.nome.toUpperCase())
+    // Filtra gastos associados a este cartão (Campo cartão ou na descrição como fallback)
+    const allCardExpenses = state.expenses.filter(e => 
+        e.cartao === card.nome || (e.descricao && e.descricao.toUpperCase().includes(card.nome.toUpperCase()))
     );
 
+    const periodFilter = state.expensePeriodFilter || 'mensal';
     const targetMonth = state.filters.month;
     const targetYear = state.filters.year;
     const monthPrefix = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
-    
-    const monthlyExpenses = cardExpenses.filter(e => e.vencimento.startsWith(monthPrefix));
-    const totalSpentMonth = monthlyExpenses.reduce((acc, e) => acc + (parseFloat(e.valor) || 0), 0);
+    const selectedDate = new Date(state.filters.year, state.filters.month - 1, state.filters.day);
+
+    let filteredCardExpenses = allCardExpenses;
+
+    if (periodFilter === 'diario') {
+        const dateStr = selectedDate.toISOString().split('T')[0];
+        filteredCardExpenses = allCardExpenses.filter(e => e.vencimento === dateStr);
+    } else if (periodFilter === 'semanal') {
+        const startOfWeek = new Date(selectedDate);
+        startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        filteredCardExpenses = allCardExpenses.filter(e => {
+            if (!e.vencimento) return false;
+            const ev = new Date(e.vencimento + 'T12:00:00'); // T12 para evitar problemas de fuso
+            return ev >= startOfWeek && ev <= endOfWeek;
+        });
+    } else if (periodFilter === 'mensal') {
+        filteredCardExpenses = allCardExpenses.filter(e => e.vencimento.startsWith(monthPrefix));
+    }
+
+    const totalSpentPeriod = filteredCardExpenses.reduce((acc, e) => acc + (parseFloat(e.valor) || 0), 0);
 
     window.saveCardEdit = async (field, value) => {
         const originalValue = card[field]; // Store original value for rollback
@@ -2673,19 +2697,19 @@ const CardProfilePage = () => {
     return `
         <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <!-- Header do Cartão -->
-            <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
-                <div class="w-24 h-24 md:w-32 md:h-32 rounded-[2.5rem] bg-amber-500/10 flex items-center justify-center text-amber-500 text-3xl md:text-5xl font-black border-2 border-amber-500/20 shadow-2xl shadow-amber-500/5">
-                    <i class="fas fa-credit-card"></i>
-                </div>
-                <div class="flex-1 text-center md:text-left space-y-4">
-                    <div>
-                        <div class="flex flex-wrap justify-center md:justify-start items-center gap-3">
+            <div class="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+                <div class="flex flex-col md:flex-row items-center md:items-start gap-6 w-full">
+                    <div class="w-24 h-24 md:w-32 md:h-32 rounded-[2.5rem] bg-amber-500/10 flex items-center justify-center text-amber-500 text-3xl md:text-5xl font-black border-2 border-amber-500/20 shadow-2xl shadow-amber-500/5 flex-shrink-0">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <div class="flex-1 text-center md:text-left">
+                        <div class="flex flex-wrap justify-center md:justify-start items-center gap-2">
                             <input type="text" 
                                    value="${card.nome}" 
                                    onblur="window.saveCardEdit('nome', this.value.toUpperCase())"
-                                   class="text-3xl md:text-4xl font-display font-black text-white bg-transparent border-b-2 border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-2 -mx-2 uppercase">
+                                   class="text-2xl md:text-4xl font-display font-black text-white bg-transparent border-b-2 border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-1 uppercase w-full md:w-auto">
                         </div>
-                        <div class="text-slate-500 font-bold uppercase tracking-widest text-xs mt-1 flex items-center justify-center md:justify-start gap-2">
+                        <div class="text-slate-500 font-bold uppercase tracking-widest text-[10px] md:text-xs mt-1 flex items-center justify-center md:justify-start gap-2">
                             <i class="fas fa-university"></i>
                             <input type="text" 
                                    value="${card.banco || ''}" 
@@ -2694,13 +2718,11 @@ const CardProfilePage = () => {
                                    class="bg-transparent border-b border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-1 uppercase">
                         </div>
                     </div>
-                    
-                    <div class="flex flex-wrap justify-center md:justify-start gap-4 pt-2">
-                        <button onclick="navigate('cards')" class="px-6 py-2 bg-dark-900 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-all border border-white/5 uppercase tracking-widest">
-                            <i class="fas fa-arrow-left mr-2"></i> Voltar
-                        </button>
-                    </div>
                 </div>
+                
+                <button onclick="navigate('cards')" class="w-full md:w-auto px-6 py-3 bg-dark-900 text-slate-400 hover:text-white rounded-2xl text-[10px] font-black transition-all border border-white/5 uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -2720,31 +2742,44 @@ const CardProfilePage = () => {
                            style="color-scheme: dark"
                            class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold text-amber-500">
                 </div>
-                <div class="glass-card p-6 rounded-[2rem] border border-white/5">
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Gasto no Mês</p>
-                    <h4 class="text-2xl font-black text-rose-500">R$ ${totalSpentMonth.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</h4>
+                <div class="glass-card p-6 rounded-[2rem] border border-white/5 flex flex-col justify-between min-h-[120px]">
+                    <div class="flex flex-col sm:flex-row justify-between items-start gap-3">
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-tight">
+                            Gasto no ${periodFilter === 'diario' ? 'Dia' : periodFilter === 'semanal' ? 'Período' : periodFilter === 'mensal' ? 'Mês' : 'Total'}
+                        </p>
+                        <div class="flex bg-dark-900 border border-white/5 rounded-xl p-0.5 shadow-inner self-end sm:self-auto overflow-x-auto max-w-full">
+                            ${['diario', 'semanal', 'mensal', 'total'].map(p => `
+                                <button onclick="window.setExpenseFilter('expensePeriodFilter', '${p}')" 
+                                        class="whitespace-nowrap px-2 md:px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all flex-shrink-0
+                                        ${state.expensePeriodFilter === p ? 'bg-amber-500 text-dark-950 shadow-lg shadow-amber-500/20' : 'text-slate-500 hover:text-white'}">
+                                    ${p === 'diario' ? 'Dia' : p === 'semanal' ? 'Semana' : p === 'mensal' ? 'Mês' : 'Total'}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <h4 class="text-2xl md:text-3xl font-black text-rose-500 mt-2">R$ ${totalSpentPeriod.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</h4>
                 </div>
             </div>
 
             <!-- Listagem de Gastos Recentes -->
             <div class="space-y-4">
                 <h3 class="text-lg font-bold text-slate-300 uppercase tracking-widest text-sm flex items-center gap-2 ml-2">
-                    <i class="fas fa-list-ul"></i> Gastos Recentes (${cardExpenses.length})
+                    <i class="fas fa-list-ul"></i> Gastos do Período (${filteredCardExpenses.length})
                 </h3>
                 
                 <div class="bg-dark-900/30 rounded-[2rem] border border-white/5">
                     <div class="divide-y divide-white/5">
-                        ${cardExpenses.length === 0 ? `
-                            <div class="p-10 text-center text-slate-500 italic">Nenhum gasto vinculado a este cartão.</div>
-                        ` : cardExpenses.slice(0, 5).map(e => `
-                            <div class="flex items-center justify-between px-8 py-4 hover:bg-white/[0.02] transition-all">
-                                <div>
-                                    <p class="text-sm font-bold text-white uppercase">${e.descricao}</p>
-                                    <p class="text-[10px] text-slate-500 font-bold">${new Date(e.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                        ${filteredCardExpenses.length === 0 ? `
+                            <div class="p-10 text-center text-slate-500 italic">Nenhum gasto encontrado para este período.</div>
+                        ` : filteredCardExpenses.slice(0, 10).map(e => `
+                            <div class="flex items-center justify-between px-4 md:px-8 py-4 hover:bg-white/[0.02] transition-all gap-4">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs md:text-sm font-bold text-white uppercase truncate">${e.descricao}</p>
+                                    <p class="text-[9px] md:text-[10px] text-slate-500 font-bold">${new Date(e.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-sm font-black ${e.paga ? 'text-emerald-500' : 'text-rose-500'}">R$ ${(parseFloat(e.valor) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                    <span class="text-[9px] font-black uppercase tracking-widest ${e.paga ? 'text-emerald-500/50' : 'text-rose-500/50'}">${e.paga ? 'PAGO' : 'PENDENTE'}</span>
+                                <div class="text-right flex-shrink-0">
+                                    <p class="text-xs md:text-sm font-black ${e.paga ? 'text-emerald-500' : 'text-rose-500'}">R$ ${(parseFloat(e.valor) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                                    <span class="text-[8px] md:text-[9px] font-black uppercase tracking-widest ${e.paga ? 'text-emerald-500/50' : 'text-rose-500/50'}">${e.paga ? 'PAGO' : 'PENDENTE'}</span>
                                 </div>
                             </div>
                         `).join('')}
@@ -2760,8 +2795,55 @@ const ExpensesPage = () => {
     const targetYear = state.filters.year;
     const monthPrefix = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
 
-    // Filtra as despesas pelo mês selecionado no Header
-    const filteredExpenses = state.expenses.filter(e => e.vencimento.startsWith(monthPrefix));
+    const searchTerm = (state.expenseSearchTerm || '').toLowerCase();
+    const statusFilter = state.expenseStatusFilter || 'TODOS';
+    const periodFilter = state.expensePeriodFilter || 'mensal';
+
+    // Base de filtragem por período
+    let filteredExpenses = state.expenses;
+    const selectedDate = new Date(state.filters.year, state.filters.month - 1, state.filters.day);
+
+    if (periodFilter === 'diario') {
+        const dateStr = selectedDate.toISOString().split('T')[0];
+        filteredExpenses = filteredExpenses.filter(e => e.vencimento === dateStr);
+    } else if (periodFilter === 'semanal') {
+        const startOfWeek = new Date(selectedDate);
+        startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        
+        filteredExpenses = filteredExpenses.filter(e => {
+            const ev = new Date(e.vencimento + 'T00:00:00');
+            return ev >= startOfWeek && ev <= endOfWeek;
+        });
+    } else if (periodFilter === 'mensal') {
+        filteredExpenses = filteredExpenses.filter(e => e.vencimento.startsWith(monthPrefix));
+    }
+    // No caso de 'total', não aplica filtro de data
+
+    // Filtros de busca e status sobre o período selecionado
+    if (searchTerm) {
+        filteredExpenses = filteredExpenses.filter(e => 
+            e.descricao.toLowerCase().includes(searchTerm) || 
+            (e.cartao && e.cartao.toLowerCase().includes(searchTerm))
+        );
+    }
+
+    if (statusFilter !== 'TODOS') {
+        const isPaid = statusFilter === 'PAGO';
+        filteredExpenses = filteredExpenses.filter(e => e.paga === isPaid);
+    }
+
+    // Ordenação
+    const sort = state.expenseSort || 'vencimento_asc';
+    filteredExpenses.sort((a, b) => {
+        if (sort === 'vencimento_asc') return new Date(a.vencimento) - new Date(b.vencimento);
+        if (sort === 'vencimento_desc') return new Date(b.vencimento) - new Date(a.vencimento);
+        if (sort === 'valor_asc') return (parseFloat(a.valor) || 0) - (parseFloat(b.valor) || 0);
+        if (sort === 'valor_desc') return (parseFloat(b.valor) || 0) - (parseFloat(a.valor) || 0);
+        if (sort === 'descricao_asc') return (a.descricao || '').localeCompare(b.descricao || '');
+        return 0;
+    });
     
     const totalPago = filteredExpenses.filter(e => e.paga).reduce((acc, e) => acc + (parseFloat(e.valor) || 0), 0);
     const totalAPagar = filteredExpenses.filter(e => !e.paga).reduce((acc, e) => acc + (parseFloat(e.valor) || 0), 0);
@@ -2819,7 +2901,7 @@ const ExpensesPage = () => {
             descricao: formData.get('descricao').toUpperCase(),
             valor: parseFloat(formData.get('valor')) || 0,
             paga: formData.get('paga') === 'on',
-            cartao: formData.get('cartao'),
+            cartao: (formData.get('cartao') || '').trim().toUpperCase() || 'OUTROS',
             data_compra: formData.get('data_compra'),
             valor_total: parseFloat(formData.get('valor_total')) || 0,
             parcela: formData.get('parcela'),
@@ -2858,8 +2940,10 @@ const ExpensesPage = () => {
 
         if (field === 'valor' || field === 'valor_pago' || field === 'valor_total') {
             value = parseFloat(value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
-        } else if (field === 'descricao' || field === 'cartao') {
+        } else if (field === 'descricao') {
             value = value.toUpperCase();
+        } else if (field === 'cartao') {
+            value = value.toUpperCase() || 'OUTROS';
         } else if (field === 'vencimento' || field === 'data_pagamento') {
             value = el.value || null;
         }
@@ -2880,14 +2964,49 @@ const ExpensesPage = () => {
         } catch (err) { console.error('Erro no salvamento inline de saída:', err); }
     };
 
+    window.clearExpenseFilters = () => {
+        state.expenseSearchTerm = '';
+        state.expenseStatusFilter = 'TODOS';
+        state.expenseSort = 'vencimento_asc';
+        render();
+    };
+
+    window.setExpenseFilter = (field, val) => {
+        state[field] = val;
+        
+        // Se estiver Editando a busca, renderizamos preservando o foco
+        if (field === 'expenseSearchTerm') {
+            const inputId = 'expenseSearchInput';
+            const cursorPosition = document.getElementById(inputId)?.selectionStart;
+            render();
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.focus();
+                if (cursorPosition) input.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        } else {
+            render();
+        }
+    };
+
     const monthsLong = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
     return `
         <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 animate-in fade-in duration-500 pb-32">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 text-sm">
                 <div>
-                    <h2 class="text-3xl font-display font-black">Saídas <span class="text-rose-500">${monthsLong[targetMonth-1]}</span></h2>
-                    <p class="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1">Fluxo de Caixa</p>
+                    <h2 class="text-3xl font-display font-black">Saídas <span class="text-rose-500">${periodFilter === 'total' ? 'Totais' : monthsLong[targetMonth-1]}</span></h2>
+                    <div class="flex items-center gap-2 mt-2">
+                        <div class="flex bg-dark-900 border border-white/5 rounded-xl p-0.5">
+                            ${['diario', 'semanal', 'mensal', 'total'].map(p => `
+                                <button onclick="window.setExpenseFilter('expensePeriodFilter', '${p}')" 
+                                        class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all
+                                        ${state.expensePeriodFilter === p ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'text-slate-500 hover:text-white'}">
+                                    ${p === 'diario' ? 'Dia' : p === 'semanal' ? 'Semana' : p === 'mensal' ? 'Mês' : 'Total'}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="flex flex-wrap gap-4 w-full md:w-auto">
@@ -2905,10 +3024,48 @@ const ExpensesPage = () => {
                 </div>
             </div>
 
+            <!-- Dashboard de Filtros -->
+            <div class="flex flex-wrap gap-4 items-center bg-dark-900/50 p-4 rounded-[1.5rem] border border-white/5 shadow-2xl">
+                <div class="flex-1 min-w-[240px] relative group">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs group-focus-within:text-rose-500 transition-colors"></i>
+                    <input type="text" 
+                           id="expenseSearchInput"
+                           placeholder="Buscar por descrição ou cartão..." 
+                           value="${state.expenseSearchTerm || ''}"
+                           oninput="window.setExpenseFilter('expenseSearchTerm', this.value)"
+                           class="w-full bg-dark-950 border border-white/10 pl-10 pr-4 py-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-xs uppercase text-white shadow-inner">
+                </div>
+                
+                <div class="flex gap-2 flex-wrap sm:flex-nowrap">
+                    <select onchange="window.setExpenseFilter('expenseStatusFilter', this.value)"
+                            class="bg-dark-950 border border-white/10 px-4 py-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-xs uppercase text-white cursor-pointer min-w-[160px]">
+                        <option value="TODOS" ${state.expenseStatusFilter === 'TODOS' ? 'selected' : ''}>Todos os Status</option>
+                        <option value="PAGO" ${state.expenseStatusFilter === 'PAGO' ? 'selected' : ''}>Somente Pagos</option>
+                        <option value="PENDENTE" ${state.expenseStatusFilter === 'PENDENTE' ? 'selected' : ''}>Somente Pendentes</option>
+                    </select>
+
+                    <select onchange="window.setExpenseFilter('expenseSort', this.value)"
+                            class="bg-dark-950 border border-white/10 px-4 py-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-xs uppercase text-white cursor-pointer min-w-[170px]">
+                        <option value="vencimento_asc" ${state.expenseSort === 'vencimento_asc' ? 'selected' : ''}>Data (Mais Antiga)</option>
+                        <option value="vencimento_desc" ${state.expenseSort === 'vencimento_desc' ? 'selected' : ''}>Data (Mais Recente)</option>
+                        <option value="valor_asc" ${state.expenseSort === 'valor_asc' ? 'selected' : ''}>Valor (Menor Primeiro)</option>
+                        <option value="valor_desc" ${state.expenseSort === 'valor_desc' ? 'selected' : ''}>Valor (Maior Primeiro)</option>
+                        <option value="descricao_asc" ${state.expenseSort === 'descricao_asc' ? 'selected' : ''}>Descrição (A-Z)</option>
+                    </select>
+                </div>
+
+                ${(state.expenseSearchTerm || state.expenseStatusFilter !== 'TODOS' || state.expenseSort !== 'vencimento_asc') ? `
+                    <button onclick="window.clearExpenseFilters()" 
+                            class="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-400 transition-colors flex items-center gap-2 px-2 animate-in fade-in slide-in-from-right-2">
+                        <i class="fas fa-times-circle"></i> Limpar Tudo
+                    </button>
+                ` : ''}
+            </div>
+
             <!-- Tabela de Saídas Responsiva -->
             <div class="space-y-4 md:space-y-0 md:bg-dark-900/30 md:rounded-[2rem] border border-white/5">
                 <!-- Header (Apenas Desktop) -->
-                <div class="hidden md:grid grid-cols-[120px_140px_1fr_120px_130px_120px_100px] bg-white/[0.02] border-b border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest px-6 py-4 items-center">
+                <div class="hidden md:grid grid-cols-[120px_130px_1fr_100px_110px_120px_80px] bg-white/[0.02] border-b border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest px-6 py-4 items-center">
                     <div class="text-left px-2">Vencimento</div>
                     <div class="text-left px-2">Cartão/Outro</div>
                     <div class="text-left px-4">Descrição</div>
@@ -2937,40 +3094,46 @@ const ExpensesPage = () => {
                         }
 
                         return `
-                        <div class="flex flex-col md:grid md:grid-cols-[120px_140px_1fr_120px_130px_120px_100px] items-center px-6 py-3 hover:bg-white/[0.02] transition-colors group relative border-b border-white/5">
+                        <div class="flex flex-col md:grid md:grid-cols-[120px_130px_1fr_100px_110px_120px_80px] items-center px-6 py-2.5 hover:bg-white/[0.02] transition-colors group relative border-b border-white/5">
                             <!-- Vencimento -->
                             <div class="w-full md:w-auto flex items-center gap-3">
                                 <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Vencimento</span>
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-1.5">
                                     <div class="w-1.5 h-1.5 rounded-full ${e.paga ? 'bg-emerald-500' : diffDays < 0 ? 'bg-rose-500 animate-pulse' : diffDays === 0 ? 'bg-amber-500' : 'bg-slate-600'}"></div>
-                                    <input type="date" 
-                                           data-id="${e.id}" 
-                                           data-field="vencimento"
-                                           value="${e.vencimento}"
-                                           onchange="window.saveExpenseInline(this)"
-                                           style="color-scheme: dark"
-                                           class="bg-transparent border-none text-[12px] font-bold text-white outline-none cursor-pointer hover:bg-white/5 rounded px-1 transition-all">
+                                    <div class="flex items-center -ml-1 gap-1">
+                                        <i class="far fa-calendar-alt text-[9px] text-slate-500 mt-0.5"></i>
+                                        <input type="date" 
+                                               data-id="${e.id}" 
+                                               data-field="vencimento"
+                                               value="${e.vencimento}"
+                                               onchange="window.saveExpenseInline(this)"
+                                               style="color-scheme: dark"
+                                               class="bg-transparent border-none text-[12px] font-bold text-white outline-none cursor-pointer hover:bg-white/5 rounded pl-0.5 pr-1 transition-all">
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Cartão/Outro -->
-                            <div class="w-full md:w-auto px-2 mt-2 md:mt-0 relative">
+                            <div class="w-full md:w-auto px-2 mt-2 md:mt-0 relative min-w-0">
                                 <span class="md:hidden text-[9px] font-black text-slate-500 uppercase block mb-1">Cartão/Outro</span>
-                                <div contenteditable="true" 
-                                     data-id="${e.id}" 
-                                     data-field="cartao"
-                                     onfocus="window.selectAll(this)"
-                                     onblur="window.saveExpenseInline(this)"
-                                     onkeydown="window.handleInlineKey(event)"
-                                     oninput="window.showExpenseAutocomplete(this)"
-                                     class="text-[11px] font-black text-amber-500 uppercase tracking-tight outline-none focus:bg-white/5 hover:bg-white/5 px-1 rounded transition-all truncate cursor-text">
-                                    ${e.cartao || 'OUTROS'}
+                                <div class="flex items-center gap-1">
+                                    <i class="fas fa-credit-card text-[9px] text-slate-500/50 mt-0.5"></i>
+                                    <div contenteditable="true" 
+                                         data-id="${e.id}" 
+                                         data-field="cartao"
+                                         onfocus="window.selectAll(this)"
+                                         onblur="window.saveExpenseInline(this)"
+                                         onkeydown="window.handleInlineKey(event)"
+                                         oninput="window.showExpenseAutocomplete(this)"
+                                         class="text-[10px] font-black text-amber-500 uppercase tracking-tight outline-none focus:bg-white/5 hover:bg-white/5 px-1 rounded transition-all truncate cursor-text w-full">
+                                        ${e.cartao || 'OUTROS'}
+                                    </div>
                                 </div>
                                 <div id="expenseAutocomplete_${e.id}" class="hidden absolute left-0 right-0 top-full mt-1 bg-dark-800 border border-white/10 rounded-xl shadow-2xl z-50 p-1"></div>
                             </div>
 
                             <!-- Descrição -->
-                            <div class="w-full md:w-auto px-4 mt-2 md:mt-0">
+                            <div class="w-full md:w-auto px-4 mt-2 md:mt-0 min-w-0">
                                 <span class="md:hidden text-[9px] font-black text-slate-500 uppercase block mb-1">Descrição</span>
                                 <div contenteditable="true" 
                                      data-id="${e.id}" 
@@ -2978,7 +3141,7 @@ const ExpensesPage = () => {
                                      onfocus="window.selectAll(this)"
                                      onblur="window.saveExpenseInline(this)"
                                      onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                                     class="font-black text-xs text-white uppercase tracking-wider outline-none focus:bg-white/5 hover:bg-white/5 px-1 rounded transition-all truncate hover:whitespace-normal cursor-text max-w-[200px] md:max-w-none">
+                                     class="font-black text-xs text-white uppercase tracking-wider outline-none focus:bg-white/5 hover:bg-white/5 px-1 rounded transition-all truncate hover:whitespace-normal cursor-text w-full">
                                     ${e.descricao}
                                 </div>
                             </div>
@@ -3975,11 +4138,14 @@ window.handleEnterSelection = (e, dropdownId) => {
             e.preventDefault();
             
             // Se houver autocomplete aberto, seleciona a primeira opção
-            const dropdown = document.getElementById(`inlineAutocomplete_${field}_${uiId}`);
+            // Tenta encontrar o dropdown (seja de agendamento ou de despesas)
+            const dropdown = document.getElementById(`inlineAutocomplete_${field}_${uiId}`) || 
+                             document.getElementById(`expenseAutocomplete_${id}`);
+
             if (dropdown && !dropdown.classList.contains('hidden')) {
                 const firstOption = dropdown.querySelector('div');
                 if (firstOption) {
-                    // Simular mousedown para disparar selectInlineData
+                    // Simular mousedown para disparar o handler de seleção (selectInlineData ou selectExpenseCard)
                     const mousedownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
                     firstOption.dispatchEvent(mousedownEvent);
                     return;
