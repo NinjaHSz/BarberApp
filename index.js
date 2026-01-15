@@ -1076,14 +1076,14 @@ const RecordsPage = () => {
             <!-- Tabela via Flexbox -->
             <div class="space-y-4 md:space-y-0 md:bg-dark-900/30 md:rounded-[2rem] border border-white/5">
                 <!-- Header (Apenas Desktop) -->
-                <div class="hidden md:flex bg-white/[0.02] border-b border-white/5 px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">
-                    <div class="w-16 text-left">Horário</div>
-                    <div class="flex-1 text-left px-4">Cliente</div>
+                <div class="hidden md:flex bg-white/[0.02] border-b border-white/5 px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    <div class="w-16 text-center">Horário</div>
+                    <div class="flex-1 text-center px-4">Cliente</div>
                     <div class="flex-1 text-center px-4">Procedimentos</div>
                     <div class="flex-1 text-center px-4">Observações</div>
-                    <div class="w-24">Valor</div>
-                    <div class="w-28">Pagamento</div>
-                    <div class="w-24 text-right">Ações</div>
+                    <div class="w-24 text-center">Valor</div>
+                    <div class="w-28 text-center">Pagamento</div>
+                    <div class="w-24 text-center">Ações</div>
                 </div>
 
                 <div id="tableBody" class="divide-y divide-white/5">
@@ -1240,7 +1240,7 @@ const RecordRow = (record) => {
 
     return `
         <div class="flex flex-col md:flex-row items-center md:items-center px-6 md:px-8 py-4 md:py-4 gap-4 md:gap-0 hover:bg-white/[0.01] transition-colors group relative glass-card md:bg-transparent rounded-2xl md:rounded-none m-2 md:m-0 border md:border-0 border-white/5 ${isBreak ? 'bg-white/[0.02] border-white/10' : ''}" style="z-index: 1;">
-            <div class="w-full md:w-16 text-xs md:text-sm text-amber-500 md:text-slate-400 font-black md:font-medium flex justify-between md:block">
+            <div class="w-full md:w-16 text-xs md:text-sm text-amber-500 md:text-slate-400 font-black md:font-medium flex justify-between md:flex md:justify-center">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Horário:</span>
                 <input type="time" 
                      data-id="${id}" data-ui-id="${rowId}" data-field="time" data-time="${record.time}" data-date="${record.date}"
@@ -1248,10 +1248,10 @@ const RecordRow = (record) => {
                      onkeydown="window.handleInlineKey(event)"
                      onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
                      value="${record.time.substring(0, 5)}"
-                     class="bg-dark-900 border border-white/5 outline-none focus:border-amber-500/50 rounded px-1.5 py-0.5 w-full md:w-auto text-xs font-bold text-amber-500 md:text-white/80 transition-all">
+                     class="bg-dark-900 border border-white/5 outline-none focus:border-amber-500/50 rounded px-1.5 py-0.5 w-full md:w-auto text-xs font-bold text-amber-500 md:text-white/80 transition-all text-center">
             </div>
             
-            <div class="w-full md:flex-1 md:px-4 text-sm md:text-sm font-bold md:font-semibold flex justify-between md:block relative">
+            <div class="w-full md:flex-1 md:px-4 text-sm md:text-sm font-bold md:font-semibold flex justify-between md:flex md:justify-center relative">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Cliente:</span>
                 <div contenteditable="true" 
                      data-id="${id}" data-ui-id="${rowId}" data-field="client" data-time="${record.time}" data-date="${record.date}"
@@ -1259,7 +1259,7 @@ const RecordRow = (record) => {
                      onkeydown="window.handleInlineKey(event)"
                      oninput="window.showInlineAutocomplete(this)"
                      onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
-                     class="truncate transition-all outline-none rounded px-1 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 ${isBreak ? 'text-slate-500 font-black' : (isEmpty ? 'text-slate-500 group-hover:text-amber-500 uppercase' : 'group-hover:text-amber-500 uppercase')}">
+                     class="truncate transition-all outline-none rounded px-1 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 text-center ${isBreak ? 'text-slate-500 font-black' : (isEmpty ? 'text-slate-500 group-hover:text-amber-500 uppercase' : 'group-hover:text-amber-500 uppercase')}">
                     ${isBreak ? '<i class="fas fa-circle-minus mr-2"></i> PAUSA / BLOQUEIO' : (() => {
                         const isNew = state.clients.find(cli => cli.nome === record.client)?.novo_cliente;
                         return `<span>${record.client}</span>${isNew ? '<span class="ml-2 bg-amber-500/20 text-amber-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ''}`;
@@ -1276,7 +1276,7 @@ const RecordRow = (record) => {
                 <div id="inlineAutocomplete_client_${rowId}" class="hidden absolute left-0 right-0 top-full mt-2 bg-dark-800 border border-white/20 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] max-h-48 overflow-y-auto p-1.5 z-[500] backdrop-blur-3xl lg:min-w-[200px]"></div>
             </div>
 
-            <div class="w-full md:flex-1 md:px-4 text-xs md:text-sm flex justify-between md:block md:text-center relative">
+            <div class="w-full md:flex-1 md:px-4 text-xs md:text-sm flex justify-between md:flex md:justify-center md:text-center relative">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Serviço:</span>
                 <div contenteditable="true"
                      data-id="${id}" data-ui-id="${rowId}" data-field="service" data-time="${record.time}" data-date="${record.date}"
@@ -1284,7 +1284,7 @@ const RecordRow = (record) => {
                      onkeydown="window.handleInlineKey(event)"
                      oninput="window.showInlineAutocomplete(this)"
                      onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
-                     class="outline-none rounded px-1 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 ${isBreak ? 'text-slate-600 italic' : (isEmpty ? 'text-slate-500' : (record.service === 'A DEFINIR' ? 'text-red-500 font-black animate-pulse' : 'text-white font-medium'))} uppercase break-words md:truncate">
+                     class="outline-none rounded px-1 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 text-center ${isBreak ? 'text-slate-600 italic' : (isEmpty ? 'text-slate-500' : (record.service === 'A DEFINIR' ? 'text-red-500 font-black animate-pulse' : 'text-white font-medium'))} uppercase break-words md:truncate">
                     ${isBreak ? 'HORÁRIO RESERVADO' : record.service}
                 </div>
                 <!-- Dropdown Autocomplete Inline (Service) -->
@@ -1336,7 +1336,7 @@ const RecordRow = (record) => {
                 `}
             </div>
 
-            <div class="w-full md:w-24 flex justify-end gap-2 pt-4 md:pt-0 border-t md:border-0 border-white/5">
+            <div class="w-full md:w-24 flex justify-end md:justify-center gap-2 pt-4 md:pt-0 border-t md:border-0 border-white/5">
                 ${!isEmpty ? `
                     <button onclick="window.editAppointment('${record.id}')" 
                             class="w-9 h-9 md:w-8 md:h-8 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-95 shadow-sm flex items-center justify-center">
@@ -1348,7 +1348,7 @@ const RecordRow = (record) => {
                     </button>
                 ` : `
                     <button onclick="window.openAddModal('${record.time}', '${record.date}')" 
-                            class="w-full md:w-auto px-4 py-2 md:py-1 rounded-lg bg-amber-500 text-dark-950 hover:bg-white hover:text-amber-600 text-[10px] font-black uppercase transition-all shadow-lg shadow-amber-500/10 active:scale-95 border border-transparent">
+                            class="w-full md:w-auto px-4 py-2 md:py-1 rounded-lg bg-amber-500 text-dark-950 hover:bg-white hover:text-amber-600 text-[10px] font-black uppercase transition-all shadow-lg shadow-amber-500/10 active:scale-95 border border-transparent text-center items-center justify-center">
                         Agendar Horário
                     </button>
                 `}
@@ -2173,7 +2173,14 @@ const PlansPage = () => {
                                                 <p class="text-slate-500 font-bold uppercase tracking-widest truncate">${c.telefone || 'Sem telefone'}</p>
                                                 ${planStats ? `
                                                     <span class="text-slate-600 hidden md:inline">•</span>
-                                                    <span class="${planStats.usageCount >= (c.limite_cortes || 4) ? 'text-red-500' : 'text-emerald-500'} font-black hidden md:inline uppercase tracking-widest">${planStats.usageCount}/${c.limite_cortes || 4} CORTES</span>
+                                                    <span contenteditable="true" 
+                                                          onblur="const [usage, limit] = this.innerText.split('/'); window.updateClientPlan('${c.id}', { limite_cortes: parseInt(limit) || 4 })"
+                                                          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()} if(this.innerText.length >= 5 && event.key !== 'Backspace' && event.key !== 'Delete'){event.preventDefault()}"
+                                                          class="${planStats.usageCount >= (c.limite_cortes || 4) ? 'text-rose-500' : 'text-emerald-500'} font-black hidden md:inline uppercase tracking-widest outline-none hover:bg-white/5 rounded px-1 transition-all cursor-text focus:bg-white/10"
+                                                          title="Clique para editar o limite (Formato: USADOS/LIMITE)">
+                                                        ${planStats.usageCount}/${c.limite_cortes || 4}
+                                                    </span>
+                                                    <span class="text-[8px] text-slate-600 font-black uppercase tracking-tighter hidden md:inline">CORTES</span>
                                                 ` : ''}
                                             </div>
                                         </div>
@@ -2221,6 +2228,11 @@ const PlansPage = () => {
                                                 class="w-9 h-9 rounded-xl bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-dark-950 transition-all flex items-center justify-center border border-yellow-500/20 active:scale-95 shadow-lg shadow-yellow-500/5"
                                                 title="Pausar Plano">
                                             <i class="fas fa-pause text-xs"></i>
+                                        </button>
+                                        <button onclick="if(confirm('Deseja resetar o contador e iniciar um novo ciclo hoje?')){ window.updateClientPlan('${c.id}', { plano_inicio: new Date().toISOString().split('T')[0], plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
+                                                class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center border border-emerald-500/20 active:scale-95 shadow-lg shadow-emerald-500/5"
+                                                title="Resetar Ciclo de Cortes">
+                                            <i class="fas fa-rotate text-xs"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -2311,19 +2323,7 @@ const ClientProfilePage = () => {
         `;
     }
 
-    // Carregar histórico de pagamentos ao abrir o perfil (apenas uma vez)
-    // Agora verifica se JÁ buscou para este cliente específico, independente se voltou vazio ou não
-    if (state.paymentsFetchedForClientId !== client.id) {
-        fetchPaymentHistory(client.id).then(() => render());
-        return `
-            <div class="p-8 h-full flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in duration-300">
-                <div class="w-16 h-16 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
-                <p class="text-slate-400 font-bold animate-pulse">Carregando perfil...</p>
-            </div>
-        `;
-    }
-
-    // Função para salvar edição inline do cliente
+    // Função para salvar edição inline do cliente (Nome, Telefone, Valor do Plano)
     window.saveClientEdit = async (field, value) => {
         try {
             const updateData = { [field]: value };
@@ -2339,7 +2339,7 @@ const ClientProfilePage = () => {
             });
             if (res.ok) {
                 Object.assign(client, updateData);
-                fetchClients();
+                fetchClients(); // Atualiza base global
             } else {
                 alert('Erro ao atualizar cliente.');
             }
@@ -2348,164 +2348,26 @@ const ClientProfilePage = () => {
         }
     };
 
-    // Função para adicionar novo pagamento
-    window.addPayment = async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const btn = e.target.querySelector('button[type="submit"]');
-        
-        // Arredondamento seguro para 2 casas
-        const rawValor = parseFloat(formData.get('valor'));
-        const valorFinal = rawValor ? Math.round(rawValor * 100) / 100 : 0;
-
-        const paymentData = {
-            cliente_id: client.id,
-            data_pagamento: formData.get('data_pagamento'),
-            valor: valorFinal,
-            tipo_plano: formData.get('tipo_plano'),
-            forma_pagamento: formData.get('forma_pagamento'),
-            observacao: formData.get('observacao') || null
-        };
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-
-        try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/pagamentos_planos`, {
-                method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_KEY,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify(paymentData)
-            });
-
-            if (res.ok) {
-                e.target.reset();
-                fetchPaymentHistory(client.id);
-                // Atualizar o último pagamento e resetar o início do plano (contador de cortes)
-                await window.updateClientPlan(client.id, { 
-                    plano_pagamento: paymentData.data_pagamento,
-                    plano_inicio: paymentData.data_pagamento 
-                });
-            } else {
-                alert('Erro ao registrar pagamento.');
-            }
-        } catch (err) {
-            alert('Erro de conexão.');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = 'Registrar Pagamento';
-        }
-    };
-
-    window.savePaymentInline = async (el) => {
-        const payId = el.getAttribute('data-id');
-        const field = el.getAttribute('data-field');
-        let value = el.tagName === 'SELECT' || el.tagName === 'INPUT' ? el.value : el.innerText;
-
-        if (field === 'valor') {
-            value = parseFloat(value.replace('R$', '').replace(',', '.').trim()) || 0;
-        }
-
-        try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/pagamentos_planos?id=eq.${payId}`, {
-                method: 'PATCH',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_KEY,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify({ [field]: value })
-            });
-
-            if (res.ok) {
-                const pay = state.paymentHistory.find(p => p.id == payId);
-                if (pay) {
-                    pay[field] = value;
-                    if (field === 'data_pagamento') {
-                        const sortedAsc = [...state.paymentHistory].sort((a, b) => new Date(a.data_pagamento) - new Date(b.data_pagamento));
-                        const firstPayment = sortedAsc[0].data_pagamento;
-                        if (client.plano_inicio !== firstPayment) {
-                            window.saveClientEdit('plano_inicio', firstPayment);
-                        }
-                    }
-                }
-                render();
-            }
-        } catch (err) { console.error('Erro ao salvar pagamento:', err); }
-    };
-
-    window.deletePayment = async (e, paymentId) => {
-        if(e) e.stopPropagation();
-        
-        try {
-            await fetch(`${SUPABASE_URL}/rest/v1/pagamentos_planos?id=eq.${paymentId}`, {
-                method: 'DELETE',
-                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-            });
-            
-            // Atualiza estado local imediatamente
-            state.paymentHistory = state.paymentHistory.filter(p => p.id !== paymentId);
-            
-            // Verifica se ficou vazio e limpa datas do cliente
-            if (state.paymentHistory.length === 0) {
-                 await fetch(`${SUPABASE_URL}/rest/v1/clientes?id=eq.${client.id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_KEY,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ plano_inicio: null, plano_pagamento: null })
-                 });
-                 client.plano_inicio = null;
-                 client.plano_pagamento = null;
-            } else {
-                // Se ainda tem pagamentos, re-sincroniza o início com o mais antigo restante
-                const sortedAsc = [...state.paymentHistory].sort((a, b) => new Date(a.data_pagamento) - new Date(b.data_pagamento));
-                const firstPayment = sortedAsc[0].data_pagamento;
-                if (client.plano_inicio !== firstPayment) {
-                     await fetch(`${SUPABASE_URL}/rest/v1/clientes?id=eq.${client.id}`, {
-                        method: 'PATCH',
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ plano_inicio: firstPayment })
-                     });
-                     client.plano_inicio = firstPayment;
-                }
-            }
-            
-            render();
-            fetchPaymentHistory(client.id); // Sincroniza background para garantir
-        } catch (err) { alert('Erro ao excluir pagamento.'); }
-    };
-
     // Filtrar agendamentos desse cliente
     const clientRecords = state.records.filter(r => 
         (r.client || '').toLowerCase() === (client.nome || '').toLowerCase()
-    ).sort((a, b) => new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time));
+    ).sort((a, b) => {
+        const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
+        const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
+        return dateB - dateA;
+    });
 
     // Filtra apenas agendamentos passados ou de hoje para estatísticas
     const today = new Date().toISOString().split('T')[0];
     const pastRecords = clientRecords.filter(r => r.date <= today);
     
-    // Calcula total investido: Agendamentos + Planos
-    const totalAppointmentsSpent = pastRecords.reduce((acc, r) => acc + (parseFloat(r.value) || 0), 0);
-    const totalPlansSpent = (state.paymentHistory || []).reduce((acc, p) => acc + (parseFloat(p.valor) || 0), 0);
-    const totalSpent = totalAppointmentsSpent + totalPlansSpent;
-    
+    // Calcula total investido baseando-se em todos os registros salvos (inclui as renovações pagas)
+    const totalSpent = pastRecords.reduce((acc, r) => acc + (parseFloat(r.value) || 0), 0);
     const lastVisit = pastRecords.length > 0 ? pastRecords[0].date : 'Nunca';
-    
-    // Pega a data mais recente do histórico de pagamentos para exibição precisa
-    const displayLastPaymentDate = state.paymentHistory.length > 0 
-        ? state.paymentHistory[0].data_pagamento 
-        : client.plano_pagamento;
+    const displayLastPaymentDate = client.plano_pagamento;
 
     return `
-        <div class="p-4 sm:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div class="p-4 sm:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-32">
             <!-- Header do Perfil -->
             <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
                 <div class="w-24 h-24 md:w-32 md:h-32 rounded-[2.5rem] bg-amber-500/10 flex items-center justify-center text-amber-500 text-3xl md:text-5xl font-black border-2 border-amber-500/20 shadow-2xl shadow-amber-500/5">
@@ -2517,7 +2379,7 @@ const ClientProfilePage = () => {
                             <input type="text" 
                                    value="${client.nome}" 
                                    onblur="window.saveClientEdit('nome', this.value)"
-                                   class="text-3xl md:text-4xl font-display font-black text-white bg-transparent border-b-2 border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-2 -mx-2">
+                                   class="text-3xl md:text-4xl font-display font-black text-white bg-transparent border-b-2 border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-2 -mx-2 uppercase">
                             ${client.plano !== 'Nenhum' ? `
                                 <span class="px-3 py-1 bg-amber-500 text-dark-950 text-[10px] font-black uppercase rounded-lg shadow-lg shadow-amber-500/20">
                                     CLIENTE PREMIUM
@@ -2544,177 +2406,68 @@ const ClientProfilePage = () => {
 
             <!-- Dados do Plano (se houver) -->
             ${client.plano !== 'Nenhum' ? `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div class="glass-card p-6 rounded-[2rem] border border-amber-500/10 relative overflow-hidden group">
                         <div class="absolute -right-4 -top-4 w-20 h-20 bg-amber-500/5 rounded-full blur-xl"></div>
                         <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Tipo de Plano</p>
                         <h4 class="text-2xl font-black text-white">${client.plano}</h4>
                     </div>
                     <div class="glass-card p-6 rounded-[2rem] border border-white/5">
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Valor do Plano</p>
+                        <div class="flex items-center gap-1">
+                            <span class="text-slate-500 font-bold">R$</span>
+                            <input type="number" step="0.01" 
+                                   value="${client.valor_plano || ''}" 
+                                   placeholder="0.00"
+                                   onblur="window.saveClientEdit('valor_plano', this.value)"
+                                   onkeydown="if(event.key==='Enter')this.blur()"
+                                   class="bg-transparent border-none text-2xl font-black text-white hover:text-amber-500 transition-all outline-none w-full appearance-none">
+                        </div>
+                    </div>
+                    <div class="glass-card p-6 rounded-[2rem] border border-white/5">
                         <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Início da Assinatura</p>
                         <h4 class="text-2xl font-black text-white">${client.plano_inicio ? new Date(client.plano_inicio + 'T00:00:00').toLocaleDateString('pt-BR') : '---'}</h4>
                     </div>
-                    <div class="glass-card p-6 rounded-[2rem] border border-white/5">
-                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Último Pagamento</p>
+                    <div class="glass-card p-6 rounded-[2rem] border border-white/5 relative group">
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Último Ciclo/Pagamento</p>
                         <h4 class="text-2xl font-black text-white">${displayLastPaymentDate ? new Date(displayLastPaymentDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não registrado'}</h4>
+                        <button onclick="if(confirm('Deseja resetar o contador e iniciar um novo ciclo hoje?')){ window.updateClientPlan('${client.id}', { plano_inicio: new Date().toISOString().split('T')[0], plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
+                                class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-500 hover:text-white flex items-center justify-center"
+                                title="Resetar Ciclo Manualmente">
+                            <i class="fas fa-rotate text-xs"></i>
+                        </button>
                     </div>
                 </div>
             ` : ''}
 
             <!-- KPIs do Cliente -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
+                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5 shadow-xl">
                     <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Total Investido</p>
                     <h3 class="text-2xl md:text-3xl font-display font-black text-amber-500">R$ ${totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                 </div>
-                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
+                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5 shadow-xl">
                     <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Visitas Realizadas</p>
                     <h3 class="text-2xl md:text-3xl font-display font-black text-white">${pastRecords.length}</h3>
                 </div>
-                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
+                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5 shadow-xl">
                     <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Ticket Médio</p>
                     <h3 class="text-2xl md:text-3xl font-display font-black text-white">R$ ${(pastRecords.length ? totalSpent / pastRecords.length : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                 </div>
-                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5">
+                <div class="bg-dark-900/50 p-6 rounded-[2rem] border border-white/5 shadow-xl">
                     <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Última Visita</p>
                     <h3 class="text-2xl md:text-3xl font-display font-black text-white">${lastVisit !== 'Nunca' ? new Date(lastVisit + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem registros'}</h3>
                 </div>
             </div>
 
-            <!-- Histórico de Pagamentos (apenas para clientes com plano) -->
-            ${client.plano !== 'Nenhum' ? `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Formulário para Novo Pagamento -->
-                    <div class="lg:col-span-1">
-                        <div class="glass-card p-6 rounded-[2rem] border border-white/5">
-                            <h3 class="text-lg font-bold text-amber-500 uppercase tracking-widest text-sm mb-6">Registrar Pagamento</h3>
-                            <form onsubmit="window.addPayment(event)" class="space-y-4">
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Data do Pagamento</label>
-                                    <input type="date" name="data_pagamento" required 
-                                           style="color-scheme: dark"
-                                           value="${new Date().toISOString().split('T')[0]}"
-                                           class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold text-xs">
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Valor Pago</label>
-                                    <input type="number" name="valor" required step="0.01" min="0" placeholder="0.00"
-                                           class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold">
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Tipo de Plano</label>
-                                    <select name="tipo_plano" required
-                                            class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
-                                        <option value="Mensal" ${client.plano === 'Mensal' ? 'selected' : ''}>Mensal</option>
-                                        <option value="Anual" ${client.plano === 'Anual' ? 'selected' : ''}>Anual</option>
-                                    </select>
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Forma de Pagamento</label>
-                                    <select name="forma_pagamento" required
-                                            class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
-                                        <option value="Pix">Pix</option>
-                                        <option value="Dinheiro">Dinheiro</option>
-                                        <option value="Cartão de Crédito">Cartão de Crédito</option>
-                                        <option value="Cartão de Débito">Cartão de Débito</option>
-                                    </select>
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Observação (Opcional)</label>
-                                    <textarea name="observacao" rows="2" placeholder="Ex: Pagamento referente ao mês de Janeiro"
-                                              class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-medium text-sm resize-none"></textarea>
-                                </div>
-                                <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-3 rounded-xl transition-all uppercase tracking-widest text-xs shadow-xl shadow-amber-500/10 active:scale-95">
-                                    Registrar Pagamento
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Lista de Pagamentos -->
-                    <div class="lg:col-span-2 space-y-4">
-                        <h3 class="text-lg font-bold text-white uppercase tracking-widest text-sm ml-2">Histórico de Pagamentos</h3>
-                        <div class="bg-dark-900/30 rounded-[2rem] border border-white/5 overflow-hidden">
-                            ${state.paymentHistory.length === 0 ? `
-                                <div class="p-12 text-center text-slate-500 italic">Nenhum pagamento registrado ainda.</div>
-                            ` : `
-                                <div class="divide-y divide-white/5">
-                                    ${state.paymentHistory.map(p => `
-                                        <div class="px-8 py-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
-                                            <div class="flex items-center gap-6">
-                                                <!-- Data Pagamento -->
-                                                <input type="date" 
-                                                       data-id="${p.id}" data-field="data_pagamento"
-                                                       value="${p.data_pagamento}"
-                                                       onchange="window.savePaymentInline(this)"
-                                                       style="color-scheme: dark"
-                                                       class="bg-transparent border-none text-amber-500 font-black text-sm w-32 outline-none cursor-pointer hover:bg-white/5 rounded px-1 transition-all">
-                                                
-                                                <div class="flex flex-col">
-                                                    <div class="flex items-center gap-1.5">
-                                                        <!-- Tipo Plano -->
-                                                        <select onchange="window.savePaymentInline(this)" 
-                                                                data-id="${p.id}" data-field="tipo_plano"
-                                                                class="appearance-none bg-transparent border-none text-white font-bold text-sm uppercase outline-none cursor-pointer hover:bg-white/5 rounded px-1 transition-all">
-                                                            <option value="Mensal" ${p.tipo_plano === 'Mensal' ? 'selected' : ''} class="bg-dark-950">Mensal</option>
-                                                            <option value="Anual" ${p.tipo_plano === 'Anual' ? 'selected' : ''} class="bg-dark-950">Anual</option>
-                                                        </select>
-                                                        <span class="text-slate-600">•</span>
-                                                        <!-- Forma Pagamento -->
-                                                        <select onchange="window.savePaymentInline(this)" 
-                                                                data-id="${p.id}" data-field="forma_pagamento"
-                                                                class="appearance-none bg-transparent border-none text-amber-500 font-bold text-sm uppercase outline-none cursor-pointer hover:bg-white/5 rounded px-1 transition-all">
-                                                            ${['Pix', 'Dinheiro', 'Cartão de Crédito', 'Cartão de Débito'].map(f => `
-                                                                <option value="${f}" ${p.forma_pagamento === f ? 'selected' : ''} class="bg-dark-950">${f}</option>
-                                                            `).join('')}
-                                                        </select>
-                                                    </div>
-                                                    <!-- Observação -->
-                                                    <div contenteditable="true"
-                                                         data-id="${p.id}" data-field="observacao"
-                                                         onblur="window.savePaymentInline(this)"
-                                                         onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                                                         class="text-[10px] text-slate-500 font-medium mt-1 outline-none hover:text-slate-300 transition-all truncate focus:whitespace-normal focus:break-words max-w-[200px] cursor-text"
-                                                         title="${p.observacao || ''}">
-                                                        ${p.observacao || 'Adicionar observação...'}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center gap-4">
-                                                <!-- Valor -->
-                                                <div class="flex items-center gap-1">
-                                                    <span class="text-xs font-black text-emerald-400">R$</span>
-                                                    <div contenteditable="true"
-                                                         data-id="${p.id}" data-field="valor"
-                                                         onfocus="window.selectAll(this)"
-                                                         onblur="window.savePaymentInline(this)"
-                                                         onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                                                         class="text-lg font-black text-emerald-400 outline-none focus:bg-emerald-500/10 rounded px-1 transition-all">
-                                                        ${parseFloat(p.valor).toFixed(2)}
-                                                    </div>
-                                                </div>
-                                                
-                                                <button onclick="window.deletePayment(event, '${p.id}')" 
-                                                        class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover:opacity-100"
-                                                        title="Excluir Pagamento">
-                                                    <i class="fas fa-trash-can text-xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `}
-                        </div>
-                    </div>
-                </div>
-            ` : ''}
+            <div class="h-8"></div>
 
             <!-- Histórico de Serviços -->
             <div class="space-y-4">
                 <h3 class="text-lg font-bold text-white uppercase tracking-widest text-sm ml-2">Histórico de Visitas</h3>
-                <div class="bg-dark-900/30 rounded-[2rem] border border-white/5 overflow-hidden">
+                <div class="bg-dark-900/30 rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl">
                     ${clientRecords.length === 0 ? `
-                        <div class="p-12 text-center text-slate-500 italic">Este cliente ainda não possui agendamentos registrados.</div>
+                        <div class="p-12 text-center text-slate-500 italic font-bold uppercase tracking-widest text-xs">Este cliente ainda não possui agendamentos registrados.</div>
                     ` : `
                         <div class="divide-y divide-white/5 overflow-x-auto">
                             ${clientRecords.map(r => {
@@ -2723,7 +2476,7 @@ const ClientProfilePage = () => {
                                 return `
                                  <div class="px-8 py-5 flex flex-col md:flex-row items-center md:items-start justify-between hover:bg-white/[0.02] min-w-[600px] gap-6 group relative" style="z-index: 1;">
                                     <div class="flex items-start gap-6 flex-1 h-full">
-                                        <!-- Data (Fixado) -->
+                                        <!-- Data -->
                                         <div class="flex flex-col w-28 shrink-0">
                                             <div class="flex items-center gap-1.5 text-slate-500 mb-1">
                                                 <i class="far fa-calendar-alt text-[10px]"></i>
@@ -2737,8 +2490,8 @@ const ClientProfilePage = () => {
                                                    class="bg-transparent border-none text-[12px] font-bold text-amber-500 outline-none cursor-pointer hover:bg-white/5 rounded px-1 transition-all">
                                         </div>
 
-                                        <!-- Serviço e Detalhes -->
-                                        <div class="flex flex-col w-48 shrink-0">
+                                        <!-- Procedimento -->
+                                        <div class="flex flex-col w-48 shrink-0 relative">
                                             <div class="flex items-center gap-1.5 text-slate-500 mb-1">
                                                 <i class="fas fa-cut text-[10px]"></i>
                                                 <span class="text-[10px] font-black uppercase tracking-tighter">Procedimento</span>
@@ -2752,7 +2505,6 @@ const ClientProfilePage = () => {
                                                  class="text-white font-black text-sm uppercase outline-none focus:bg-amber-500/10 rounded px-1 transition-all truncate">
                                                 ${r.service}
                                             </div>
-                                            <!-- Dropdown Autocomplete -->
                                             <div id="inlineAutocomplete_service_${rowId}" class="hidden absolute left-0 right-0 top-full mt-1 bg-dark-800 border border-white/10 rounded-xl shadow-2xl z-50 p-1"></div>
                                             
                                             <div class="flex items-center gap-2 mt-1">
@@ -2773,7 +2525,7 @@ const ClientProfilePage = () => {
                                             </div>
                                         </div>
 
-                                        <!-- Observações (Área Ampliada) -->
+                                        <!-- Observações -->
                                         <div class="flex-1 flex flex-col min-h-[45px]">
                                             <div class="flex items-center gap-1.5 text-slate-500 mb-1">
                                                 <i class="far fa-comment-alt text-[10px]"></i>
@@ -2810,7 +2562,7 @@ const ClientProfilePage = () => {
                                             </div>
                                             
                                             <button onclick="window.cancelAppointment('${r.id}')" 
-                                                    class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-95 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                    class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-95 flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-lg">
                                                 <i class="fas fa-trash-can text-xs"></i>
                                             </button>
                                         </div>
@@ -4033,56 +3785,58 @@ if (!window.hasGlobalHandlers) {
         render();
     };
 
-    // Helper para detectar ciclo e uso do plano
     window.getClientPlanUsage = (clientName) => {
-    if (!clientName) return null;
-    const client = state.clients.find(c => (c.nome || '').trim().toLowerCase() === clientName.trim().toLowerCase());
-    if (!client || client.plano === 'Nenhum' || client.plano === 'Pausado') return null;
-    
-    // Início padrão
-    let cycleStartDate = client.plano_inicio || client.plano_pagamento;
-    
-    // Pega o pagamento mais recente (inclusive futuro, pois indica uma renovação/reset)
-    if (state.allPlanPayments && state.allPlanPayments.length > 0) {
-        const clientPayments = state.allPlanPayments
-            .filter(p => p.cliente_id == client.id)
-            .sort((a, b) => b.data_pagamento.localeCompare(a.data_pagamento));
+        if (!clientName) return null;
+        const client = state.clients.find(c => (c.nome || '').trim().toLowerCase() === clientName.trim().toLowerCase());
+        if (!client || client.plano === 'Nenhum' || client.plano === 'Pausado') return null;
         
-        if (clientPayments.length > 0) {
-            cycleStartDate = clientPayments[0].data_pagamento;
-        }
-    }
+        let cycleStartDate = client.plano_inicio || client.plano_pagamento;
 
-    if (!cycleStartDate) return null;
+        // Encontra o agendamento de RENOVAÇÃO mais recente (Data + Hora)
+        const lastRenewal = state.records
+            .filter(r => (r.client || '').toLowerCase() === clientName.toLowerCase() && 
+                         /RENOVA[CÇ][AÃ]O/i.test(r.service || ''))
+            .sort((a, b) => {
+                const dtA = (a.date || a.data) + 'T' + (a.time || a.horario || '00:00');
+                const dtB = (b.date || b.data) + 'T' + (b.time || b.horario || '00:00');
+                return dtB.localeCompare(dtA);
+            })[0];
 
-    const visits = state.records.filter(r => {
-        const clientNameInRecord = (r.client || r.cliente || '').trim().toLowerCase();
-        const targetClientName = client.nome.trim().toLowerCase();
-        if (clientNameInRecord !== targetClientName) return false;
-        
-        // Normalização de data para comparação segura
-        const rDate = r.date || r.data;
-        if (!rDate) return false;
-        
-        const isFromCycle = rDate >= cycleStartDate;
-        
-        // CRITÉRIO RESTRITO: Aceita símbolos ordinais variados ou nenhum símbolo
-        const planServicePattern = /\d+\s*[º°]?\s*DIA/i;
-        const isPlanService = planServicePattern.test(r.service || r.procedimento || '');
-        
-        return isFromCycle && isPlanService;
-    }).length;
+        // Determina a data base de comparação
+        const baseDate = lastRenewal ? (lastRenewal.date || lastRenewal.data) : (client.plano_inicio || client.plano_pagamento);
+        if (!baseDate) return null;
 
-    const limit = parseInt(client.limite_cortes) || 4;
-    
-    return {
-        usageCount: visits,
-        nextVisit: visits + 1,
-        isWithinLimit: visits < limit,
-        startDate: cycleStartDate,
-        limit: limit
+        const visits = state.records.filter(r => {
+            const clientNameInRecord = (r.client || r.cliente || '').trim().toLowerCase();
+            if (clientNameInRecord !== client.nome.trim().toLowerCase()) return false;
+            
+            const rDate = r.date || r.data;
+            const rTime = r.time || r.horario || '00:00';
+            const service = (r.service || r.procedimento || '');
+            const isPlanService = /\d+\s*[º°]?\s*DIA/i.test(service) || /RENOVA[CÇ][AÃ]O/i.test(service);
+
+            if (!isPlanService) return false;
+
+            // Se existe uma renovação, contamos apenas o que aconteceu a partir dela (mesma hora ou depois)
+            if (lastRenewal) {
+                const rFull = rDate + 'T' + rTime;
+                const lastFull = (lastRenewal.date || lastRenewal.data) + 'T' + (lastRenewal.time || lastRenewal.horario || '00:00');
+                return rFull >= lastFull;
+            }
+
+            return rDate >= baseDate;
+        }).length;
+
+        const limit = parseInt(client.limite_cortes) || 4;
+        
+        return {
+            usageCount: visits,
+            nextVisit: visits + 1,
+            isWithinLimit: visits < limit,
+            startDate: cycleStartDate,
+            limit: limit
+        };
     };
-};
 
     // --- Helpers de Busca de Clientes (Global) ---
     window.openClientDropdown = () => {
@@ -4518,6 +4272,18 @@ if (!window.hasGlobalHandlers) {
                             document.querySelectorAll(`[data-ui-id="${uiId}"]`).forEach(s => {
                                 s.dataset.id = newId;
                             });
+
+                            // SE for Renovação, reseta o ciclo aqui também
+                            if (/RENOVA[CÇ][AÃ]O/i.test(serviceVal)) {
+                                const client = state.clients.find(c => c.nome.toLowerCase() === value.toLowerCase());
+                                if (client) {
+                                    window.updateClientPlan(client.id, { 
+                                        plano_inicio: date,
+                                        plano_pagamento: date 
+                                    });
+                                }
+                            }
+
                             syncFromSheet(state.sheetUrl);
                         }
                     }
@@ -4525,10 +4291,33 @@ if (!window.hasGlobalHandlers) {
                 }
             } else {
                 let recordData = { [dbField]: finalValue };
-                // Se o serviço mudou para algo tipo "1º DIA", garantir que valor e pagamento subam junto
-                if (field === 'service' && /\d+º\s*DIA/i.test(value)) {
-                    recordData.forma_pagamento = 'PLANO MENSAL';
-                    recordData.valor = 0;
+                // Lógica de Automação de Plano e Renovação
+                if (field === 'service') {
+                    const isRenewal = /RENOVA[CÇ][AÃ]O/i.test(value);
+                    
+                    if (isRenewal) {
+                        const clientName = document.querySelector(`[data-ui-id="${uiId}"][data-field="client"]`)?.innerText.trim();
+                        const client = state.clients.find(c => c.nome.toLowerCase() === clientName?.toLowerCase());
+                        if (client) {
+                            recordData.forma_pagamento = 'PIX';
+                            recordData.valor = parseFloat(client.valor_plano) || 0;
+                            
+                            // Feedback visual imediato na UI
+                            const priceEl = document.querySelector(`[data-ui-id="${uiId}"][data-field="value"]`);
+                            const payEl = document.querySelector(`[data-ui-id="${uiId}"][data-field="payment"]`);
+                            if (priceEl) priceEl.innerText = parseFloat(client.valor_plano).toFixed(2);
+                            if (payEl) payEl.value = 'PIX';
+                            
+                            // Reseta ciclo do cliente
+                            window.updateClientPlan(client.id, { 
+                                plano_inicio: date,
+                                plano_pagamento: date 
+                            });
+                        }
+                    } else if (/\d+º\s*DIA/i.test(value)) {
+                        recordData.forma_pagamento = 'PLANO MENSAL';
+                        recordData.valor = 0;
+                    }
                 }
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/agendamentos?id=eq.${id}`, {
                     method: 'PATCH',
@@ -4681,16 +4470,33 @@ if (!window.hasGlobalHandlers) {
 
             if (field === 'client') {
                 const usage = window.getClientPlanUsage(value);
-                if (usage && usage.isWithinLimit) {
+                if (usage) {
+                    const client = state.clients.find(c => c.nome.toLowerCase() === value.toLowerCase());
                     const serviceEl = document.querySelector(`[data-ui-id="${uiId}"][data-field="service"]`);
                     const valueEl = document.querySelector(`[data-ui-id="${uiId}"][data-field="value"]`);
                     const paymentSelect = document.querySelector(`[data-ui-id="${uiId}"][data-field="payment"]`);
-                    
-                    if (serviceEl) serviceEl.innerText = `${usage.nextVisit}º DIA`;
-                    if (valueEl) valueEl.innerText = "0.00";
-                    if (paymentSelect) paymentSelect.value = "PLANO MENSAL";
+                    const dateVal = document.querySelector(`[data-ui-id="${uiId}"][data-field="time"]`)?.dataset.date || new Date().toISOString().split('T')[0];
 
-                    // Se não for novo, dispara o save para cada campo. 
+                    if (usage.isWithinLimit) {
+                        if (serviceEl) serviceEl.innerText = `${usage.nextVisit}º DIA`;
+                        if (valueEl) valueEl.innerText = "0.00";
+                        if (paymentSelect) paymentSelect.value = "PLANO MENSAL";
+                    } else {
+                        // Atingiu o limite! Sugere Renovação
+                        if (serviceEl) serviceEl.innerText = `RENOVAÇÃO 1º DIA`;
+                        if (valueEl && client?.valor_plano) valueEl.innerText = parseFloat(client.valor_plano).toFixed(2);
+                        if (paymentSelect) paymentSelect.value = "PIX";
+                        
+                        // Atualiza as datas do cliente para resetar o ciclo
+                        if (client) {
+                            window.updateClientPlan(client.id, { 
+                                plano_inicio: dateVal,
+                                plano_pagamento: dateVal 
+                            });
+                        }
+                    }
+
+                    // Se não for novo, dispara o save para cada campo
                     if (!isNew) {
                         if (serviceEl) window.saveInlineEdit(serviceEl);
                         if (valueEl) window.saveInlineEdit(valueEl);
@@ -4700,12 +4506,50 @@ if (!window.hasGlobalHandlers) {
             }
             
             if (field === 'service') {
-                const proc = state.procedures.find(p => p.nome === value);
-                if (proc) {
+                const isRenewal = /RENOVA[CÇ][AÃ]O/i.test(value);
+                
+                if (isRenewal) {
+                    const clientName = document.querySelector(`[data-ui-id="${uiId}"][data-field="client"]`)?.innerText.trim();
+                    const client = state.clients.find(c => c.nome.toLowerCase() === clientName?.toLowerCase());
+                    
+                    if (client) {
+                        const priceEl = document.querySelector(`[data-ui-id="${uiId}"][data-field="value"]`);
+                        const payEl = document.querySelector(`[data-ui-id="${uiId}"][data-field="payment"]`);
+                        
+                        if (priceEl && client.valor_plano) priceEl.innerText = parseFloat(client.valor_plano).toFixed(2);
+                        if (payEl) payEl.value = 'PIX';
+                        
+                        // Atualiza as datas do cliente para resetar o ciclo
+                        const dateVal = document.querySelector(`[data-ui-id="${uiId}"][data-field="time"]`)?.dataset.date || new Date().toISOString().split('T')[0];
+                        if (dateVal) {
+                            window.updateClientPlan(client.id, { 
+                                plano_pagamento: dateVal,
+                                plano_inicio: dateVal 
+                            });
+                        }
+
+                        if (!isNew) {
+                            if (priceEl) window.saveInlineEdit(priceEl);
+                            if (payEl) window.saveInlineEdit(payEl);
+                        }
+                    }
+                } else if (/\d+º\s*DIA/i.test(value)) {
                     const priceEl = document.querySelector(`[data-ui-id="${uiId}"][data-field="value"]`);
-                    if (priceEl) {
-                        priceEl.innerText = proc.preco.toFixed(2);
-                        if (!isNew) window.saveInlineEdit(priceEl);
+                    const payEl = document.querySelector(`[data-ui-id="${uiId}"][data-field="payment"]`);
+                    if (priceEl) priceEl.innerText = "0.00";
+                    if (payEl) payEl.value = "PLANO MENSAL";
+                    if (!isNew) {
+                        if (priceEl) window.saveInlineEdit(priceEl);
+                        if (payEl) window.saveInlineEdit(payEl);
+                    }
+                } else {
+                    const proc = state.procedures.find(p => p.nome === value);
+                    if (proc) {
+                        const priceEl = document.querySelector(`[data-ui-id="${uiId}"][data-field="value"]`);
+                        if (priceEl) {
+                            priceEl.innerText = proc.preco.toFixed(2);
+                            if (!isNew) window.saveInlineEdit(priceEl);
+                        }
                     }
                 }
             }
