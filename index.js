@@ -1529,8 +1529,7 @@ const ClientsPage = () => {
             plano_inicio: formData.get('plano_inicio') || null,
             plano_pagamento: formData.get('plano_pagamento') || null,
             plano_pagamento: formData.get('plano_pagamento') || null,
-            novo_cliente: formData.get('novo_cliente') === 'on',
-            observacoes: formData.get('observacoes') || ''
+            novo_cliente: formData.get('novo_cliente') === 'on'
         };
 
         btn.disabled = true;
@@ -1747,12 +1746,6 @@ const ClientsPage = () => {
                                     <label for="novo_cliente_toggle" class="text-xs font-bold text-white uppercase tracking-widest cursor-pointer">Marcar como Novo Cliente</label>
                                 </div>
 
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Observações Geras</label>
-                                    <textarea name="observacoes" rows="2" placeholder="Ex: Gosta de café, Alérgico a lâmina..."
-                                              class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-medium text-sm resize-none custom-scroll">${state.editingClient?.observacoes || ''}</textarea>
-                                </div>
-
                                 <!-- Botão Final de Cadastro -->
                                 <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl border border-transparent transition-all uppercase tracking-widest text-sm shadow-xl shadow-amber-500/10 active:scale-95">
                                     ${state.editingClient ? 'Salvar Alterações' : 'Cadastrar Cliente'}
@@ -1824,7 +1817,6 @@ const ClientsPage = () => {
                                                 <th class="px-8 py-4 border-b border-white/5">Nome</th>
                                                 <th class="px-8 py-4 border-b border-white/5">Plano</th>
                                                 <th class="px-8 py-4 border-b border-white/5">Telefone</th>
-                                                <th class="px-8 py-4 border-b border-white/5">Observações</th>
                                                 <th class="px-8 py-4 border-b border-white/5 text-right">Ações</th>
                                             </tr>
                                         </thead>
@@ -1845,14 +1837,6 @@ const ClientsPage = () => {
                                                         </span>
                                                     </td>
                                                     <td class="px-8 py-4 text-slate-400 font-medium">${c.telefone || '---'}</td>
-                                                    <td class="px-8 py-4 relative">
-                                                        <div contenteditable="true"
-                                                             onblur="window.saveClientInline('${c.id}', 'observacoes', this.innerText)"
-                                                             onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                                                             class="text-[10px] text-slate-500 italic outline-none hover:text-slate-300 transition-all truncate focus:whitespace-normal focus:break-words max-w-[150px] cursor-text">
-                                                            ${c.observacoes || 'Sem obs...'}
-                                                        </div>
-                                                    </td>
                                                     <td class="px-8 py-4 text-right">
                                                         <div class="flex justify-end space-x-2">
                                                             <button onclick='window.editClient(${JSON.stringify(c)})' 
@@ -2030,8 +2014,7 @@ const PlansPage = () => {
             telefone: formData.get('telefone'),
             plano: formData.get('plano'),
             plano_inicio: formData.get('plano_inicio'),
-            limite_cortes: parseInt(formData.get('limite_cortes')) || 4,
-            observacoes: formData.get('observacoes') || ''
+            limite_cortes: parseInt(formData.get('limite_cortes')) || 4
         };
 
         try {
@@ -2154,12 +2137,12 @@ const PlansPage = () => {
                 </div>
                 
                 <div class="hidden md:grid grid-cols-12 gap-4 px-8 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 bg-white/[0.01]">
+                    <div class="col-span-3 pl-2">Cliente</div>
                     <div class="col-span-2">Início Plan</div>
                     <div class="col-span-2">Ult. Pagamento</div>
-                    <div class="col-span-2">Observações</div>
+                    <div class="col-span-2">Limite Cortes</div>
                     <div class="col-span-2">Status</div>
                     <div class="col-span-1 text-right pr-2">Ações</div>
-+                </div>
                 </div>
 
                 <div class="bg-dark-900/30 rounded-b-[2rem] rounded-t-none border border-white/5 border-t-0 overflow-hidden min-h-[400px]">
@@ -2212,13 +2195,13 @@ const PlansPage = () => {
                                                class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-2xl px-3 py-2.5 outline-none focus:border-amber-500/50 transition-all text-white cursor-pointer hover:bg-white/5">
                                     </div>
 
-                                    <!-- Observações (Col 2) -->
-                                    <div class="md:col-span-2 px-2">
-                                        <div contenteditable="true"
-                                             onblur="window.saveClientInline('${c.id}', 'observacoes', this.innerText)"
-                                             onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                                             class="text-[10px] text-slate-500 italic outline-none hover:text-slate-300 transition-all truncate focus:whitespace-normal focus:break-words max-w-[120px] mx-auto cursor-text text-center">
-                                            ${c.observacoes || 'Sem obs...'}
+                                    <!-- Limite Cortes (Col 2) -->
+                                    <div class="md:col-span-2">
+                                        <div class="relative group/limit">
+                                            <input type="number" value="${c.limite_cortes || 4}" min="1" max="99"
+                                                   onchange="window.updateClientPlan('${c.id}', { limite_cortes: parseInt(this.value) || 4 })"
+                                                   class="w-full bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-8 py-2 outline-none focus:border-amber-500 transition-all text-white/70 text-center hover:border-white/10 appearance-none">
+                                            <i class="fas fa-scissors absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 group-hover/limit:text-amber-500 transition-colors"></i>
                                         </div>
                                     </div>
 
@@ -2297,11 +2280,6 @@ const PlansPage = () => {
                                                class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-white pl-10">
                                         <i class="fas fa-scissors absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
                                     </div>
-                                </div>
-                                <div class="space-y-1 col-span-2">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Observações</label>
-                                    <textarea name="observacoes" rows="2" placeholder="Notas sobre o assinante..."
-                                              class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-medium text-xs resize-none"></textarea>
                                 </div>
                             </div>
                             
