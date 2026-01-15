@@ -3271,8 +3271,9 @@ const ExpensesPage = () => {
                                 <select onchange="window.toggleExpenseStatus('${e.id}', this.value)" 
                                         class="bg-white/5 border border-white/10 text-[10px] font-black uppercase rounded-lg px-2 py-1 outline-none transition-all w-full
                                         ${e.paga ? 'text-emerald-500' : diffDays < 0 ? 'text-rose-500' : 'text-amber-500'}">
-                                    <option value="PENDENTE" ${!e.paga ? 'selected' : ''}>${diffDays < 0 ? 'VENCIDO' : 'PENDENTE'}</option>
                                     <option value="PAGO" ${e.paga ? 'selected' : ''}>PAGO</option>
+                                    <option value="A VENCER" ${!e.paga && diffDays >= 0 ? 'selected' : ''}>A VENCER</option>
+                                    <option value="VENCIDO" ${!e.paga && diffDays < 0 ? 'selected' : ''}>VENCIDO</option>
                                 </select>
                             </div>
 
@@ -3322,14 +3323,18 @@ const ExpensesPage = () => {
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
-                        <form onsubmit="window.saveExpense(event)" class="p-5 space-y-4">
+                        <form onsubmit="window.saveExpense(event)" id="expenseModal" class="p-5 space-y-4">
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="space-y-1">
+                                <div class="space-y-1 relative">
                                     <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Cartão/Origem</label>
-                                    <select name="cartao" class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-xs uppercase text-white">
-                                        <option value="">NENHUM (DINHEIRO/PIX)</option>
-                                        ${state.cards.map(c => `<option value="${c.nome}" ${state.editingExpense?.cartao === c.nome ? 'selected' : ''}>${c.nome} (${c.banco})</option>`).join('')}
-                                    </select>
+                                    <input type="text" name="cartao" value="${state.editingExpense?.cartao || ''}" 
+                                           placeholder="DINHEIRO / CARTÃO..."
+                                           autocomplete="off"
+                                           oninput="window.showExpenseAutocomplete(this, true, 'card')"
+                                           onkeydown="window.handleEnterSelection(event, 'expenseAutocomplete_card_modal')"
+                                           onblur="setTimeout(() => document.getElementById('expenseAutocomplete_card_modal')?.classList.add('hidden'), 200)"
+                                           class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-xs uppercase text-white">
+                                    <div id="expenseAutocomplete_card_modal" class="hidden absolute z-[120] left-0 right-0 mt-2 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scroll p-2"></div>
                                 </div>
                                 <div class="space-y-1">
                                     <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Data da Compra</label>
@@ -3345,37 +3350,38 @@ const ExpensesPage = () => {
                                        value="${state.editingExpense?.descricao || ''}" 
                                        placeholder="EX: COMPRA 1, ALUGUEL..."
                                        autocomplete="off"
-                                       oninput="window.showExpenseAutocomplete(this, true)"
-                                       onblur="setTimeout(() => document.getElementById('expenseAutocomplete_modal')?.classList.add('hidden'), 200)"
+                                       oninput="window.showExpenseAutocomplete(this, true, 'desc')"
+                                       onkeydown="window.handleEnterSelection(event, 'expenseAutocomplete_desc_modal')"
+                                       onblur="setTimeout(() => document.getElementById('expenseAutocomplete_desc_modal')?.classList.add('hidden'), 200)"
                                        class="w-full bg-dark-950 border border-white/5 p-3.5 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold uppercase text-sm">
-                                <div id="expenseAutocomplete_modal" class="hidden absolute z-[120] left-0 right-0 mt-2 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scroll p-2"></div>
+                                <div id="expenseAutocomplete_desc_modal" class="hidden absolute z-[120] left-0 right-0 mt-2 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl max-h-48 overflow-y-auto custom-scroll p-2"></div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div class="space-y-1">
                                     <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Valor Total (R$)</label>
                                     <input type="number" step="0.01" name="valor_total" value="${state.editingExpense?.valor_total || state.editingExpense?.valor || ''}"
                                            class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-sm">
                                 </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                     <div class="space-y-1">
-                                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Parcela</label>
-                                        <input type="text" name="parcela" value="${state.editingExpense?.parcela || '1/1'}"
-                                               class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-xs text-center">
-                                    </div>
-                                    <div class="space-y-1">
-                                        <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Vencimento</label>
-                                        <input type="date" name="vencimento" required value="${state.editingExpense?.vencimento || ''}"
-                                               style="color-scheme: dark"
-                                               class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-xs">
-                                    </div>
+                                <div class="space-y-1">
+                                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Parcela</label>
+                                    <input type="text" name="parcela" value="${state.editingExpense?.parcela || '1/1'}"
+                                           oninput="window.maskParcela(this)"
+                                           placeholder="1/1"
+                                           class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-xs text-center">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Vencimento</label>
+                                    <input type="date" name="vencimento" required value="${state.editingExpense?.vencimento || ''}"
+                                           style="color-scheme: dark"
+                                           class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-xs">
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-1">
                                     <label class="text-[9px] font-black uppercase text-slate-500 tracking-widest ml-1">Valor Parcela (R$)</label>
-                                    <input type="number" step="0.01" name="valor" required value="${state.editingExpense?.valor || ''}"
+                                    <input type="number" step="0.01" name="valor" value="${state.editingExpense?.valor || ''}"
                                            class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-rose-500/50 transition-all font-bold text-sm">
                                 </div>
                                 <div class="space-y-1">
@@ -4206,32 +4212,25 @@ if (!window.hasGlobalHandlers) {
         }
     };
 
-window.handleEnterSelection = (e, dropdownId) => {
-    if (e.key === 'Enter') {
-        const dropdown = document.getElementById(dropdownId);
-        if (dropdown && !dropdown.classList.contains('hidden')) {
-            const firstOption = dropdown.querySelector('div');
-            if (firstOption) {
-                e.preventDefault();
-                const mousedownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
-                const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
-                firstOption.dispatchEvent(mousedownEvent);
-                firstOption.dispatchEvent(clickEvent);
-                
-                // Tenta mover o foco para o próximo campo (Serviço) nos formulários principais
-                setTimeout(() => {
-                    const form = e.target.closest('form');
-                    if (form) {
-                        const next = form.querySelector('select[name="service"]');
-                        if (next) next.focus();
-                    }
-                }, 50);
-                return true;
+    window.handleEnterSelection = (e, dropdownId) => {
+        if (e.key === 'Enter') {
+            const dropdown = document.getElementById(dropdownId);
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                const firstOption = dropdown.querySelector('div');
+                if (firstOption) {
+                    e.preventDefault();
+                    // Dispara o mousedown para acionar a lógica de seleção
+                    const mousedownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+                    firstOption.dispatchEvent(mousedownEvent);
+                    
+                    // Esconde o dropdown manualmente para garantir
+                    dropdown.classList.add('hidden');
+                    return true;
+                }
             }
         }
-    }
-    return false;
-};
+        return false;
+    };
 
     window.saveNewRecord = async (e) => {
         e.preventDefault();
@@ -4419,47 +4418,60 @@ window.handleEnterSelection = (e, dropdownId) => {
         }
     };
 
-    window.showExpenseAutocomplete = (el, isModal = false) => {
-        const id = isModal ? 'modal' : el.dataset.id;
+    window.showExpenseAutocomplete = (el, isModal = false, type = 'card') => {
+        const id = isModal ? `${type}_modal` : el.dataset.id;
         const val = (isModal ? el.value : el.innerText).trim().toLowerCase();
         const dropdown = document.getElementById(`expenseAutocomplete_${id}`);
         if (!dropdown) return;
 
         if (val.length < 1) { dropdown.classList.add('hidden'); return; }
 
-        const matches = state.cards.filter(c => c.nome.toLowerCase().includes(val)).slice(0, 5);
+        let matches = [];
+        if (type === 'card') {
+            matches = state.cards.filter(c => c.nome.toLowerCase().includes(val)).slice(0, 5);
+        } else if (type === 'desc') {
+            const commonDescs = [...new Set(state.expenses.map(e => e.descricao))];
+            matches = commonDescs.filter(d => d && d.toLowerCase().includes(val)).slice(0, 5).map(d => ({ nome: d }));
+        }
 
         if (matches.length === 0) { dropdown.classList.add('hidden'); return; }
 
-        dropdown.innerHTML = matches.map(card => `
+        dropdown.innerHTML = matches.map(match => `
             <div class="px-3 py-2 hover:bg-amber-500 hover:text-dark-950 cursor-pointer rounded-lg transition-colors font-bold uppercase truncate text-[11px]"
-                 onmousedown="window.selectExpenseCard('${id}', '${card.nome}', ${isModal})">
-                <i class="fas fa-credit-card mr-2 text-[10px] text-amber-500/50"></i>
-                ${card.nome}
+                 onmousedown="window.selectExpenseData('${id}', '${match.nome}', ${isModal}, '${type}')">
+                <i class="fas ${type === 'card' ? 'fa-credit-card' : 'fa-tag'} mr-2 text-[10px] text-amber-500/50"></i>
+                ${match.nome}
             </div>
         `).join('');
         dropdown.classList.remove('hidden');
     };
 
-    window.selectExpenseCard = (id, value, isModal = false) => {
+    window.selectExpenseData = (id, value, isModal = false, type = 'card') => {
         if (isModal) {
-            const el = document.querySelector('#expenseModal select[name="cartao"]');
-            if (el) {
-                // Tenta selecionar o cartão no dropdown, senão adiciona temporariamente ou deixa como texto se o modal for dinâmico
-                el.value = value;
-            }
+            const fieldName = type === 'card' ? 'cartao' : 'descricao';
+            const el = document.querySelector(`#expenseModal input[name="${fieldName}"]`);
+            if (el) el.value = value.toUpperCase();
             const dropdown = document.getElementById(`expenseAutocomplete_${id}`);
             if (dropdown) dropdown.classList.add('hidden');
         } else {
             const el = document.querySelector(`[data-field="cartao"][data-id="${id}"]`);
             if (el) {
-                el.innerText = value;
+                el.innerText = value.toUpperCase();
                 el.dataset.beganTyping = "false";
                 const dropdown = document.getElementById(`expenseAutocomplete_${id}`);
                 if (dropdown) dropdown.classList.add('hidden');
                 window.saveExpenseInline(el);
             }
         }
+    };
+
+    window.maskParcela = (el) => {
+        let value = el.value.replace(/[^\d/]/g, ""); 
+        const parts = value.split("/");
+        if (parts.length > 2) value = parts[0] + "/" + parts[1];
+        if (parts[0] && parts[0].length > 2) value = parts[0].substring(0, 2) + (parts[1] !== undefined ? "/" + parts[1] : "");
+        if (parts[1] && parts[1].length > 2) value = (parts[0] || "") + "/" + parts[1].substring(0, 2);
+        el.value = value;
     };
 
     window.showInlineAutocomplete = (el) => {
