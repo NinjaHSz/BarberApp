@@ -98,16 +98,35 @@
       /* Estilo para edição inline (planilha) */
       [contenteditable="true"]:focus {
         outline: none;
-        background: rgba(var(--accent-rgb), 0.1);
-        box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.3);
-        border-radius: 4px;
-        min-width: 50px;
-        display: inline-block;
+        background: rgba(var(--accent-rgb), 0.05);
+        box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.2);
+        border-radius: 8px;
+        display: block;
+        min-height: 1.5rem;
       }
       [contenteditable="true"]:hover {
         cursor: text;
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.03);
       }
+      [contenteditable="true"] {
+        padding: 2px 4px;
+        transition: background 0.2s;
+      }
+
+      [contenteditable="true"]:empty:before {
+        content: attr(placeholder);
+        color: #64748b;
+        font-style: italic;
+        pointer-events: none;
+      }
+      /* Prevenir quebra de linha indesejada em elementos pequenos */
+      .line-clamp-1,
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
       /* Esconder ícone nativo do input date */
       input[type="date"]::-webkit-calendar-picker-indicator {
         opacity: 0;

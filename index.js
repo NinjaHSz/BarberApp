@@ -1524,10 +1524,8 @@ const ClientsPage = () => {
         
         const clientData = {
             nome: formData.get('nome'),
-            telefone: formData.get('telefone') || null,
             plano: formData.get('plano') || 'Nenhum',
             plano_inicio: formData.get('plano_inicio') || null,
-            plano_pagamento: formData.get('plano_pagamento') || null,
             plano_pagamento: formData.get('plano_pagamento') || null,
             novo_cliente: formData.get('novo_cliente') === 'on'
         };
@@ -1705,12 +1703,7 @@ const ClientsPage = () => {
                                            value="${state.editingClient?.nome || ''}"
                                            class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold">
                                 </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Telefone (Opcional)</label>
-                                    <input type="text" name="telefone" placeholder="(00) 00000-0000"
-                                           value="${state.editingClient?.telefone || ''}"
-                                           class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold">
-                                </div>
+
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Tipo de Plano</label>
                                     <select name="plano" onchange="document.getElementById('plan-dates-container').classList.toggle('hidden', this.value === 'Nenhum')"
@@ -1814,10 +1807,10 @@ const ClientsPage = () => {
                                     <table class="w-full text-left">
                                         <thead class="bg-white/[0.01] text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                             <tr>
-                                                <th class="px-8 py-4 border-b border-white/5">Nome</th>
-                                                <th class="px-8 py-4 border-b border-white/5">Plano</th>
-                                                <th class="px-8 py-4 border-b border-white/5">Telefone</th>
-                                                <th class="px-8 py-4 border-b border-white/5 text-right">Ações</th>
+                                                <th class="px-4 py-4 border-b border-white/5">Nome</th>
+                                                <th class="px-4 py-4 border-b border-white/5 text-center">Plano</th>
+                                                <th class="px-4 py-4 border-b border-white/5">Observações</th>
+                                                <th class="px-4 py-4 border-b border-white/5 text-right">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-white/5 text-sm">
@@ -1825,27 +1818,29 @@ const ClientsPage = () => {
                                                 .filter(c => c.nome.toLowerCase().includes(state.managementSearch.toLowerCase()))
                                                 .map(c => `
                                                 <tr class="hover:bg-white/[0.01] transition-colors group">
-                                                    <td class="px-8 py-4 font-bold text-white uppercase cursor-pointer hover:text-amber-500 transition-colors" onclick="navigate('client-profile', '${c.id}')">
-                                                        ${c.nome} ${c.novo_cliente ? '<span class="ml-2 bg-amber-500/20 text-amber-500 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ''}
+                                                    <td class="px-4 py-4 font-bold text-white uppercase cursor-pointer hover:text-amber-500 transition-colors whitespace-nowrap" onclick="navigate('client-profile', '${c.id}')">
+                                                        ${c.nome} ${c.novo_cliente ? '<span class="ml-1 bg-amber-500/20 text-amber-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ''}
                                                     </td>
-                                                    <td class="px-8 py-4">
-                                                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+                                                    <td class="px-4 py-4 text-center">
+                                                        <span class="px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest
                                                             ${c.plano === 'Mensal' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
                                                               c.plano === 'Anual' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 
                                                               'text-slate-500 border border-white/5'}">
                                                             ${c.plano || 'Nenhum'}
                                                         </span>
                                                     </td>
-                                                    <td class="px-8 py-4 text-slate-400 font-medium">${c.telefone || '---'}</td>
-                                                    <td class="px-8 py-4 text-right">
-                                                        <div class="flex justify-end space-x-2">
+                                                    <td class="px-4 py-4">
+                                                        <div contenteditable="true" onblur="window.updateClientField('${c.id}', 'observacoes_cliente', this.innerText.trim())" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="bg-transparent text-[10px] text-slate-400 font-medium outline-none hover:text-white transition-colors whitespace-pre-wrap min-w-[120px] max-w-[250px] cursor-text">${!c.observacoes_cliente || c.observacoes_cliente.includes('...') || c.observacoes_cliente.includes('permanentes') ? 'Adcionar Nota...' : c.observacoes_cliente}</div>
+                                                    </td>
+                                                    <td class="px-4 py-4 text-right">
+                                                        <div class="flex justify-end space-x-1.5">
                                                             <button onclick='window.editClient(${JSON.stringify(c)})' 
-                                                                    class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-90">
-                                                                <i class="fas fa-edit"></i>
+                                                                    class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-90 flex items-center justify-center">
+                                                                <i class="fas fa-edit text-xs"></i>
                                                             </button>
                                                             <button onclick="window.deleteClient('${c.id}')" 
-                                                                    class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90">
-                                                                <i class="fas fa-trash-alt"></i>
+                                                                    class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90 flex items-center justify-center">
+                                                                <i class="fas fa-trash-alt text-xs"></i>
                                                             </button>
                                                         </div>
                                                     </td>
@@ -1871,7 +1866,6 @@ const ClientsPage = () => {
                                             </div>
                                             <div class="flex items-center space-x-4">
                                                 <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${c.plano === 'Mensal' ? 'bg-amber-500/10 text-amber-500' : 'text-slate-500 border border-white/5'}">${c.plano || 'Nenhum'}</span>
-                                                <span class="text-xs text-slate-500">${c.telefone || ''}</span>
                                             </div>
                                         </div>
                                     `).join('')}
@@ -1882,9 +1876,9 @@ const ClientsPage = () => {
                                     <table class="w-full text-left">
                                         <thead class="bg-white/[0.01] text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                             <tr>
-                                                <th class="px-8 py-4 border-b border-white/5">Serviço</th>
-                                                <th class="px-8 py-4 border-b border-white/5">Preço Base</th>
-                                                <th class="px-8 py-4 border-b border-white/5 text-right">Ações</th>
+                                                <th class="px-4 py-4 border-b border-white/5">Serviço</th>
+                                                <th class="px-4 py-4 border-b border-white/5">Preço Base</th>
+                                                <th class="px-4 py-4 border-b border-white/5 text-right">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-white/5 text-sm">
@@ -1892,17 +1886,17 @@ const ClientsPage = () => {
                                                 .filter(p => p.nome.toLowerCase().includes(state.managementSearch.toLowerCase()))
                                                 .map(p => `
                                                 <tr class="hover:bg-white/[0.01] transition-colors group">
-                                                    <td class="px-8 py-4 font-bold text-white uppercase">${p.nome}</td>
-                                                    <td class="px-8 py-4 text-emerald-400 font-black">R$ ${p.preco.toFixed(2).replace('.', ',')}</td>
-                                                    <td class="px-8 py-4 text-right">
-                                                        <div class="flex justify-end space-x-2">
+                                                    <td class="px-4 py-4 font-bold text-white uppercase whitespace-nowrap">${p.nome}</td>
+                                                    <td class="px-4 py-4 text-emerald-400 font-black">R$ ${p.preco.toFixed(2).replace('.', ',')}</td>
+                                                    <td class="px-4 py-4 text-right">
+                                                        <div class="flex justify-end space-x-1.5">
                                                             <button onclick='window.editProcedure(${JSON.stringify(p)})' 
-                                                                    class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-90">
-                                                                <i class="fas fa-edit"></i>
+                                                                    class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-90 flex items-center justify-center">
+                                                                <i class="fas fa-edit text-xs"></i>
                                                             </button>
                                                             <button onclick="window.deleteProcedure('${p.id}')" 
-                                                                    class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90">
-                                                                <i class="fas fa-trash-alt"></i>
+                                                                    class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90 flex items-center justify-center">
+                                                                <i class="fas fa-trash-alt text-xs"></i>
                                                             </button>
                                                         </div>
                                                     </td>
@@ -1939,6 +1933,7 @@ const ClientsPage = () => {
 };
 
 // Mover funções para fora para estabilidade
+// Mover funções para fora para estabilidade
 window.updateClientPlan = async (clientId, data) => {
     const payload = typeof data === 'string' ? { plano: data } : data;
     try {
@@ -1956,16 +1951,42 @@ window.updateClientPlan = async (clientId, data) => {
         if (res.ok) {
             const client = state.clients.find(c => c.id == clientId);
             if (client) Object.assign(client, payload);
-            render();
-            fetchClients();
+            render(); // Re-render to show updates
         } else {
-            const errBody = await res.json().catch(() => ({}));
-            console.error('Erro Supabase:', errBody);
-            alert('Erro ao atualizar dados do plano. Verifique se a coluna "limite_cortes" existe no seu banco de dados.');
+            console.error('Erro Supabase ao atualizar plano');
         }
     } catch (err) {
         console.error('Erro de conexão:', err);
-        alert('Erro de conexão ao atualizar plano.');
+    }
+};
+
+// Função genérica para atualizar campos do cliente (ex: observações na lista)
+window.updateClientField = async (clientId, field, value) => {
+    try {
+        const payload = { [field]: value };
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?id=eq.${clientId}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            const client = state.clients.find(c => c.id == clientId);
+            if (client) Object.assign(client, payload);
+            // Opcional: render() se precisar refletir em outros lugares, 
+            // mas para edição inline simples talvez não precise re-renderizar tudo e perder foco.
+            // Se o foco estiver no elemento, re-renderizar remove o foco.
+            // Então NÃO chamamos render() aqui para manter a UX fluida.
+        } else {
+            console.error('Erro ao salvar campo de cliente');
+        }
+    } catch (err) {
+        console.error('Erro de conexão:', err);
     }
 };
 
@@ -2011,7 +2032,6 @@ const PlansPage = () => {
 
         const payload = {
             nome: name,
-            telefone: formData.get('telefone'),
             plano: formData.get('plano'),
             plano_inicio: formData.get('plano_inicio'),
             limite_cortes: parseInt(formData.get('limite_cortes')) || 4
@@ -2025,9 +2045,7 @@ const PlansPage = () => {
                 url += `?id=eq.${existingClient.id}`;
                 method = 'PATCH';
                 // Preservar ID e dados antigos se necessário, mas neste fluxo estamos definindo o plano
-                // Se o telefone estiver vazio no form e o cliente já tiver, podemos manter o antigo?
-                // Vamos assumir que o form é a verdade, mas se vazio, usa o antigo
-                if (!payload.telefone && existingClient.telefone) payload.telefone = existingClient.telefone;
+
             }
 
             const res = await fetch(url, {
@@ -2075,20 +2093,18 @@ const PlansPage = () => {
         }
         
         list.innerHTML = matches.map(c => `
-            <div onclick="window.selectPlanModalClient('${c.nome}', '${c.telefone || ''}')" 
+            <div onclick="window.selectPlanModalClient('${c.nome}')" 
                  class="p-4 hover:bg-white/5 cursor-pointer transition-colors flex justify-between items-center group/item border-b border-white/5 last:border-0">
                 <span class="font-bold text-white text-sm group-hover/item:text-amber-500 transition-colors">${c.nome}</span>
-                <span class="text-[10px] text-slate-500 font-mono bg-white/5 px-2 py-1 rounded-lg">${c.telefone || 'Sem tel'}</span>
             </div>
         `).join('');
         list.classList.remove('hidden');
     };
 
-    window.selectPlanModalClient = (nome, telefone) => {
+    window.selectPlanModalClient = (nome) => {
         const form = document.querySelector('#plan-modal-form');
         if (form) {
             form.nome.value = nome;
-            form.telefone.value = telefone;
         }
         document.getElementById('plan-modal-suggestions').classList.add('hidden');
     };
@@ -2096,10 +2112,8 @@ const PlansPage = () => {
     const clientsWithPlans = state.clients.filter(c => c.plano && c.plano !== 'Nenhum');
     const filteredPlans = clientsWithPlans.filter(c => {
         if (!state.planSearchTerm) return true;
-        const search = state.planSearchTerm.toLowerCase();
         const name = (c.nome || '').toLowerCase();
-        const tel = (c.telefone || '').toLowerCase();
-        return name.includes(search) || tel.includes(search);
+        return name.includes(search);
     });
 
     return `
@@ -2137,11 +2151,12 @@ const PlansPage = () => {
                 </div>
                 
                 <div class="hidden md:grid grid-cols-12 gap-4 px-8 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 bg-white/[0.01]">
-                    <div class="col-span-3 pl-2">Cliente</div>
-                    <div class="col-span-2">Início Plan</div>
-                    <div class="col-span-2">Ult. Pagamento</div>
-                    <div class="col-span-2">Limite Cortes</div>
-                    <div class="col-span-2">Status</div>
+                    <div class="col-span-2 pl-2">Cliente</div>
+                    <div class="col-span-1 text-center">Uso</div>
+                    <div class="col-span-2 text-center">Início</div>
+                    <div class="col-span-2 text-center">Últ. Pagto</div>
+                    <div class="col-span-3">Observações</div>
+                    <div class="col-span-1 text-center">Status</div>
                     <div class="col-span-1 text-right pr-2">Ações</div>
                 </div>
 
@@ -2158,81 +2173,70 @@ const PlansPage = () => {
 
                                     return `
                                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-6 hover:bg-white/[0.02] transition-colors group plan-client-card" data-name="${c.nome}">
-                                    <!-- Cliente Info (Col 3) -->
-                                    <div class="md:col-span-3 flex items-center gap-3 cursor-pointer group/name" onclick="navigate('client-profile', '${c.id}')">
-                                        <div class="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold shrink-0 group-hover/name:bg-amber-500 group-hover/name:text-dark-950 transition-all relative">
+                                    <!-- Cliente Info (Col 2) -->
+                                    <div class="md:col-span-2 flex items-center gap-3 cursor-pointer group/name" onclick="navigate('client-profile', '${c.id}')">
+                                        <div class="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold shrink-0 group-hover/name:bg-amber-500 group-hover/name:text-dark-950 transition-all relative">
                                             ${c.nome.charAt(0)}
-                                            ${c.novo_cliente ? `<div class="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full border-2 border-dark-900 animate-pulse"></div>` : ''}
+                                            ${c.novo_cliente ? `<div class="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border-2 border-dark-900 animate-pulse"></div>` : ''}
                                         </div>
                                         <div class="min-w-0">
-                                            <div class="flex items-center gap-2">
-                                                <p class="font-bold text-white group-hover/name:text-amber-500 transition-colors truncate">${c.nome}</p>
-                                                ${c.novo_cliente ? `<span class="bg-amber-500 text-dark-950 text-[8px] font-black px-1.5 rounded uppercase tracking-wider">Novo</span>` : ''}
-                                            </div>
-                                            <div class="flex items-center gap-2 text-[10px]">
-                                                <p class="text-slate-500 font-bold uppercase tracking-widest truncate">${c.telefone || 'Sem telefone'}</p>
-                                                ${planStats ? `
-                                                    <span class="text-slate-600 hidden md:inline">•</span>
-                                                    <span contenteditable="true" 
-                                                          onblur="const [usage, limit] = this.innerText.split('/'); window.updateClientPlan('${c.id}', { limite_cortes: parseInt(limit) || 4 })"
-                                                          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()} if(this.innerText.length >= 5 && event.key !== 'Backspace' && event.key !== 'Delete'){event.preventDefault()}"
-                                                          class="${planStats.usageCount >= (c.limite_cortes || 4) ? 'text-rose-500' : 'text-emerald-500'} font-black hidden md:inline uppercase tracking-widest outline-none hover:bg-white/5 rounded px-1 transition-all cursor-text focus:bg-white/10"
-                                                          title="Clique para editar o limite (Formato: USADOS/LIMITE)">
-                                                        ${planStats.usageCount}/${c.limite_cortes || 4}
-                                                    </span>
-                                                    <span class="text-[8px] text-slate-600 font-black uppercase tracking-tighter hidden md:inline">CORTES</span>
-                                                ` : ''}
-                                            </div>
+                                            <p class="font-bold text-white group-hover/name:text-amber-500 transition-colors truncate text-[11px]" title="${c.nome}">${c.nome}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Limite/Uso (Col 1) -->
+                                    <div class="md:col-span-1 flex justify-center">
+                                        <div class="flex items-center gap-0.5 text-[11px] font-black tracking-tighter">
+                                            <span class="${planStats?.usageCount >= (c.limite_cortes || 4) ? 'text-rose-500' : 'text-emerald-500'}">${planStats?.usageCount || 0}</span>
+                                            <span class="text-slate-600">/</span>
+                                            <input type="number" value="${c.limite_cortes || 4}" min="1" max="99"
+                                                   onchange="window.updateClientPlan('${c.id}', { limite_cortes: parseInt(this.value) || 4 })"
+                                                   class="w-5 bg-transparent border-none text-[11px] font-black p-0 outline-none text-white/40 focus:text-amber-500 hover:text-white transition-colors appearance-none cursor-pointer">
                                         </div>
                                     </div>
 
                                     <!-- Início Plano (Col 2) -->
-                                    <div class="md:col-span-2">
+                                    <div class="md:col-span-2 flex justify-center">
                                         <input type="date" value="${c.plano_inicio || ''}" 
                                                onchange="window.updateClientPlan('${c.id}', { plano_inicio: this.value })"
                                                style="color-scheme: dark"
-                                               class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-2xl px-3 py-2.5 outline-none focus:border-amber-500/50 transition-all text-white cursor-pointer hover:bg-white/5">
+                                               class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-xl px-2 py-2 outline-none focus:border-amber-500/50 transition-all text-white cursor-pointer hover:bg-white/5 text-center">
                                     </div>
 
                                     <!-- Pagamento (Col 2) -->
-                                    <div class="md:col-span-2">
+                                    <div class="md:col-span-2 flex justify-center">
                                         <input type="date" value="${c.plano_pagamento || ''}" 
                                                onchange="window.updateClientPlan('${c.id}', { plano_pagamento: this.value })"
                                                style="color-scheme: dark"
-                                               class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-2xl px-3 py-2.5 outline-none focus:border-amber-500/50 transition-all text-white cursor-pointer hover:bg-white/5">
+                                               class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-xl px-2 py-2 outline-none focus:border-amber-500/50 transition-all text-white cursor-pointer hover:bg-white/5 text-center">
+                                    </div>
+                                    
+                                     <!-- Observações (Col 3) -->
+                                    <div class="md:col-span-3 relative group/obs">
+                                        <div contenteditable="true" onblur="window.updateClientPlan('${c.id}', { observacoes_plano: this.innerText.trim() })" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-xl px-3 py-2.5 outline-none focus:border-amber-500/50 transition-all text-slate-400 focus:text-white whitespace-pre-wrap cursor-text overflow-hidden">${!c.observacoes_plano || c.observacoes_plano.includes('...') ? 'Adcionar Nota...' : c.observacoes_plano}</div>
                                     </div>
 
-                                    <!-- Limite Cortes (Col 2) -->
-                                    <div class="md:col-span-2">
-                                        <div class="relative group/limit">
-                                            <input type="number" value="${c.limite_cortes || 4}" min="1" max="99"
-                                                   onchange="window.updateClientPlan('${c.id}', { limite_cortes: parseInt(this.value) || 4 })"
-                                                   class="w-full bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-8 py-2 outline-none focus:border-amber-500 transition-all text-white/70 text-center hover:border-white/10 appearance-none">
-                                            <i class="fas fa-scissors absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 group-hover/limit:text-amber-500 transition-colors"></i>
-                                        </div>
-                                    </div>
-
-                                    <!-- Status (Col 2) -->
-                                    <div class="md:col-span-2">
+                                    <!-- Status (Col 1) -->
+                                    <div class="md:col-span-1 flex justify-center">
                                         <select onchange="window.updateClientPlan('${c.id}', { plano: this.value })" 
-                                                class="w-full bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-2 py-2 outline-none focus:border-amber-500 transition-all cursor-pointer appearance-none text-center hover:border-white/10 ${c.plano === 'Pausado' ? 'text-yellow-500' : 'text-white'}">
-                                            <option value="Mensal" ${c.plano === 'Mensal' ? 'selected' : ''}>Mensal</option>
-                                            <option value="Anual" ${c.plano === 'Anual' ? 'selected' : ''}>Anual</option>
-                                            <option value="Pausado" ${c.plano === 'Pausado' ? 'selected' : ''}>Pausado</option>
+                                                class="w-full bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-0 py-2 outline-none focus:border-amber-500 transition-all cursor-pointer appearance-none text-center hover:border-white/10 ${c.plano === 'Pausado' ? 'text-yellow-500' : 'text-white'}">
+                                            <option value="Mensal" ${c.plano === 'Mensal' ? 'selected' : ''}>MES</option>
+                                            <option value="Anual" ${c.plano === 'Anual' ? 'selected' : ''}>ANO</option>
+                                            <option value="Pausado" ${c.plano === 'Pausado' ? 'selected' : ''}>PAUSE</option>
                                         </select>
                                     </div>
 
                                     <!-- Actions (Col 1) -->
-                                    <div class="md:col-span-1 flex justify-end gap-2">
+                                    <div class="md:col-span-1 flex justify-end gap-1">
                                         <button onclick="window.updateClientPlan('${c.id}', { plano: 'Pausado' })" 
-                                                class="w-9 h-9 rounded-xl bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-dark-950 transition-all flex items-center justify-center border border-yellow-500/20 active:scale-95 shadow-lg shadow-yellow-500/5"
-                                                title="Pausar Plano">
-                                            <i class="fas fa-pause text-xs"></i>
+                                                class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-dark-950 transition-all flex items-center justify-center border border-yellow-500/20 active:scale-95 shadow-lg shadow-yellow-500/5"
+                                                title="Pausar">
+                                            <i class="fas fa-pause text-[10px]"></i>
                                         </button>
-                                        <button onclick="if(confirm('Deseja resetar o contador e iniciar um novo ciclo hoje?')){ window.updateClientPlan('${c.id}', { plano_inicio: new Date().toISOString().split('T')[0], plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
-                                                class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center border border-emerald-500/20 active:scale-95 shadow-lg shadow-emerald-500/5"
-                                                title="Resetar Ciclo de Cortes">
-                                            <i class="fas fa-rotate text-xs"></i>
+                                        <button onclick="if(confirm('Resetar ciclo?')){ window.updateClientPlan('${c.id}', { plano_inicio: new Date().toISOString().split('T')[0], plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
+                                                class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center border border-emerald-500/20 active:scale-95 shadow-lg shadow-emerald-500/5"
+                                                title="Resetar">
+                                            <i class="fas fa-rotate text-[10px]"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -2265,11 +2269,7 @@ const PlansPage = () => {
                                 <div id="plan-modal-suggestions" class="hidden absolute left-0 right-0 top-full mt-2 bg-dark-900 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                                 </div>
                             </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Telefone / WhatsApp</label>
-                                <input type="text" name="telefone" placeholder="(00) 00000-0000"
-                                       class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-white">
-                            </div>
+
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Plano</label>
@@ -2325,6 +2325,7 @@ const ClientProfilePage = () => {
 
     // Função para salvar edição inline do cliente (Nome, Telefone, Valor do Plano)
     window.saveClientEdit = async (field, value) => {
+        const oldName = client.nome;
         try {
             const updateData = { [field]: value };
             const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?id=eq.${client.id}`, {
@@ -2338,8 +2339,17 @@ const ClientProfilePage = () => {
                 body: JSON.stringify(updateData)
             });
             if (res.ok) {
+                // Se o nome mudou, atualiza todos os agendamentos antigos para o novo nome
+                // Se o nome mudou, deixamos o Trigger do Banco de Dados lidar com a atualização nos agendamentos.
+                // Isso evita complexidade no frontend.    
+                
                 Object.assign(client, updateData);
                 fetchClients(); // Atualiza base global
+                if (field === 'nome') {
+                    // Recarrega registros para refletir a mudança no histórico local imediatamente
+                    await syncFromSheet(state.sheetUrl);
+                    render();
+                }
             } else {
                 alert('Erro ao atualizar cliente.');
             }
@@ -2378,6 +2388,7 @@ const ClientProfilePage = () => {
                         <div class="flex flex-wrap justify-center md:justify-start items-center gap-3">
                             <input type="text" 
                                    value="${client.nome}" 
+                                   onfocus="window.selectAll(this)"
                                    onblur="window.saveClientEdit('nome', this.value)"
                                    class="text-3xl md:text-4xl font-display font-black text-white bg-transparent border-b-2 border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-2 -mx-2 uppercase">
                             ${client.plano !== 'Nenhum' ? `
@@ -2386,13 +2397,9 @@ const ClientProfilePage = () => {
                                 </span>
                             ` : ''}
                         </div>
-                        <div class="text-slate-500 font-bold uppercase tracking-widest text-xs mt-1 flex items-center justify-center md:justify-start gap-2">
-                            <i class="fas fa-phone"></i>
-                            <input type="text" 
-                                   value="${client.telefone || ''}" 
-                                   placeholder="Adicionar telefone"
-                                   onblur="window.saveClientEdit('telefone', this.value)"
-                                   class="bg-transparent border-b border-transparent hover:border-amber-500/30 focus:border-amber-500 outline-none transition-all px-1">
+                        <!-- Notas Gerais abaixo do Nome -->
+                        <div class="mt-1 flex justify-center md:justify-start">
+                            <div contenteditable="true" onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_cliente', this.innerText.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="text-xs text-slate-500 font-medium outline-none hover:text-white transition-all cursor-text whitespace-pre-wrap italic">${!client.observacoes_cliente || client.observacoes_cliente.includes('...') || client.observacoes_cliente.includes('permanentes') ? 'Adcionar Nota...' : client.observacoes_cliente}</div>
                         </div>
                     </div>
                     
@@ -2411,7 +2418,13 @@ const ClientProfilePage = () => {
                         <div class="absolute -right-4 -top-4 w-20 h-20 bg-amber-500/5 rounded-full blur-xl"></div>
                         <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Tipo de Plano</p>
                         <h4 class="text-2xl font-black text-white">${client.plano}</h4>
+                        
+                        <div class="mt-3 pt-3 border-t border-white/5">
+                            <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Observações do Plano</p>
+                            <div contenteditable="true" onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_plano', this.innerText.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="text-[11px] text-slate-400 font-medium outline-none hover:text-white transition-all min-h-[1.5rem] cursor-text whitespace-pre-wrap">${!client.observacoes_plano || client.observacoes_plano.includes('...') ? 'Adcionar Nota...' : client.observacoes_plano}</div>
+                        </div>
                     </div>
+
                     <div class="glass-card p-6 rounded-[2rem] border border-white/5">
                         <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Valor do Plano</p>
                         <div class="flex items-center gap-1">
@@ -4183,6 +4196,28 @@ if (!window.hasGlobalHandlers) {
         finally { 
             btn.disabled = false; 
             btn.innerHTML = isEditing ? 'Salvar Alterações' : 'Salvar Agendamento'; 
+        }
+    };
+
+    // Função para selecionar todo o texto de um element contenteditable
+    window.selectText = (el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    };
+
+    // Função para selecionar todo o texto de um campo (input ou contenteditable)
+    window.selectAll = (el) => {
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.select();
+        } else {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
         }
     };
 
