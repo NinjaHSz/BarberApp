@@ -2638,11 +2638,14 @@ const ClientProfilePage = () => {
                                 const id = r.id;
                                 const rowId = `hist_${r.id}`;
                                 return `
-                                <div class="px-8 py-4 flex flex-col md:flex-row items-center justify-between hover:bg-white/[0.02] min-w-[500px] gap-4 group relative" style="z-index: 1;">
-                                    <div class="flex items-center gap-6 flex-1">
-                                        <!-- Data -->
-                                        <div class="flex items-center gap-1.5 w-28 flex-shrink-0">
-                                            <i class="far fa-calendar-alt text-[9px] text-slate-500"></i>
+                                 <div class="px-8 py-5 flex flex-col md:flex-row items-center md:items-start justify-between hover:bg-white/[0.02] min-w-[600px] gap-6 group relative" style="z-index: 1;">
+                                    <div class="flex items-start gap-6 flex-1 h-full">
+                                        <!-- Data (Fixado) -->
+                                        <div class="flex flex-col w-28 shrink-0">
+                                            <div class="flex items-center gap-1.5 text-slate-500 mb-1">
+                                                <i class="far fa-calendar-alt text-[10px]"></i>
+                                                <span class="text-[10px] font-black uppercase tracking-tighter">Data</span>
+                                            </div>
                                             <input type="date" 
                                                    data-id="${id}" data-ui-id="${rowId}" data-field="date"
                                                    value="${r.date}"
@@ -2652,58 +2655,82 @@ const ClientProfilePage = () => {
                                         </div>
 
                                         <!-- Serviço e Detalhes -->
-                                        <div class="flex-1 relative">
+                                        <div class="flex flex-col w-48 shrink-0">
+                                            <div class="flex items-center gap-1.5 text-slate-500 mb-1">
+                                                <i class="fas fa-cut text-[10px]"></i>
+                                                <span class="text-[10px] font-black uppercase tracking-tighter">Procedimento</span>
+                                            </div>
                                             <div contenteditable="true"
                                                  data-id="${id}" data-ui-id="${rowId}" data-field="service"
                                                  onfocus="this.parentElement.parentElement.parentElement.style.zIndex='100'; window.selectAll(this)"
                                                  onblur="this.parentElement.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
                                                  onkeydown="window.handleInlineKey(event)"
                                                  oninput="window.showInlineAutocomplete(this)"
-                                                 class="text-white font-bold text-sm uppercase outline-none focus:bg-amber-500/10 rounded px-1 transition-all">
+                                                 class="text-white font-black text-sm uppercase outline-none focus:bg-amber-500/10 rounded px-1 transition-all truncate">
                                                 ${r.service}
                                             </div>
                                             <!-- Dropdown Autocomplete -->
                                             <div id="inlineAutocomplete_service_${rowId}" class="hidden absolute left-0 right-0 top-full mt-1 bg-dark-800 border border-white/10 rounded-xl shadow-2xl z-50 p-1"></div>
                                             
                                             <div class="flex items-center gap-2 mt-1">
-                                                <!-- Horário -->
                                                 <input type="time" 
                                                        data-id="${id}" data-ui-id="${rowId}" data-field="time"
                                                        value="${r.time.substring(0, 5)}"
                                                        onchange="window.saveInlineEdit(this)"
                                                        style="color-scheme: dark"
                                                        class="bg-transparent border-none text-[10px] text-slate-500 font-bold outline-none cursor-pointer hover:bg-white/5 rounded px-1 transition-all">
-                                                <span class="text-[10px] text-slate-600">•</span>
-                                                <!-- Pagamento -->
+                                                <span class="text-[10px] text-slate-700">•</span>
                                                 <select onchange="window.saveInlineEdit(this)" 
                                                         data-id="${id}" data-ui-id="${rowId}" data-field="payment"
                                                         class="appearance-none bg-transparent border-none text-[10px] text-slate-500 font-bold uppercase tracking-widest outline-none cursor-pointer hover:bg-white/5 rounded px-1 transition-all">
                                                     ${['PIX', 'DINHEIRO', 'CARTÃO', 'PLANO MENSAL', 'CORTESIA'].map(p => `
                                                         <option value="${p}" ${r.paymentMethod === p ? 'selected' : ''} class="bg-dark-950">${p}</option>
-                                                    `).join('')}
+                                                     `).join('')}
                                                 </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Observações (Área Ampliada) -->
+                                        <div class="flex-1 flex flex-col min-h-[45px]">
+                                            <div class="flex items-center gap-1.5 text-slate-500 mb-1">
+                                                <i class="far fa-comment-alt text-[10px]"></i>
+                                                <span class="text-[10px] font-black uppercase tracking-tighter">Observações</span>
+                                            </div>
+                                            <div contenteditable="true"
+                                                 data-id="${id}" data-ui-id="${rowId}" data-field="observations"
+                                                 onblur="window.saveInlineEdit(this)"
+                                                 onkeydown="window.handleInlineKey(event)"
+                                                 onfocus="window.selectAll(this)"
+                                                 class="text-[11px] text-slate-400 italic outline-none hover:text-slate-200 transition-all cursor-text min-h-[20px] px-1 rounded hover:bg-white/5"
+                                                 title="${r.observations || ''}">
+                                                ${r.observations || 'Nenhuma observação...'}
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Valor e Ações -->
-                                    <div class="flex items-center gap-6">
-                                        <div class="flex items-center gap-1">
-                                            <span class="text-xs font-black text-slate-500">R$</span>
-                                            <div contenteditable="true"
-                                                 data-id="${id}" data-ui-id="${rowId}" data-field="value"
-                                                 onfocus="window.selectAll(this)"
-                                                 onblur="window.saveInlineEdit(this)"
-                                                 onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                                                 class="text-sm font-black text-white outline-none focus:bg-amber-500/10 rounded px-1 transition-all">
-                                                ${(parseFloat(r.value) || 0).toFixed(2)}
-                                            </div>
+                                    <div class="flex flex-col items-end gap-2 pr-2">
+                                        <div class="flex items-center gap-1.5 text-slate-500 mb-0.5">
+                                            <span class="text-[10px] font-black uppercase tracking-tighter">Valor</span>
                                         </div>
-                                        
-                                        <button onclick="window.cancelAppointment('${r.id}')" 
-                                                class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-95 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                            <i class="fas fa-trash-can text-xs"></i>
-                                        </button>
+                                        <div class="flex items-center gap-6">
+                                            <div class="flex items-center gap-1">
+                                                <span class="text-xs font-black text-slate-500">R$</span>
+                                                <div contenteditable="true"
+                                                     data-id="${id}" data-ui-id="${rowId}" data-field="value"
+                                                     onfocus="window.selectAll(this)"
+                                                     onblur="window.saveInlineEdit(this)"
+                                                     onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                                     class="text-lg font-black text-white outline-none focus:bg-amber-500/10 rounded px-1 transition-all">
+                                                    ${(parseFloat(r.value) || 0).toFixed(2)}
+                                                </div>
+                                            </div>
+                                            
+                                            <button onclick="window.cancelAppointment('${r.id}')" 
+                                                    class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-95 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                <i class="fas fa-trash-can text-xs"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 `;
