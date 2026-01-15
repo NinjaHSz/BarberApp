@@ -291,7 +291,8 @@ async function syncFromSheet(url) {
                             client: r.cliente,
                             service: r.procedimento || 'A DEFINIR',
                             value: parseFloat(r.valor) || 0,
-                            paymentMethod: r.forma_pagamento || 'N/A'
+                            paymentMethod: r.forma_pagamento || 'N/A',
+                            observations: r.observacoes || ''
                         });
                     });
                 }
@@ -415,6 +416,7 @@ async function syncFromSheet(url) {
                             if (n.includes('procedimento')) mapping.service = i;
                             if (n.includes('valor')) mapping.value = i;
                             if (n.includes('pagamento')) mapping.method = i;
+                            if (n.includes('observ') || n.includes('anot')) mapping.obs = i;
                         });
                         return;
                     }
@@ -450,7 +452,8 @@ async function syncFromSheet(url) {
                                     client: clientName,
                                     service: serviceName,
                                     value: isNaN(cleanVal) ? 0 : cleanVal,
-                                    paymentMethod: cols[mapping.method] || 'N/A'
+                                    paymentMethod: cols[mapping.method] || 'N/A',
+                                    observations: mapping.obs !== undefined ? cols[mapping.obs] : ''
                                 });
                             }
                         }
@@ -1074,11 +1077,12 @@ const RecordsPage = () => {
             <div class="space-y-4 md:space-y-0 md:bg-dark-900/30 md:rounded-[2rem] border border-white/5">
                 <!-- Header (Apenas Desktop) -->
                 <div class="hidden md:flex bg-white/[0.02] border-b border-white/5 px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">
-                    <div class="w-20 text-left">Horário</div>
+                    <div class="w-16 text-left">Horário</div>
                     <div class="flex-1 text-left px-4">Cliente</div>
                     <div class="flex-1 text-center px-4">Procedimentos</div>
-                    <div class="w-28">Valor</div>
-                    <div class="w-32">Pagamento</div>
+                    <div class="flex-1 text-center px-4">Observações</div>
+                    <div class="w-24">Valor</div>
+                    <div class="w-28">Pagamento</div>
                     <div class="w-24 text-right">Ações</div>
                 </div>
 
@@ -1189,6 +1193,12 @@ const EditModal = () => {
                         </select>
                     </div>
 
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Observações</label>
+                        <textarea name="observations" rows="2" placeholder="Alguma observação importante?"
+                                  class="w-full bg-dark-900 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-medium text-sm custom-scroll resize-none">${r.observations || r.observacoes || ''}</textarea>
+                    </div>
+
                     <div class="pt-4">
                         <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl border border-transparent shadow-lg shadow-amber-500/10 active:scale-95 uppercase tracking-widest text-xs transition-all">
                             ${isNew ? 'Salvar Agendamento' : 'Salvar Alterações'}
@@ -1230,7 +1240,7 @@ const RecordRow = (record) => {
 
     return `
         <div class="flex flex-col md:flex-row items-center md:items-center px-6 md:px-8 py-4 md:py-4 gap-4 md:gap-0 hover:bg-white/[0.01] transition-colors group relative glass-card md:bg-transparent rounded-2xl md:rounded-none m-2 md:m-0 border md:border-0 border-white/5 ${isBreak ? 'bg-white/[0.02] border-white/10' : ''}" style="z-index: 1;">
-            <div class="w-full md:w-20 text-xs md:text-sm text-amber-500 md:text-slate-400 font-black md:font-medium flex justify-between md:block">
+            <div class="w-full md:w-16 text-xs md:text-sm text-amber-500 md:text-slate-400 font-black md:font-medium flex justify-between md:block">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Horário:</span>
                 <input type="time" 
                      data-id="${id}" data-ui-id="${rowId}" data-field="time" data-time="${record.time}" data-date="${record.date}"
@@ -1281,7 +1291,20 @@ const RecordRow = (record) => {
                 <div id="inlineAutocomplete_service_${rowId}" class="hidden absolute left-0 right-0 top-full mt-2 bg-dark-800 border border-white/20 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] max-h-48 overflow-y-auto p-1.5 z-[500] backdrop-blur-3xl lg:min-w-[200px]"></div>
             </div>
 
-            <div class="w-full md:w-28 text-sm md:text-sm font-bold md:font-bold ${isBreak ? 'text-slate-600/50' : 'text-white md:text-amber-500/90'} flex justify-between md:block md:text-center relative">
+            <div class="w-full md:flex-1 md:px-4 text-[10px] md:text-xs flex justify-between md:block md:text-center relative group/obs">
+                <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Obs:</span>
+                <div contenteditable="true"
+                     data-id="${id}" data-ui-id="${rowId}" data-field="observations" data-time="${record.time}" data-date="${record.date}"
+                     onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
+                     onkeydown="window.handleInlineKey(event)"
+                     onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
+                     class="outline-none rounded px-1 focus:bg-white/5 focus:ring-1 focus:ring-white/20 text-slate-500 hover:text-slate-300 transition-all italic truncate max-w-[100px] md:max-w-none mx-auto cursor-text"
+                     title="${record.observations || ''}">
+                    ${isBreak || isEmpty ? '---' : (record.observations || 'Nenhuma obs...')}
+                </div>
+            </div>
+
+            <div class="w-full md:w-24 text-sm md:text-sm font-bold md:font-bold ${isBreak ? 'text-slate-600/50' : 'text-white md:text-amber-500/90'} flex justify-between md:block md:text-center relative">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Valor:</span>
                 <div contenteditable="true"
                      data-id="${id}" data-ui-id="${rowId}" data-field="value" data-time="${record.time}" data-date="${record.date}"
@@ -1293,7 +1316,7 @@ const RecordRow = (record) => {
                 </div>
             </div>
 
-            <div class="w-full md:w-32 flex justify-between md:justify-center items-center">
+            <div class="w-full md:w-28 flex justify-between md:justify-center items-center">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Pagamento:</span>
                 ${isBreak ? `
                     <span class="px-2 py-0.5 rounded-lg text-[10px] font-black border-transparent bg-transparent text-slate-400 uppercase tracking-tighter text-center w-20">
@@ -1445,6 +1468,12 @@ const ManagePage = () => {
                             </select>
                             <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
                         </div>
+                    </div>
+
+                    <div class="space-y-2 col-span-1 md:col-span-2">
+                        <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Observações</label>
+                        <textarea name="observations" rows="3" placeholder="Escreva aqui detalhes importantes sobre o atendimento..."
+                                  class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-medium custom-scroll resize-none">${initialValues.observations || initialValues.observacoes || ''}</textarea>
                     </div>
 
                     <div class="col-span-1 md:col-span-2 pt-6">
@@ -4247,7 +4276,8 @@ if (!window.hasGlobalHandlers) {
             cliente: formData.get('client'),
             procedimento: formData.get('service'),
             valor: parseFloat(formData.get('value')) || 0,
-            forma_pagamento: formData.get('payment')
+            forma_pagamento: formData.get('payment'),
+            observacoes: formData.get('observations')
         };
 
         btn.disabled = true;
@@ -4302,7 +4332,8 @@ if (!window.hasGlobalHandlers) {
             value: 'valor',
             payment: 'forma_pagamento',
             time: 'horario',
-            date: 'data'
+            date: 'data',
+            observations: 'observacoes'
         };
 
         const dbField = fieldMap[field];
@@ -4342,7 +4373,8 @@ if (!window.hasGlobalHandlers) {
                         cliente: value,
                         procedimento: serviceVal,
                         valor: priceVal,
-                        forma_pagamento: paymentVal
+                        forma_pagamento: paymentVal,
+                        observacoes: document.querySelector(`[data-ui-id="${uiId}"][data-field="observations"]`)?.innerText.trim() === 'Nenhuma obs...' ? '' : document.querySelector(`[data-ui-id="${uiId}"][data-field="observations"]`)?.innerText.trim()
                     };
                     const res = await fetch(`${SUPABASE_URL}/rest/v1/agendamentos`, {
                         method: 'POST',
