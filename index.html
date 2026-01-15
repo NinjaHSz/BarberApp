@@ -101,8 +101,6 @@
         background: rgba(var(--accent-rgb), 0.05);
         box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.2);
         border-radius: 8px;
-        display: block;
-        min-height: 1.5rem;
       }
       [contenteditable="true"]:hover {
         cursor: text;
@@ -111,6 +109,7 @@
       [contenteditable="true"] {
         padding: 2px 4px;
         transition: background 0.2s;
+        min-height: 1.2rem;
       }
 
       [contenteditable="true"]:empty:before {

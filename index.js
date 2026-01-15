@@ -982,61 +982,65 @@ const RecordsPage = () => {
                 (r.service || '').toLowerCase().includes(state.searchTerm.toLowerCase())
             );
         } else {
-            // Criamos um set de chaves para evitar duplicações
-            // Chaves priorizadas: ID do banco > Data+Hora+Cliente (para novos)
-            const displayedKeys = new Set();
-            recordsToDisplay = [];
+            const realAppointments = existingForDay.sort((a, b) => a.time.localeCompare(b.time));
+            const dayStartMin = 7 * 60 + 20; // 07:20
+            const dayEndMin = 22 * 60;       // 22:00
+            
+            const toMin = (t) => {
+                const [h, m] = t.split(':').map(Number);
+                return h * 60 + m;
+            };
 
-            // Primeiro, iteramos pelos horários padrão
-            standardTimes.forEach(time => {
-                // Filtramos os registros do banco que batem com esse horário (formato HH:mm)
-                const matches = existingForDay.filter(r => r.time.startsWith(time.substring(0, 5)));
-                
-                if (matches.length > 0) {
-                    matches.forEach(m => {
-                        const key = m.id || `${m.date}_${m.time}_${m.client}`.toLowerCase();
-                        if (!displayedKeys.has(key)) {
-                            recordsToDisplay.push(m);
-                            displayedKeys.add(key);
-                        }
-                    });
+            const fromMin = (m) => {
+                const h = Math.floor(m / 60);
+                const min = m % 60;
+                return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+            };
+
+            const records = [];
+            const unhandledReals = [...realAppointments];
+            let currentMin = dayStartMin;
+
+            // Algoritmo Ganancioso Especial:
+            // 1. Mantém a base de 07:20.
+            // 2. Garante distância mínima de 20 min entre vazio e real.
+            // 3. Garante distância de EXATAMENTE 40 min após qualquer item mostrado.
+            while (currentMin <= dayEndMin) {
+                const nextReal = unhandledReals[0];
+                const nextRealMin = nextReal ? toMin(nextReal.time) : null;
+
+                // Se houver um agendamento real que seja "muito próximo" (<= 20 min) 
+                // do horário atual do grid, ou se o real já passou do horário do grid:
+                if (nextRealMin !== null && nextRealMin <= currentMin + 20) {
+                    records.push(nextReal);
+                    unhandledReals.shift();
+                    // Regra: O próximo horário DEVE ser 40 minutos após este agendamento real
+                    currentMin = nextRealMin + 40;
                 } else {
-                    // Se não há nada no banco para esse horário padrão, mostramos vazio
-                    recordsToDisplay.push({ time, client: '---', service: 'A DEFINIR', value: 0, paymentMethod: 'PIX', isEmpty: true, date: dayPrefix });
+                    // O horário atual do grid está livre e respeita a distância mínima
+                    records.push({ 
+                        time: fromMin(currentMin), 
+                        client: '---', 
+                        service: 'A DEFINIR', 
+                        value: 0, 
+                        paymentMethod: 'PIX', 
+                        isEmpty: true, 
+                        date: dayPrefix 
+                    });
+                    // Próximo horário padrão (40 min depois)
+                    currentMin += 40;
                 }
-            });
 
-            // Depois, adicionamos qualquer registro que sobrou (horários personalizados/fora do padrão)
-            existingForDay.forEach(r => {
-                const key = r.id || `${r.date}_${r.time}_${r.client}`.toLowerCase();
-                if (!displayedKeys.has(key)) {
-                    recordsToDisplay.push(r);
-                    displayedKeys.add(key);
-                }
-            });
+                // Limite de segurança
+                if (records.length > 60) break;
+            }
 
-            // Ordena por horário final
-            recordsToDisplay.sort((a, b) => a.time.localeCompare(b.time));
+            // Adiciona agendamentos que sobraram (se houver algum erro de lógica no loop)
+            unhandledReals.forEach(r => records.push(r));
 
-            // Filtro de Proximidade: Remove horários vazios se houver um real a menos de 20min
-            const realAppointments = recordsToDisplay.filter(r => !r.isEmpty);
-            recordsToDisplay = recordsToDisplay.filter(r => {
-                if (!r.isEmpty) return true;
-                
-                const [h, m] = r.time.split(':').map(Number);
-                const rMin = h * 60 + m;
+            recordsToDisplay = records.sort((a, b) => a.time.localeCompare(b.time));
 
-                const tooClose = realAppointments.some(real => {
-                    const [rh, rm] = real.time.split(':').map(Number);
-                    const realMin = rh * 60 + rm;
-                    const diff = Math.abs(rMin - realMin);
-                    return diff >= 1 && diff <= 20; // 1-20 minutos de distância
-                });
-
-                return !tooClose;
-            });
-
-            // Filtra espaços vazios se o usuário desejar (após o filtro de proximidade)
+            // Filtra espaços vazios se o usuário desejar
             if (!state.showEmptySlots) {
                 recordsToDisplay = recordsToDisplay.filter(r => !r.isEmpty);
             }
@@ -1242,7 +1246,7 @@ const RecordRow = (record) => {
         <div class="flex flex-col md:flex-row items-center md:items-center px-6 md:px-8 py-4 md:py-4 gap-4 md:gap-0 hover:bg-white/[0.01] transition-colors group relative glass-card md:bg-transparent rounded-2xl md:rounded-none m-2 md:m-0 border md:border-0 border-white/5 ${isBreak ? 'bg-white/[0.02] border-white/10' : ''}" style="z-index: 1;">
             <div class="w-full md:w-16 text-xs md:text-sm text-amber-500 md:text-slate-400 font-black md:font-medium flex justify-between md:flex md:justify-center">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Horário:</span>
-                <input type="time" 
+                <input type="time" id="edit_time_${rowId}"
                      data-id="${id}" data-ui-id="${rowId}" data-field="time" data-time="${record.time}" data-date="${record.date}"
                      onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
                      onkeydown="window.handleInlineKey(event)"
@@ -1253,16 +1257,17 @@ const RecordRow = (record) => {
             
             <div class="w-full md:flex-1 md:px-4 text-sm md:text-sm font-bold md:font-semibold flex justify-between md:flex md:justify-center relative">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Cliente:</span>
-                <div contenteditable="true" 
+                <div contenteditable="true" id="edit_client_${rowId}"
                      data-id="${id}" data-ui-id="${rowId}" data-field="client" data-time="${record.time}" data-date="${record.date}"
                      onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
                      onkeydown="window.handleInlineKey(event)"
                      oninput="window.showInlineAutocomplete(this)"
                      onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
-                     class="truncate transition-all outline-none rounded px-1 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 text-center ${isBreak ? 'text-slate-500 font-black' : (isEmpty ? 'text-slate-500 group-hover:text-amber-500 uppercase' : 'group-hover:text-amber-500 uppercase')}">
+                     placeholder="${isEmpty && !isBreak ? 'Adicionar Nome...' : ''}"
+                     class="truncate transition-all outline-none rounded px-3 py-1.5 min-w-[200px] border border-white/5 hover:bg-white/5 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 text-center ${isBreak ? 'text-slate-500 font-black' : (isEmpty ? 'text-slate-400 group-hover:text-amber-500 uppercase' : 'group-hover:text-amber-500 uppercase')}">
                     ${isBreak ? '<i class="fas fa-circle-minus mr-2"></i> PAUSA / BLOQUEIO' : (() => {
                         const isNew = state.clients.find(cli => cli.nome === record.client)?.novo_cliente;
-                        return `<span>${record.client}</span>${isNew ? '<span class="ml-2 bg-amber-500/20 text-amber-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ''}`;
+                        return `${record.client}${isNew ? '<span contenteditable="false" class="ml-2 bg-amber-500/20 text-amber-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ''}`;
                     })()}
                 </div>
                 ${!isEmpty && !isBreak ? `
@@ -1278,7 +1283,7 @@ const RecordRow = (record) => {
 
             <div class="w-full md:flex-1 md:px-4 text-xs md:text-sm flex justify-between md:flex md:justify-center md:text-center relative">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Serviço:</span>
-                <div contenteditable="true"
+                <div contenteditable="true" id="edit_service_${rowId}"
                      data-id="${id}" data-ui-id="${rowId}" data-field="service" data-time="${record.time}" data-date="${record.date}"
                      onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
                      onkeydown="window.handleInlineKey(event)"
@@ -1293,7 +1298,7 @@ const RecordRow = (record) => {
 
             <div class="w-full md:flex-1 md:px-4 text-[10px] md:text-xs flex justify-between md:block md:text-center relative group/obs">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Obs:</span>
-                <div contenteditable="true"
+                <div contenteditable="true" id="edit_obs_${rowId}"
                      data-id="${id}" data-ui-id="${rowId}" data-field="observations" data-time="${record.time}" data-date="${record.date}"
                      onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
                      onkeydown="window.handleInlineKey(event)"
@@ -1306,7 +1311,7 @@ const RecordRow = (record) => {
 
             <div class="w-full md:w-24 text-sm md:text-sm font-bold md:font-bold ${isBreak ? 'text-slate-600/50' : 'text-white md:text-amber-500/90'} flex justify-between md:block md:text-center relative">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Valor:</span>
-                <div contenteditable="true"
+                <div contenteditable="true" id="edit_value_${rowId}"
                      data-id="${id}" data-ui-id="${rowId}" data-field="value" data-time="${record.time}" data-date="${record.date}"
                      onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
                      onkeydown="window.handleInlineKey(event)"
@@ -1324,7 +1329,7 @@ const RecordRow = (record) => {
                     </span>
                 ` : `
                     <div class="relative ${isEmpty ? 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity' : ''}">
-                        <select onchange="window.saveInlineEdit(this)" 
+                        <select id="edit_payment_${rowId}" onchange="window.saveInlineEdit(this)" 
                                 data-id="${id}" data-ui-id="${rowId}" data-field="payment"
                                 class="appearance-none px-2 py-0.5 rounded-lg text-[10px] font-black border border-white/5 bg-white/[0.03] text-slate-500 uppercase tracking-tighter cursor-pointer focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all pr-4 text-center w-24">
                             ${['PIX', 'DINHEIRO', 'CARTÃO', 'PLANO MENSAL', 'CORTESIA'].map(p => `
@@ -1830,7 +1835,7 @@ const ClientsPage = () => {
                                                         </span>
                                                     </td>
                                                     <td class="px-4 py-4">
-                                                        <div contenteditable="true" onblur="window.updateClientField('${c.id}', 'observacoes_cliente', this.innerText.trim())" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="bg-transparent text-[10px] text-slate-400 font-medium outline-none hover:text-white transition-colors whitespace-pre-wrap min-w-[120px] max-w-[250px] cursor-text">${!c.observacoes_cliente || c.observacoes_cliente.includes('...') || c.observacoes_cliente.includes('permanentes') ? 'Adcionar Nota...' : c.observacoes_cliente}</div>
+                                                        <div contenteditable="true" id="edit_mgmt_obs_${c.id}" onblur="window.updateClientField('${c.id}', 'observacoes_cliente', this.innerText.trim())" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="bg-transparent text-[10px] text-slate-400 font-medium outline-none hover:text-white transition-colors whitespace-pre-wrap break-words min-w-[120px] max-w-[200px] cursor-text">${!c.observacoes_cliente || c.observacoes_cliente.includes('...') || c.observacoes_cliente.includes('permanentes') ? 'Adcionar Nota...' : c.observacoes_cliente}</div>
                                                     </td>
                                                     <td class="px-4 py-4 text-right">
                                                         <div class="flex justify-end space-x-1.5">
@@ -2013,6 +2018,19 @@ window.renewPlan = async (clientId) => {
  * PÁGINA: Gestão de Planos
  */
 const PlansPage = () => {
+    window.handlePlanSearch = (val) => {
+        state.planSearchTerm = val;
+        render();
+        setTimeout(() => {
+            const input = document.getElementById('planSearchInput');
+            if (input) {
+                input.focus();
+                const len = input.value.length;
+                input.setSelectionRange(len, len);
+            }
+        }, 50);
+    };
+
     window.toggleAddPlanModal = (show) => {
         state.isAddPlanModalOpen = show;
         render();
@@ -2112,6 +2130,7 @@ const PlansPage = () => {
     const clientsWithPlans = state.clients.filter(c => c.plano && c.plano !== 'Nenhum');
     const filteredPlans = clientsWithPlans.filter(c => {
         if (!state.planSearchTerm) return true;
+        const search = state.planSearchTerm.toLowerCase();
         const name = (c.nome || '').toLowerCase();
         return name.includes(search);
     });
@@ -2213,7 +2232,7 @@ const PlansPage = () => {
                                     
                                      <!-- Observações (Col 3) -->
                                     <div class="md:col-span-3 relative group/obs">
-                                        <div contenteditable="true" onblur="window.updateClientPlan('${c.id}', { observacoes_plano: this.innerText.trim() })" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-xl px-3 py-2.5 outline-none focus:border-amber-500/50 transition-all text-slate-400 focus:text-white whitespace-pre-wrap cursor-text overflow-hidden">${!c.observacoes_plano || c.observacoes_plano.includes('...') ? 'Adcionar Nota...' : c.observacoes_plano}</div>
+                                        <div contenteditable="true" id="edit_plan_obs_${c.id}" onblur="window.updateClientPlan('${c.id}', { observacoes_plano: this.innerText.trim() })" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-xl px-3 py-2.5 outline-none focus:border-amber-500/50 transition-all text-slate-400 focus:text-white whitespace-pre-wrap break-words cursor-text overflow-hidden">${!c.observacoes_plano || c.observacoes_plano.includes('...') ? 'Adcionar Nota...' : c.observacoes_plano}</div>
                                     </div>
 
                                     <!-- Status (Col 1) -->
@@ -2399,7 +2418,7 @@ const ClientProfilePage = () => {
                         </div>
                         <!-- Notas Gerais abaixo do Nome -->
                         <div class="mt-1 flex justify-center md:justify-start">
-                            <div contenteditable="true" onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_cliente', this.innerText.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="text-xs text-slate-500 font-medium outline-none hover:text-white transition-all cursor-text whitespace-pre-wrap italic">${!client.observacoes_cliente || client.observacoes_cliente.includes('...') || client.observacoes_cliente.includes('permanentes') ? 'Adcionar Nota...' : client.observacoes_cliente}</div>
+                            <div contenteditable="true" id="edit_prof_obs_${client.id}" onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_cliente', this.innerText.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="text-xs text-slate-500 font-medium outline-none hover:text-white transition-all cursor-text whitespace-pre-wrap break-words italic max-w-sm md:max-w-md">${!client.observacoes_cliente || client.observacoes_cliente.includes('...') || client.observacoes_cliente.includes('permanentes') ? 'Adcionar Nota...' : client.observacoes_cliente}</div>
                         </div>
                     </div>
                     
@@ -2421,7 +2440,7 @@ const ClientProfilePage = () => {
                         
                         <div class="mt-3 pt-3 border-t border-white/5">
                             <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Observações do Plano</p>
-                            <div contenteditable="true" onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_plano', this.innerText.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="text-[11px] text-slate-400 font-medium outline-none hover:text-white transition-all min-h-[1.5rem] cursor-text whitespace-pre-wrap">${!client.observacoes_plano || client.observacoes_plano.includes('...') ? 'Adcionar Nota...' : client.observacoes_plano}</div>
+                            <div contenteditable="true" id="edit_prof_plan_obs_${client.id}" onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_plano', this.innerText.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="text-[11px] text-slate-400 font-medium outline-none hover:text-white transition-all min-h-[1.5rem] cursor-text whitespace-pre-wrap break-words">${!client.observacoes_plano || client.observacoes_plano.includes('...') ? 'Adcionar Nota...' : client.observacoes_plano}</div>
                         </div>
                     </div>
 
@@ -4599,9 +4618,13 @@ if (!window.hasGlobalHandlers) {
         el.dataset.beganTyping = "false";
         // Ocultar outros autocompletes
         document.querySelectorAll('[id^="inlineAutocomplete_"]').forEach(d => d.classList.add('hidden'));
-        if (el.innerText === '---') {
+        
+        const currentText = el.innerText.trim();
+        if (currentText === '---') {
             el.innerText = '';
             el.dataset.beganTyping = "true";
+            // Força o foco e move o cursor para o início caso innerText tenha limpado algo
+            el.focus();
         } else {
             // Selecionar tudo para permitir substituição instantânea
             window.selectAll(el);
