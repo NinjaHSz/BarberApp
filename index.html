@@ -84,18 +84,15 @@
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
-      * {
-        transition: border-color 0.2s, background-color 0.2s, color 0.1s;
+      /* Estilizar transições de forma granulada para evitar 'flash' no render */
+      button,
+      .transition-all,
+      .transition-colors,
+      .group-hover {
+        transition: border-color 0.2s, background-color 0.2s, color 0.1s,
+          transform 0.2s, box-shadow 0.2s;
       }
-      /* Inversão de Cores no Hover para Botões Principais */
-      button.bg-amber-500:hover,
-      button[class*="bg-amber-500"]:hover {
-        background-color: var(--bg-950) !important;
-        color: rgb(var(--accent-rgb)) !important;
-        border-color: rgb(var(--accent-rgb)) !important;
-        box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.2);
-      }
-      /* Estilo para edição inline (planilha) */
+
       [contenteditable="true"]:focus {
         outline: none;
         background: rgba(var(--accent-rgb), 0.05);

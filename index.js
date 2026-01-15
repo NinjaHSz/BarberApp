@@ -95,14 +95,20 @@ function applyTheme() {
  * Isso permite que ao digitar qualquer caractere, o valor antigo seja substituído
  */
 window.selectAll = (el) => {
-    // Pequeno delay para garantir que o navegador completou o foco
+    // Uso de setTimeout para garantir que o navegador completou seu evento de clique/foco
+    // antes de forçarmos a seleção total. Isso evita o conflito de "cursor pulando".
     setTimeout(() => {
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-    }, 10);
+        if (!el || document.activeElement !== el) return;
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.select();
+        } else {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }, 50);
 };
 
 // ==========================================
@@ -1081,13 +1087,13 @@ const RecordsPage = () => {
             <div class="space-y-4 md:space-y-0 md:bg-dark-900/30 md:rounded-[2rem] border border-white/5">
                 <!-- Header (Apenas Desktop) -->
                 <div class="hidden md:flex bg-white/[0.02] border-b border-white/5 px-8 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    <div class="w-16 text-center">Horário</div>
-                    <div class="flex-1 text-center px-4">Cliente</div>
-                    <div class="flex-1 text-center px-4">Procedimentos</div>
-                    <div class="flex-1 text-center px-4">Observações</div>
-                    <div class="w-24 text-center">Valor</div>
-                    <div class="w-28 text-center">Pagamento</div>
-                    <div class="w-24 text-center">Ações</div>
+                    <div class="w-16 text-left">Horário</div>
+                    <div class="flex-1 text-left px-4">Cliente</div>
+                    <div class="flex-1 text-left px-4">Procedimentos</div>
+                    <div class="flex-1 text-left px-4">Observações</div>
+                    <div class="w-24 text-left">Valor</div>
+                    <div class="w-28 text-left">Pagamento</div>
+                    <div class="w-24 text-left">Ações</div>
                 </div>
 
                 <div id="tableBody" class="divide-y divide-white/5">
@@ -1243,31 +1249,35 @@ const RecordRow = (record) => {
     const rowId = record.id ? `rec_${record.id}` : `new_${record.time.replace(/:/g, '')}`;
 
     return `
-        <div class="flex flex-col md:flex-row items-center md:items-center px-6 md:px-8 py-4 md:py-4 gap-4 md:gap-0 hover:bg-white/[0.01] transition-colors group relative glass-card md:bg-transparent rounded-2xl md:rounded-none m-2 md:m-0 border md:border-0 border-white/5 ${isBreak ? 'bg-white/[0.02] border-white/10' : ''}" style="z-index: 1;">
-            <div class="w-full md:w-16 text-xs md:text-sm text-amber-500 md:text-slate-400 font-black md:font-medium flex justify-between md:flex md:justify-center">
+        <div class="flex flex-col md:flex-row items-center md:items-center px-6 md:px-8 py-4 md:py-4 gap-4 md:gap-0 hover:bg-white/[0.01] transition-colors group relative glass-card md:bg-transparent rounded-2xl md:rounded-none m-2 md:m-0 border md:border-0 border-white/5 ${isBreak ? 'bg-white/[0.02] border-white/10' : ''}" style="z-index: 1;" onfocusin="this.style.zIndex = '100'" onfocusout="this.style.zIndex = '1'">
+            <div class="w-full md:w-16 text-xs md:text-sm text-amber-500 md:text-slate-400 font-black md:font-medium flex justify-between md:flex md:justify-start">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Horário:</span>
                 <input type="time" id="edit_time_${rowId}"
                      data-id="${id}" data-ui-id="${rowId}" data-field="time" data-time="${record.time}" data-date="${record.date}"
-                     onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
+                     onblur="window.saveInlineEdit(this)"
                      onkeydown="window.handleInlineKey(event)"
-                     onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
+                     onfocus="window.clearPlaceholder(this)"
                      value="${record.time.substring(0, 5)}"
-                     class="bg-dark-900 border border-white/5 outline-none focus:border-amber-500/50 rounded px-1.5 py-0.5 w-full md:w-auto text-xs font-bold text-amber-500 md:text-white/80 transition-all text-center">
+                     class="bg-dark-900 border border-white/5 outline-none focus:border-amber-500/50 rounded px-1.5 py-0.5 w-full md:w-auto text-xs font-bold text-amber-500 md:text-white/80 transition-all text-left">
             </div>
             
-            <div class="w-full md:flex-1 md:px-4 text-sm md:text-sm font-bold md:font-semibold flex justify-between md:flex md:justify-center relative">
+            <div class="w-full md:flex-1 md:px-4 text-sm md:text-sm font-bold md:font-semibold flex justify-between md:flex md:justify-start relative">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Cliente:</span>
-                <div contenteditable="true" id="edit_client_${rowId}"
-                     data-id="${id}" data-ui-id="${rowId}" data-field="client" data-time="${record.time}" data-date="${record.date}"
-                     onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
-                     onkeydown="window.handleInlineKey(event)"
-                     oninput="window.showInlineAutocomplete(this)"
-                     onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
-                     placeholder="${isEmpty && !isBreak ? 'Adicionar Nome...' : ''}"
-                     class="truncate transition-all outline-none rounded px-3 py-1.5 min-w-[200px] border border-white/5 hover:bg-white/5 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 text-center ${isBreak ? 'text-slate-500 font-black' : (isEmpty ? 'text-slate-400 group-hover:text-amber-500 uppercase' : 'group-hover:text-amber-500 uppercase')}">
-                    ${isBreak ? '<i class="fas fa-circle-minus mr-2"></i> PAUSA / BLOQUEIO' : (() => {
-                        const isNew = state.clients.find(cli => cli.nome === record.client)?.novo_cliente;
-                        return `${record.client}${isNew ? '<span contenteditable="false" class="ml-2 bg-amber-500/20 text-amber-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ''}`;
+                <div class="flex items-center justify-start gap-2">
+                    <div contenteditable="true" id="edit_client_${rowId}"
+                         spellcheck="false"
+                         data-id="${id}" data-ui-id="${rowId}" data-field="client" data-time="${record.time}" data-date="${record.date}"
+                         onblur="window.saveInlineEdit(this)"
+                         onkeydown="window.handleInlineKey(event)"
+                         oninput="window.showInlineAutocomplete(this)"
+                         onfocus="window.clearPlaceholder(this)"
+                         placeholder="${isEmpty && !isBreak ? 'Adicionar Nome...' : ''}"
+                         class="outline-none rounded px-3 py-1.5 min-w-[200px] border border-white/5 hover:bg-white/5 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 text-left ${isBreak ? 'text-slate-500 font-black' : (isEmpty ? 'text-slate-400 uppercase' : 'text-white uppercase')}">
+                        ${isBreak ? '<i class="fas fa-circle-minus mr-2"></i> PAUSA' : record.client}
+                    </div>
+                    ${(() => {
+                        const isNew = !isBreak && !isEmpty && state.clients.find(cli => cli.nome === record.client)?.novo_cliente;
+                        return isNew ? '<span class="bg-amber-500/20 text-amber-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : '';
                     })()}
                 </div>
                 ${!isEmpty && !isBreak ? `
@@ -1281,57 +1291,60 @@ const RecordRow = (record) => {
                 <div id="inlineAutocomplete_client_${rowId}" class="hidden absolute left-0 right-0 top-full mt-2 bg-dark-800 border border-white/20 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] max-h-48 overflow-y-auto p-1.5 z-[500] backdrop-blur-3xl lg:min-w-[200px]"></div>
             </div>
 
-            <div class="w-full md:flex-1 md:px-4 text-xs md:text-sm flex justify-between md:flex md:justify-center md:text-center relative">
+            <div class="w-full md:flex-1 md:px-4 text-xs md:text-sm flex justify-between md:flex md:justify-start md:text-left relative">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Serviço:</span>
                 <div contenteditable="true" id="edit_service_${rowId}"
+                     spellcheck="false"
                      data-id="${id}" data-ui-id="${rowId}" data-field="service" data-time="${record.time}" data-date="${record.date}"
-                     onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
+                     onblur="window.saveInlineEdit(this)"
                      onkeydown="window.handleInlineKey(event)"
                      oninput="window.showInlineAutocomplete(this)"
-                     onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
-                     class="outline-none rounded px-1 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 text-center ${isBreak ? 'text-slate-600 italic' : (isEmpty ? 'text-slate-500' : (record.service === 'A DEFINIR' ? 'text-red-500 font-black animate-pulse' : 'text-white font-medium'))} uppercase break-words md:truncate">
-                    ${isBreak ? 'HORÁRIO RESERVADO' : record.service}
+                     onfocus="window.clearPlaceholder(this)"
+                     class="outline-none rounded px-1 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 text-left ${isBreak ? 'text-slate-600 italic' : (isEmpty ? 'text-slate-500' : (record.service === 'A DEFINIR' ? 'text-red-500 font-black animate-pulse' : 'text-white font-medium'))} uppercase">
+                    ${isBreak ? 'RESERVADO' : record.service}
                 </div>
                 <!-- Dropdown Autocomplete Inline (Service) -->
                 <div id="inlineAutocomplete_service_${rowId}" class="hidden absolute left-0 right-0 top-full mt-2 bg-dark-800 border border-white/20 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] max-h-48 overflow-y-auto p-1.5 z-[500] backdrop-blur-3xl lg:min-w-[200px]"></div>
             </div>
 
-            <div class="w-full md:flex-1 md:px-4 text-[10px] md:text-xs flex justify-between md:block md:text-center relative group/obs">
+            <div class="w-full md:flex-1 md:px-4 text-[10px] md:text-xs flex justify-between md:block md:text-left relative group/obs">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Obs:</span>
                 <div contenteditable="true" id="edit_obs_${rowId}"
+                     spellcheck="false" autocomplete="off"
                      data-id="${id}" data-ui-id="${rowId}" data-field="observations" data-time="${record.time}" data-date="${record.date}"
-                     onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
+                     onblur="window.saveInlineEdit(this)"
                      onkeydown="window.handleInlineKey(event)"
-                     onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
-                     class="outline-none rounded px-1 focus:bg-white/5 focus:ring-1 focus:ring-white/20 text-slate-500 hover:text-slate-300 transition-all italic truncate focus:whitespace-normal focus:break-words max-w-[120px] md:max-w-[180px] mx-auto cursor-text"
+                     onfocus="window.clearPlaceholder(this)"
+                     class="outline-none rounded px-1 focus:bg-white/5 focus:ring-1 focus:ring-white/20 text-slate-500 hover:text-slate-300 transition-all italic truncate focus:whitespace-normal focus:break-words max-w-[120px] md:max-w-[180px] cursor-text"
                      title="${record.observations || ''}">
                     ${isBreak || isEmpty ? '---' : (record.observations || 'Nenhuma obs...')}
                 </div>
             </div>
 
-            <div class="w-full md:w-24 text-sm md:text-sm font-bold md:font-bold ${isBreak ? 'text-slate-600/50' : 'text-white md:text-amber-500/90'} flex justify-between md:block md:text-center relative">
+            <div class="w-full md:w-24 text-sm md:text-sm font-bold md:font-bold ${isBreak ? 'text-slate-600/50' : 'text-white md:text-amber-500/90'} flex justify-between md:block md:text-left relative">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Valor:</span>
                 <div contenteditable="true" id="edit_value_${rowId}"
+                     spellcheck="false" autocomplete="off"
                      data-id="${id}" data-ui-id="${rowId}" data-field="value" data-time="${record.time}" data-date="${record.date}"
-                     onblur="this.parentElement.parentElement.style.zIndex='1'; window.saveInlineEdit(this)"
+                     onblur="window.saveInlineEdit(this)"
                      onkeydown="window.handleInlineKey(event)"
-                     onfocus="this.parentElement.parentElement.style.zIndex='100'; window.clearPlaceholder(this)"
+                     onfocus="window.clearPlaceholder(this)"
                      class="outline-none rounded px-1 focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50">
                     ${isEmpty || isBreak ? '---' : record.value.toFixed(2)}
                 </div>
             </div>
 
-            <div class="w-full md:w-28 flex justify-between md:justify-center items-center">
+            <div class="w-full md:w-28 flex justify-between md:justify-start items-center">
                 <span class="md:hidden text-slate-500 font-bold uppercase text-[10px]">Pagamento:</span>
                 ${isBreak ? `
-                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black border-transparent bg-transparent text-slate-400 uppercase tracking-tighter text-center w-20">
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black border-transparent bg-transparent text-slate-400 uppercase tracking-tighter text-left w-20">
                         N/A
                     </span>
                 ` : `
                     <div class="relative ${isEmpty ? 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity' : ''}">
                         <select id="edit_payment_${rowId}" onchange="window.saveInlineEdit(this)" 
                                 data-id="${id}" data-ui-id="${rowId}" data-field="payment"
-                                class="appearance-none px-2 py-0.5 rounded-lg text-[10px] font-black border border-white/5 bg-white/[0.03] text-slate-500 uppercase tracking-tighter cursor-pointer focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all pr-4 text-center w-24">
+                                class="appearance-none px-2 py-0.5 rounded-lg text-[10px] font-black border border-white/5 bg-white/[0.03] text-slate-500 uppercase tracking-tighter cursor-pointer focus:bg-amber-500/10 focus:ring-1 focus:ring-amber-500/50 outline-none transition-all pr-4 text-left w-24">
                             ${['PIX', 'DINHEIRO', 'CARTÃO', 'PLANO MENSAL', 'CORTESIA'].map(p => `
                                 <option value="${p}" ${record.paymentMethod === p ? 'selected' : ''} class="bg-dark-900">${p}</option>
                             `).join('')}
@@ -1341,7 +1354,7 @@ const RecordRow = (record) => {
                 `}
             </div>
 
-            <div class="w-full md:w-24 flex justify-end md:justify-center gap-2 pt-4 md:pt-0 border-t md:border-0 border-white/5">
+            <div class="w-full md:w-24 flex justify-end md:justify-start gap-2 pt-4 md:pt-0 border-t md:border-0 border-white/5">
                 ${!isEmpty ? `
                     <button onclick="window.editAppointment('${record.id}')" 
                             class="w-9 h-9 md:w-8 md:h-8 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-95 shadow-sm flex items-center justify-center">
@@ -1835,7 +1848,9 @@ const ClientsPage = () => {
                                                         </span>
                                                     </td>
                                                     <td class="px-4 py-4">
-                                                        <div contenteditable="true" id="edit_mgmt_obs_${c.id}" onblur="window.updateClientField('${c.id}', 'observacoes_cliente', this.innerText.trim())" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="bg-transparent text-[10px] text-slate-400 font-medium outline-none hover:text-white transition-colors whitespace-pre-wrap break-words min-w-[120px] max-w-[200px] cursor-text">${!c.observacoes_cliente || c.observacoes_cliente.includes('...') || c.observacoes_cliente.includes('permanentes') ? 'Adcionar Nota...' : c.observacoes_cliente}</div>
+                                                        <div contenteditable="true" id="edit_mgmt_obs_${c.id}" 
+                                                             spellcheck="false" autocomplete="off"
+                                                             onblur="window.updateClientField('${c.id}', 'observacoes_cliente', this.innerText.trim())" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="bg-transparent text-[10px] text-slate-400 font-medium outline-none hover:text-white transition-colors whitespace-pre-wrap break-words min-w-[120px] max-w-[200px] cursor-text">${!c.observacoes_cliente || c.observacoes_cliente.includes('...') || c.observacoes_cliente.includes('permanentes') ? 'Adcionar Nota...' : c.observacoes_cliente}</div>
                                                     </td>
                                                     <td class="px-4 py-4 text-right">
                                                         <div class="flex justify-end space-x-1.5">
@@ -1939,7 +1954,7 @@ const ClientsPage = () => {
 
 // Mover funções para fora para estabilidade
 // Mover funções para fora para estabilidade
-window.updateClientPlan = async (clientId, data) => {
+window.updateClientPlan = async (clientId, data, skipRender = false) => {
     const payload = typeof data === 'string' ? { plano: data } : data;
     try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/clientes?id=eq.${clientId}`, {
@@ -1956,7 +1971,7 @@ window.updateClientPlan = async (clientId, data) => {
         if (res.ok) {
             const client = state.clients.find(c => c.id == clientId);
             if (client) Object.assign(client, payload);
-            render(); // Re-render to show updates
+            if (!skipRender) render();
         } else {
             console.error('Erro Supabase ao atualizar plano');
         }
@@ -2011,7 +2026,7 @@ window.handlePlanSearch = (val) => {
 
 window.renewPlan = async (clientId) => {
     const today = new Date().toISOString().split('T')[0];
-    await window.updateClientPlan(clientId, { plano_inicio: today, plano_pagamento: today });
+    await window.updateClientPlan(clientId, { plano_pagamento: today });
 };
 
 /**
@@ -2051,7 +2066,7 @@ const PlansPage = () => {
         const payload = {
             nome: name,
             plano: formData.get('plano'),
-            plano_inicio: formData.get('plano_inicio'),
+            plano_pagamento: new Date().toISOString().split('T')[0],
             limite_cortes: parseInt(formData.get('limite_cortes')) || 4
         };
 
@@ -2170,13 +2185,12 @@ const PlansPage = () => {
                 </div>
                 
                 <div class="hidden md:grid grid-cols-12 gap-4 px-8 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 bg-white/[0.01]">
-                    <div class="col-span-2 pl-2">Cliente</div>
-                    <div class="col-span-1 text-center">Uso</div>
-                    <div class="col-span-2 text-center">Início</div>
-                    <div class="col-span-2 text-center">Últ. Pagto</div>
-                    <div class="col-span-3">Observações</div>
-                    <div class="col-span-1 text-center">Status</div>
-                    <div class="col-span-1 text-right pr-2">Ações</div>
+                    <div class="col-span-3 pl-2 text-left">Cliente</div>
+                    <div class="col-span-1 text-left">Uso</div>
+                    <div class="col-span-2 text-left">Últ. Pagto</div>
+                    <div class="col-span-4 text-left">Observações</div>
+                    <div class="col-span-1 text-left">Status</div>
+                    <div class="col-span-1 text-left pr-2">Ações</div>
                 </div>
 
                 <div class="bg-dark-900/30 rounded-b-[2rem] rounded-t-none border border-white/5 border-t-0 overflow-hidden min-h-[400px]">
@@ -2192,53 +2206,47 @@ const PlansPage = () => {
 
                                     return `
                                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-6 hover:bg-white/[0.02] transition-colors group plan-client-card" data-name="${c.nome}">
-                                    <!-- Cliente Info (Col 2) -->
-                                    <div class="md:col-span-2 flex items-center gap-3 cursor-pointer group/name" onclick="navigate('client-profile', '${c.id}')">
+                                    <!-- Cliente Info (Col 3) -->
+                                    <div class="md:col-span-3 flex items-center justify-start gap-3 cursor-pointer group/name" onclick="navigate('client-profile', '${c.id}')">
                                         <div class="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold shrink-0 group-hover/name:bg-amber-500 group-hover/name:text-dark-950 transition-all relative">
                                             ${c.nome.charAt(0)}
                                             ${c.novo_cliente ? `<div class="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full border-2 border-dark-900 animate-pulse"></div>` : ''}
                                         </div>
-                                        <div class="min-w-0">
+                                        <div class="min-w-0 text-left">
                                             <p class="font-bold text-white group-hover/name:text-amber-500 transition-colors truncate text-[11px]" title="${c.nome}">${c.nome}</p>
                                         </div>
                                     </div>
 
                                     <!-- Limite/Uso (Col 1) -->
-                                    <div class="md:col-span-1 flex justify-center">
+                                    <div class="md:col-span-1 flex justify-start">
                                         <div class="flex items-center gap-0.5 text-[11px] font-black tracking-tighter">
                                             <span class="${planStats?.usageCount >= (c.limite_cortes || 4) ? 'text-rose-500' : 'text-emerald-500'}">${planStats?.usageCount || 0}</span>
                                             <span class="text-slate-600">/</span>
                                             <input type="number" value="${c.limite_cortes || 4}" min="1" max="99"
                                                    onchange="window.updateClientPlan('${c.id}', { limite_cortes: parseInt(this.value) || 4 })"
-                                                   class="w-5 bg-transparent border-none text-[11px] font-black p-0 outline-none text-white/40 focus:text-amber-500 hover:text-white transition-colors appearance-none cursor-pointer">
+                                                   class="w-5 bg-transparent border-none text-[11px] font-black p-0 outline-none text-white/40 focus:text-amber-500 hover:text-white transition-colors appearance-none cursor-pointer text-left">
                                         </div>
                                     </div>
 
-                                    <!-- Início Plano (Col 2) -->
-                                    <div class="md:col-span-2 flex justify-center">
-                                        <input type="date" value="${c.plano_inicio || ''}" 
-                                               onchange="window.updateClientPlan('${c.id}', { plano_inicio: this.value })"
-                                               style="color-scheme: dark"
-                                               class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-xl px-2 py-2 outline-none focus:border-amber-500/50 transition-all text-white cursor-pointer hover:bg-white/5 text-center">
-                                    </div>
-
                                     <!-- Pagamento (Col 2) -->
-                                    <div class="md:col-span-2 flex justify-center">
+                                    <div class="md:col-span-2 flex justify-start">
                                         <input type="date" value="${c.plano_pagamento || ''}" 
                                                onchange="window.updateClientPlan('${c.id}', { plano_pagamento: this.value })"
                                                style="color-scheme: dark"
-                                               class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-xl px-2 py-2 outline-none focus:border-amber-500/50 transition-all text-white cursor-pointer hover:bg-white/5 text-center">
+                                               class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-xl px-2 py-2 outline-none focus:border-amber-500/50 transition-all text-white cursor-pointer hover:bg-white/5 text-left">
                                     </div>
                                     
-                                     <!-- Observações (Col 3) -->
-                                    <div class="md:col-span-3 relative group/obs">
-                                        <div contenteditable="true" id="edit_plan_obs_${c.id}" onblur="window.updateClientPlan('${c.id}', { observacoes_plano: this.innerText.trim() })" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-xl px-3 py-2.5 outline-none focus:border-amber-500/50 transition-all text-slate-400 focus:text-white whitespace-pre-wrap break-words cursor-text overflow-hidden">${!c.observacoes_plano || c.observacoes_plano.includes('...') ? 'Adcionar Nota...' : c.observacoes_plano}</div>
+                                     <!-- Observações (Col 4) -->
+                                    <div class="md:col-span-4 relative group/obs text-left">
+                                        <div contenteditable="true" id="edit_plan_obs_${c.id}" 
+                                             spellcheck="false" autocomplete="off"
+                                             onblur="window.updateClientPlan('${c.id}', { observacoes_plano: this.innerText.trim() })" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="w-full bg-dark-900 border border-white/5 text-[10px] font-bold rounded-xl px-3 py-2.5 outline-none focus:border-amber-500/50 transition-all text-slate-400 focus:text-white whitespace-pre-wrap break-words cursor-text overflow-hidden text-left">${!c.observacoes_plano || c.observacoes_plano.includes('...') ? 'Adcionar Nota...' : c.observacoes_plano}</div>
                                     </div>
 
                                     <!-- Status (Col 1) -->
-                                    <div class="md:col-span-1 flex justify-center">
+                                    <div class="md:col-span-1 flex justify-start">
                                         <select onchange="window.updateClientPlan('${c.id}', { plano: this.value })" 
-                                                class="w-full bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-0 py-2 outline-none focus:border-amber-500 transition-all cursor-pointer appearance-none text-center hover:border-white/10 ${c.plano === 'Pausado' ? 'text-yellow-500' : 'text-white'}">
+                                                class="w-full bg-dark-950 border border-white/5 text-[10px] font-bold rounded-lg px-0 py-2 outline-none focus:border-amber-500 transition-all cursor-pointer appearance-none text-left hover:border-white/10 ${c.plano === 'Pausado' ? 'text-yellow-500' : 'text-white'}">
                                             <option value="Mensal" ${c.plano === 'Mensal' ? 'selected' : ''}>MES</option>
                                             <option value="Anual" ${c.plano === 'Anual' ? 'selected' : ''}>ANO</option>
                                             <option value="Pausado" ${c.plano === 'Pausado' ? 'selected' : ''}>PAUSE</option>
@@ -2246,13 +2254,13 @@ const PlansPage = () => {
                                     </div>
 
                                     <!-- Actions (Col 1) -->
-                                    <div class="md:col-span-1 flex justify-end gap-1">
+                                    <div class="md:col-span-1 flex justify-start gap-1">
                                         <button onclick="window.updateClientPlan('${c.id}', { plano: 'Pausado' })" 
                                                 class="w-8 h-8 rounded-lg bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-dark-950 transition-all flex items-center justify-center border border-yellow-500/20 active:scale-95 shadow-lg shadow-yellow-500/5"
                                                 title="Pausar">
                                             <i class="fas fa-pause text-[10px]"></i>
                                         </button>
-                                        <button onclick="if(confirm('Resetar ciclo?')){ window.updateClientPlan('${c.id}', { plano_inicio: new Date().toISOString().split('T')[0], plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
+                                        <button onclick="if(confirm('Resetar ciclo?')){ window.updateClientPlan('${c.id}', { plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
                                                 class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center border border-emerald-500/20 active:scale-95 shadow-lg shadow-emerald-500/5"
                                                 title="Resetar">
                                             <i class="fas fa-rotate text-[10px]"></i>
@@ -2289,7 +2297,6 @@ const PlansPage = () => {
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Plano</label>
                                     <select name="plano" required
@@ -2299,20 +2306,13 @@ const PlansPage = () => {
                                     </select>
                                 </div>
                                 <div class="space-y-1">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Início do Plano</label>
-                                    <input type="date" name="plano_inicio" required 
-                                           value="${new Date().toISOString().split('T')[0]}"
-                                           class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-white">
-                                </div>
-                                <div class="space-y-1 col-span-2">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Limite de Cortes no Ciclo</label>
+                                    <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Limite de Cortes</label>
                                     <div class="relative">
                                         <input type="number" name="limite_cortes" value="4" min="1" max="99"
                                                class="w-full bg-dark-950 border border-white/5 p-3 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold text-white pl-10">
                                         <i class="fas fa-scissors absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
                                     </div>
                                 </div>
-                            </div>
                             
                             <div class="pt-4">
                                 <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl hover:shadow-lg hover:shadow-amber-500/20 transition-all uppercase tracking-widest text-xs">
@@ -2418,7 +2418,9 @@ const ClientProfilePage = () => {
                         </div>
                         <!-- Notas Gerais abaixo do Nome -->
                         <div class="mt-1 flex justify-center md:justify-start">
-                            <div contenteditable="true" id="edit_prof_obs_${client.id}" onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_cliente', this.innerText.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="text-xs text-slate-500 font-medium outline-none hover:text-white transition-all cursor-text whitespace-pre-wrap break-words italic max-w-sm md:max-w-md">${!client.observacoes_cliente || client.observacoes_cliente.includes('...') || client.observacoes_cliente.includes('permanentes') ? 'Adcionar Nota...' : client.observacoes_cliente}</div>
+                            <div contenteditable="true" id="edit_prof_obs_${client.id}" 
+                                 spellcheck="false" autocomplete="off"
+                                 onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_cliente', this.innerText.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="text-xs text-slate-500 font-medium outline-none hover:text-white transition-all cursor-text whitespace-pre-wrap break-words italic max-w-sm md:max-w-md">${!client.observacoes_cliente || client.observacoes_cliente.includes('...') || client.observacoes_cliente.includes('permanentes') ? 'Adcionar Nota...' : client.observacoes_cliente}</div>
                         </div>
                     </div>
                     
@@ -2440,7 +2442,9 @@ const ClientProfilePage = () => {
                         
                         <div class="mt-3 pt-3 border-t border-white/5">
                             <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Observações do Plano</p>
-                            <div contenteditable="true" id="edit_prof_plan_obs_${client.id}" onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_plano', this.innerText.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="text-[11px] text-slate-400 font-medium outline-none hover:text-white transition-all min-h-[1.5rem] cursor-text whitespace-pre-wrap break-words">${!client.observacoes_plano || client.observacoes_plano.includes('...') ? 'Adcionar Nota...' : client.observacoes_plano}</div>
+                            <div contenteditable="true" id="edit_prof_plan_obs_${client.id}" 
+                                 spellcheck="false" autocomplete="off"
+                                 onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_plano', this.innerText.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="text-[11px] text-slate-400 font-medium outline-none hover:text-white transition-all min-h-[1.5rem] cursor-text whitespace-pre-wrap break-words">${!client.observacoes_plano || client.observacoes_plano.includes('...') ? 'Adcionar Nota...' : client.observacoes_plano}</div>
                         </div>
                     </div>
 
@@ -2456,14 +2460,10 @@ const ClientProfilePage = () => {
                                    class="bg-transparent border-none text-2xl font-black text-white hover:text-amber-500 transition-all outline-none w-full appearance-none">
                         </div>
                     </div>
-                    <div class="glass-card p-6 rounded-[2rem] border border-white/5">
-                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Início da Assinatura</p>
-                        <h4 class="text-2xl font-black text-white">${client.plano_inicio ? new Date(client.plano_inicio + 'T00:00:00').toLocaleDateString('pt-BR') : '---'}</h4>
-                    </div>
                     <div class="glass-card p-6 rounded-[2rem] border border-white/5 relative group">
                         <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Último Ciclo/Pagamento</p>
                         <h4 class="text-2xl font-black text-white">${displayLastPaymentDate ? new Date(displayLastPaymentDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não registrado'}</h4>
-                        <button onclick="if(confirm('Deseja resetar o contador e iniciar um novo ciclo hoje?')){ window.updateClientPlan('${client.id}', { plano_inicio: new Date().toISOString().split('T')[0], plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
+                        <button onclick="if(confirm('Deseja resetar o contador e iniciar um novo ciclo hoje?')){ window.updateClientPlan('${client.id}', { plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
                                 class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-500 hover:text-white flex items-center justify-center"
                                 title="Resetar Ciclo Manualmente">
                             <i class="fas fa-rotate text-xs"></i>
@@ -3711,11 +3711,26 @@ function render() {
     const mainEl = app ? app.querySelector('main') : null;
     const scrollPos = mainEl ? mainEl.scrollTop : 0;
 
-    // Captura o foco e seleção antes de renderizar
-    const activeId = document.activeElement ? document.activeElement.id : null;
-    const selection = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') 
-        ? { start: document.activeElement.selectionStart, end: document.activeElement.selectionEnd } 
-        : null;
+
+    // Captura o foco e o VALOR ATUAL antes de renderizar
+    const activeEl = document.activeElement;
+    const activeId = activeEl ? activeEl.id : null;
+    let selection = null;
+    let activeValue = null;
+
+    if (activeEl) {
+        if (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA') {
+            selection = { start: activeEl.selectionStart, end: activeEl.selectionEnd, type: 'input' };
+            activeValue = activeEl.value;
+        } else if (activeEl.isContentEditable) {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+                const range = sel.getRangeAt(0);
+                selection = { start: range.startOffset, end: range.endOffset, type: 'contenteditable' };
+                activeValue = activeEl.innerText;
+            }
+        }
+    }
 
     const contentFn = pages[state.currentPage] || (() => '404');
     const content = contentFn();
@@ -3741,13 +3756,52 @@ function render() {
         newMain.scrollTop = scrollPos;
     }
 
-    // Restaura o foco e posição do cursor
+    // Restaura o foco e o VALOR (apenas se mudou o elemento ou se for input/textarea ou contenteditable)
     if (activeId) {
         const el = document.getElementById(activeId);
         if (el) {
+            // Restaura o valor NÃO SALVO se ele existir, para evitar que o render() sobrescreva enquanto o usuário digita
+            if (activeValue !== null) {
+                 if (selection && selection.type === 'input' && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+                      if (el.value !== activeValue) el.value = activeValue;
+                 } else if (selection && selection.type === 'contenteditable' && el.isContentEditable) {
+                      // Usa innerText para contenteditable para preservar quebras de linha básicas se houver
+                      if (el.innerText !== activeValue) el.innerText = activeValue;
+                 }
+            }
+
             el.focus();
-            if (selection && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
-                el.setSelectionRange(selection.start, selection.end);
+            if (selection) {
+                if (selection.type === 'input' && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+                    el.setSelectionRange(selection.start, selection.end);
+                } else if (selection.type === 'contenteditable' && el.isContentEditable) {
+                    // Tenta restaurar a posição do cursor em contenteditable
+                    try {
+                        const range = document.createRange();
+                        const sel = window.getSelection();
+                        // Assume que o contenteditable tem apenas um nó de texto filho direto por enquanto (comum em one-line inputs)
+                        if (el.firstChild) {
+                             const textNode = el.firstChild;
+                             // Garante que o offset não estoure o tamanho do texto
+                             const len = textNode.textContent.length;
+                             const start = Math.min(selection.start, len);
+                             range.setStart(textNode, start);
+                             range.collapse(true);
+                             sel.removeAllRanges();
+                             sel.addRange(range);
+                        } else if (activeValue) {
+                              // Se não tiver filhos mas tinha valor, cria o nó de texto
+                              el.innerText = activeValue;
+                              const textNode = el.firstChild;
+                              if(textNode) {
+                                  range.setStart(textNode, Math.min(selection.start, textNode.length));
+                                  range.collapse(true);
+                                  sel.removeAllRanges();
+                                  sel.addRange(range);
+                              }
+                        }
+                    } catch(e) { console.warn('Erro ao restaurar cursor:', e); }
+                }
             }
         }
     }
@@ -3822,7 +3876,8 @@ if (!window.hasGlobalHandlers) {
         const client = state.clients.find(c => (c.nome || '').trim().toLowerCase() === clientName.trim().toLowerCase());
         if (!client || client.plano === 'Nenhum' || client.plano === 'Pausado') return null;
         
-        let cycleStartDate = client.plano_inicio || client.plano_pagamento;
+        // Baseado no plano_pagamento
+    let cycleStartDate = client.plano_pagamento;
 
         // Encontra o agendamento de RENOVAÇÃO mais recente (Data + Hora)
         const lastRenewal = state.records
@@ -3835,7 +3890,7 @@ if (!window.hasGlobalHandlers) {
             })[0];
 
         // Determina a data base de comparação
-        const baseDate = lastRenewal ? (lastRenewal.date || lastRenewal.data) : (client.plano_inicio || client.plano_pagamento);
+        const baseDate = lastRenewal ? (lastRenewal.date || lastRenewal.data) : client.plano_pagamento;
         if (!baseDate) return null;
 
         const visits = state.records.filter(r => {
@@ -3865,7 +3920,7 @@ if (!window.hasGlobalHandlers) {
             usageCount: visits,
             nextVisit: visits + 1,
             isWithinLimit: visits < limit,
-            startDate: cycleStartDate,
+            startDate: client.plano_pagamento,
             limit: limit
         };
     };
@@ -4039,19 +4094,27 @@ if (!window.hasGlobalHandlers) {
 
         // Auto-fill logic para Plano (Modal)
         const usage = window.getClientPlanUsage(name);
-        if (usage && usage.isWithinLimit) {
-            const form = document.querySelector('.glass-card form[onsubmit="window.saveNewRecord(event)"]');
-            if (form) {
-                const serviceInput = form.querySelector('#serviceSearchInputModal');
-                const serviceHidden = form.querySelector('input[name="service"]');
-                const valueInput = form.querySelector('input[name="value"]');
-                const paymentSelect = form.querySelector('select[name="payment"]');
-                
+        const form = document.querySelector('.glass-card form[onsubmit="window.saveNewRecord(event)"]');
+        if (usage && form) {
+            const serviceInput = form.querySelector('#serviceSearchInputModal');
+            const serviceHidden = form.querySelector('input[name="service"]');
+            const valueInput = form.querySelector('input[name="value"]');
+            const paymentSelect = form.querySelector('select[name="payment"]');
+            
+            if (usage.isWithinLimit) {
                 const planServiceName = `${usage.nextVisit}º DIA`;
                 if (serviceInput) serviceInput.value = planServiceName;
                 if (serviceHidden) serviceHidden.value = planServiceName;
                 if (valueInput) valueInput.value = "0";
                 if (paymentSelect) paymentSelect.value = "PLANO MENSAL";
+            } else {
+                // Sugestão de Renovação
+                const client = state.clients.find(c => c.nome.toLowerCase() === name.toLowerCase());
+                const renewalService = `RENOVAÇÃO`;
+                if (serviceInput) serviceInput.value = renewalService;
+                if (serviceHidden) serviceHidden.value = renewalService;
+                if (valueInput && client?.valor_plano) valueInput.value = parseFloat(client.valor_plano).toFixed(2);
+                if (paymentSelect) paymentSelect.value = "PIX";
             }
         }
     };
@@ -4332,9 +4395,8 @@ if (!window.hasGlobalHandlers) {
                                 const client = state.clients.find(c => c.nome.toLowerCase() === value.toLowerCase());
                                 if (client) {
                                     window.updateClientPlan(client.id, { 
-                                        plano_inicio: date,
                                         plano_pagamento: date 
-                                    });
+                                    }, true);
                                 }
                             }
 
@@ -4364,9 +4426,8 @@ if (!window.hasGlobalHandlers) {
                             
                             // Reseta ciclo do cliente
                             window.updateClientPlan(client.id, { 
-                                plano_inicio: date,
                                 plano_pagamento: date 
-                            });
+                            }, true);
                         }
                     } else if (/\d+º\s*DIA/i.test(value)) {
                         recordData.forma_pagamento = 'PLANO MENSAL';
@@ -4537,25 +4598,22 @@ if (!window.hasGlobalHandlers) {
                         if (paymentSelect) paymentSelect.value = "PLANO MENSAL";
                     } else {
                         // Atingiu o limite! Sugere Renovação
-                        if (serviceEl) serviceEl.innerText = `RENOVAÇÃO 1º DIA`;
+                        if (serviceEl) serviceEl.innerText = `RENOVAÇÃO`;
                         if (valueEl && client?.valor_plano) valueEl.innerText = parseFloat(client.valor_plano).toFixed(2);
                         if (paymentSelect) paymentSelect.value = "PIX";
                         
-                        // Atualiza as datas do cliente para resetar o ciclo
+                        // Atualiza as datas do cliente para resetar o ciclo SEM re-renderizar para não bugar o DOM atual
                         if (client) {
                             window.updateClientPlan(client.id, { 
-                                plano_inicio: dateVal,
                                 plano_pagamento: dateVal 
-                            });
+                            }, true); // true = skipRender
                         }
                     }
 
-                    // Se não for novo, dispara o save para cada campo
-                    if (!isNew) {
-                        if (serviceEl) window.saveInlineEdit(serviceEl);
-                        if (valueEl) window.saveInlineEdit(valueEl);
-                        if (paymentSelect) window.saveInlineEdit(paymentSelect);
-                    }
+                    // Dispara o save principal (client) que já vai ler os campos atualizados acima
+                    // Não disparamos saves múltiplos para evitar conflitos de render
+                    window.saveInlineEdit(el);
+                    return; // Importante sair aqui para não disparar o save duplicado no final
                 }
             }
             
@@ -4577,8 +4635,7 @@ if (!window.hasGlobalHandlers) {
                         const dateVal = document.querySelector(`[data-ui-id="${uiId}"][data-field="time"]`)?.dataset.date || new Date().toISOString().split('T')[0];
                         if (dateVal) {
                             window.updateClientPlan(client.id, { 
-                                plano_pagamento: dateVal,
-                                plano_inicio: dateVal 
+                                plano_pagamento: dateVal
                             });
                         }
 
@@ -4615,18 +4672,10 @@ if (!window.hasGlobalHandlers) {
     window.handleInlineTyping = null; // Removido, usando handleInlineKey agora
 
     window.clearPlaceholder = (el) => {
-        el.dataset.beganTyping = "false";
-        // Ocultar outros autocompletes
-        document.querySelectorAll('[id^="inlineAutocomplete_"]').forEach(d => d.classList.add('hidden'));
-        
         const currentText = el.innerText.trim();
-        if (currentText === '---') {
+        if (currentText === '---' || currentText === 'Adicionar Nome...') {
             el.innerText = '';
-            el.dataset.beganTyping = "true";
-            // Força o foco e move o cursor para o início caso innerText tenha limpado algo
-            el.focus();
         } else {
-            // Selecionar tudo para permitir substituição instantânea
             window.selectAll(el);
         }
     };
