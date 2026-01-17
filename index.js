@@ -2881,8 +2881,8 @@ const PlansPage = () => {
                 </div>
                 
                 <div class="hidden md:grid grid-cols-12 gap-4 px-8 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 bg-white/[0.01]">
-                    <div class="col-span-3 pl-2 text-left">Cliente</div>
-                    <div class="col-span-1 text-left">Uso</div>
+                    <div class="col-span-2 pl-2 text-left">Cliente</div>
+                    <div class="col-span-2 text-left">Uso</div>
                     <div class="col-span-2 text-left">Últ. Pagto</div>
                     <div class="col-span-4 text-left">Observações</div>
                     <div class="col-span-1 text-left">Status</div>
@@ -2910,8 +2910,8 @@ const PlansPage = () => {
                                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-6 hover:bg-white/[0.02] transition-colors group plan-client-card" data-name="${
                                   c.nome
                                 }">
-                                    <!-- Cliente Info (Col 3) -->
-                                    <div class="md:col-span-3 flex items-center justify-start gap-3 cursor-pointer group/name" onclick="navigate('client-profile', '${
+                                    <!-- Cliente Info (Col 2) -->
+                                    <div class="md:col-span-2 flex items-center justify-start gap-3 cursor-pointer group/name" onclick="navigate('client-profile', '${
                                       c.id
                                     }')">
                                         <div class="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 font-bold shrink-0 group-hover/name:bg-amber-500 group-hover/name:text-dark-950 transition-all relative">
@@ -2929,9 +2929,9 @@ const PlansPage = () => {
                                         </div>
                                     </div>
 
-                                    <!-- Limite/Uso (Col 1) -->
-                                    <div class="md:col-span-1 flex justify-start">
-                                        <div class="flex items-center gap-1 text-[11px] font-black tracking-tighter">
+                                    <!-- Limite/Uso (Col 2) -->
+                                    <div class="md:col-span-2 flex justify-start">
+                                        <div class="flex items-center gap-1.5 text-[11px] font-black tracking-tighter group/limit">
                                             <span class="${
                                               planStats?.usageCount >=
                                               (c.limite_cortes || 99)
@@ -2941,22 +2941,22 @@ const PlansPage = () => {
                                   planStats?.usageCount || 0
                                 }</span>
                                             <span class="text-slate-600">/</span>
-                                            <div class="flex items-center gap-0.5 group/limit">
-                                                <button onclick="window.adjustLimitCortes('${c.id}', parseInt(document.getElementById('limit_input_${c.id}').value || 99) - 1)"
-                                                        class="w-5 h-5 rounded bg-white/5 text-slate-500 hover:bg-rose-500/20 hover:text-rose-400 active:scale-90 transition-all flex items-center justify-center text-[9px] opacity-50 group-hover/limit:opacity-100">
-                                                    <i class="fas fa-minus"></i>
-                                                </button>
-                                                <input type="number" value="${
-                                                  c.limite_cortes || 99
-                                                }" min="1" max="99"
-                                                       id="limit_input_${c.id}"
-                                                       onchange="window.updateClientPlan('${
-                                                         c.id
-                                                       }', { limite_cortes: parseInt(this.value) || 99 })"
-                                                       class="w-7 bg-transparent border-none text-[11px] font-black p-0 outline-none text-white/60 focus:text-amber-500 hover:text-white transition-colors text-center cursor-pointer [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+                                            <input type="number" value="${
+                                              c.limite_cortes || 99
+                                            }" min="1" max="99"
+                                                   id="limit_input_${c.id}"
+                                                   onchange="window.updateClientPlan('${
+                                                     c.id
+                                                   }', { limite_cortes: parseInt(this.value) || 99 })"
+                                                   class="w-6 bg-transparent border-none text-[11px] font-black p-0 outline-none text-white/60 focus:text-amber-500 hover:text-white transition-colors text-center cursor-pointer [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+                                            <div class="flex flex-col gap-0.5 opacity-50 group-hover/limit:opacity-100 transition-opacity">
                                                 <button onclick="window.adjustLimitCortes('${c.id}', parseInt(document.getElementById('limit_input_${c.id}').value || 99) + 1)"
-                                                        class="w-5 h-5 rounded bg-white/5 text-slate-500 hover:bg-emerald-500/20 hover:text-emerald-400 active:scale-90 transition-all flex items-center justify-center text-[9px] opacity-50 group-hover/limit:opacity-100">
-                                                    <i class="fas fa-plus"></i>
+                                                        class="w-4 h-3 rounded-sm bg-white/5 text-slate-500 hover:bg-emerald-500/30 hover:text-emerald-400 active:scale-90 transition-all flex items-center justify-center text-[7px]">
+                                                    <i class="fas fa-chevron-up"></i>
+                                                </button>
+                                                <button onclick="window.adjustLimitCortes('${c.id}', parseInt(document.getElementById('limit_input_${c.id}').value || 99) - 1)"
+                                                        class="w-4 h-3 rounded-sm bg-white/5 text-slate-500 hover:bg-rose-500/30 hover:text-rose-400 active:scale-90 transition-all flex items-center justify-center text-[7px]">
+                                                    <i class="fas fa-chevron-down"></i>
                                                 </button>
                                             </div>
                                         </div>
