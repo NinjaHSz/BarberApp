@@ -1,0 +1,37 @@
+import { state } from "./core/state.js";
+import { applyTheme } from "./ui/theme.js";
+import {
+  fetchClients,
+  fetchProcedures,
+  fetchAllPlanPayments,
+} from "./api/supabase.js";
+import { syncFromSheet } from "./api/sync.js";
+import { render } from "./ui/render.js";
+import { setupGlobalHandlers } from "./ui/handlers.js";
+import "./utils/dom.js"; // Registers selectAll globally
+
+// Run initialization directly since script is a module (deferred by default)
+setupGlobalHandlers();
+applyTheme();
+
+// Initial render to show skeleton or setup page if not integrated
+render();
+
+// Background data fetch
+(async () => {
+  try {
+    await Promise.all([
+      fetchClients(),
+      fetchProcedures(),
+      fetchAllPlanPayments(),
+    ]);
+
+    if (state.sheetUrl) {
+      syncFromSheet(state.sheetUrl);
+    }
+  } catch (err) {
+    console.error("Erro na inicialização de dados:", err);
+  } finally {
+    render();
+  }
+})();

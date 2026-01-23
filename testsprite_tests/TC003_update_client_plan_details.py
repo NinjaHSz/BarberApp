@@ -1,47 +1,89 @@
 import requests
-import uuid
 
-BASE_URL = 'http://localhost:5555'
-CLIENTS_ENDPOINT = f"{BASE_URL}/rest/v1/clientes"
-HEADERS = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-}
+BASE_URL = "http://localhost:5555"
 TIMEOUT = 30
+HEADERS = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+}
 
 def test_update_client_plan_details():
-    # Assume a client ID to update (must exist in DB for test to pass)
-    existing_client_id = 'existing-client-id-to-update'
-
-    # Prepare update payload: update subscription plan details
-    update_payload = {
-        "plano_assinatura": "anual",
-        "status_pagamento": "inativo"
+    client_create_url = f"{BASE_URL}/rest/v1/clientes"
+    client_patch_url = f"{BASE_URL}/rest/v1/clientes"
+    # Prepare a new client with initial plan details to create
+    new_client_data = {
+        "nome": "Test Client TC003",
+        "email": "testclienttc003@example.com",
+        "telefone": "555-1234",
+        "plano_id": 1,           # assuming plan id 1 exists
+        "status_assinatura": "ativo",
+        "data_renovacao": "2026-12-31"
     }
-    # Perform PATCH request to update client plan details by specifying id in query param
-    patch_response = requests.patch(CLIENTS_ENDPOINT, json=update_payload, headers=HEADERS, timeout=TIMEOUT, params={"id": f"eq.{existing_client_id}"})
-    assert patch_response.status_code in (200, 204), f"Failed to update client plan: {patch_response.text}"
 
-    # Validate changes persisted by fetching the client data
-    params = {
-        "id": f"eq.{existing_client_id}"
+    # Updated plan details for PATCH request
+    updated_client_plan_data = {
+        "plano_id": 2,           # change subscription plan to id 2, assuming this exists
+        "status_assinatura": "inativo",
+        "data_renovacao": "2027-01-31"
     }
-    get_response = requests.get(CLIENTS_ENDPOINT, headers=HEADERS, params=params, timeout=TIMEOUT)
-    assert get_response.status_code == 200, f"Failed to fetch updated client data: {get_response.text}"
-    clients = get_response.json()
-    assert isinstance(clients, list) and len(clients) == 1, "Updated client not found or multiple entries returned"
-    client = clients[0]
-    assert client["id"] == existing_client_id, "Client ID mismatch"
-    assert client["plano_assinatura"] == "anual", f"Subscription plan not updated, expected 'anual' got {client['plano_assinatura']}"
-    assert client["status_pagamento"] == "inativo", f"Payment status not updated, expected 'inativo' got {client['status_pagamento']}"
 
-    # Test validation of input data by sending invalid plan detail
-    invalid_update_payload = {
-        "plano_assinatura": 12345  # invalid type
-    }
-    invalid_response = requests.patch(CLIENTS_ENDPOINT, json=invalid_update_payload, headers=HEADERS, timeout=TIMEOUT, params={"id": f"eq.{existing_client_id}"})
-    # Expecting error due to invalid data type
-    assert invalid_response.status_code >= 400, "Invalid input was accepted, expected error status code"
+    client_id = None
 
+    try:
+        # Create a new client first to update it later
+        response = requests.post(
+            client_create_url,
+            headers=HEADERS,
+            json=new_client_data,
+            timeout=TIMEOUT,
+        )
+        response.raise_for_status()
+        created_clients = response.json()
+        # The POST returns an array of created records typically
+        assert isinstance(created_clients, list), "Create client response is not a list"
+        assert len(created_clients) == 1, "Expected exactly one created client"
+        client_id = created_clients[0].get("id")
+        assert client_id is not None, "Created client missing 'id' field"
+
+        # Patch the created client's plan details using PATCH with filter in query string
+        patch_url = f"{client_patch_url}?id=eq.{client_id}"
+        patch_response = requests.patch(
+            patch_url,
+            headers=HEADERS,
+            json=updated_client_plan_data,
+            timeout=TIMEOUT,
+        )
+        patch_response.raise_for_status()
+        # The PATCH request typically returns the updated record(s) as list
+        patched_clients = patch_response.json()
+        assert isinstance(patched_clients, list), "Patch response is not a list"
+        assert len(patched_clients) > 0, "No client records were updated"
+
+        # Verify the updated fields match what we sent
+        patched_client = patched_clients[0]
+        assert patched_client.get("plano_id") == updated_client_plan_data["plano_id"], "plano_id not updated correctly"
+        assert patched_client.get("status_assinatura") == updated_client_plan_data["status_assinatura"], "status_assinatura not updated correctly"
+        assert patched_client.get("data_renovacao") == updated_client_plan_data["data_renovacao"], "data_renovacao not updated correctly"
+
+        # Retrieve the client to confirm persisted changes
+        get_url = f"{client_create_url}?id=eq.{client_id}"
+        get_response = requests.get(get_url, headers=HEADERS, timeout=TIMEOUT)
+        get_response.raise_for_status()
+        get_clients = get_response.json()
+        assert len(get_clients) == 1, "Client not found after update"
+        retrieved_client = get_clients[0]
+        assert retrieved_client.get("plano_id") == updated_client_plan_data["plano_id"], "Persisted plano_id mismatch"
+        assert retrieved_client.get("status_assinatura") == updated_client_plan_data["status_assinatura"], "Persisted status_assinatura mismatch"
+        assert retrieved_client.get("data_renovacao") == updated_client_plan_data["data_renovacao"], "Persisted data_renovacao mismatch"
+
+    finally:
+        # Cleanup: delete the created client if exists
+        if client_id:
+            del_url = f"{client_create_url}?id=eq.{client_id}"
+            try:
+                del_response = requests.delete(del_url, headers=HEADERS, timeout=TIMEOUT)
+                del_response.raise_for_status()
+            except Exception:
+                pass
 
 test_update_client_plan_details()

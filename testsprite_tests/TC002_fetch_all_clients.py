@@ -1,36 +1,37 @@
 import requests
 
 BASE_URL = "http://localhost:5555"
-CLIENTS_ENDPOINT = "/rest/v1/clientes"
 TIMEOUT = 30
 
 def test_fetch_all_clients():
-    url = f"{BASE_URL}{CLIENTS_ENDPOINT}"
+    url = f"{BASE_URL}/rest/v1/clients"
     headers = {
         "Accept": "application/json"
     }
-
     try:
         response = requests.get(url, headers=headers, timeout=TIMEOUT)
-        response.raise_for_status()
+    except requests.RequestException as e:
+        assert False, f"Request failed: {e}"
+
+    assert response.status_code == 200, f"Expected status code 200, got {response.status_code}"
+
+    try:
         clients = response.json()
+    except ValueError:
+        assert False, "Response content is not valid JSON"
 
-        # Assert that the response is a list (array of clients)
-        assert isinstance(clients, list), "Expected response to be a list of clients"
+    assert isinstance(clients, list), f"Expected response to be a list, got {type(clients)}"
 
-        # If there are clients, check that each client has expected keys
-        if clients:
-            expected_keys = {"id", "name", "email", "phone", "subscription_plan", "payment_history"}
-            for client in clients:
-                assert isinstance(client, dict), "Each client should be a dictionary"
-                # Validate client keys exist (at least some keys expected in a client)
-                assert expected_keys.intersection(client.keys()), "Client object missing expected keys"
-
-    except requests.exceptions.HTTPError as http_err:
-        assert False, f"HTTP error occurred: {http_err}"
-    except requests.exceptions.RequestException as req_err:
-        assert False, f"Request error occurred: {req_err}"
-    except ValueError as json_err:
-        assert False, f"JSON decode error: {json_err}"
+    # Additional basic checks for data integrity
+    for client in clients:
+        assert isinstance(client, dict), "Each client record should be a dictionary"
+        assert "id" in client, "Client should have an identifier field 'id'"
+        # Attempt minimal data fields validation if they exist
+        if "nome" in client:
+            assert isinstance(client["nome"], str), "Client 'nome' should be a string"
+        if "email" in client:
+            assert isinstance(client["email"], (str, type(None))), "Client 'email' should be string or None"
+        if "telefone" in client:
+            assert isinstance(client["telefone"], (str, type(None))), "Client 'telefone' should be string or None"
 
 test_fetch_all_clients()

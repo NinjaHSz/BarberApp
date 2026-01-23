@@ -1,33 +1,44 @@
 import requests
 
 BASE_URL = "http://localhost:5555"
+ENDPOINT = "/rest/v1/pagamentos_planos"
 TIMEOUT = 30
-HEADERS = {
-    "Accept": "application/json"
-}
 
 def test_fetch_payment_history_for_plans():
-    url = f"{BASE_URL}/rest/v1/pagamentos_planos"
+    url = BASE_URL + ENDPOINT
+    headers = {
+        "Accept": "application/json"
+    }
     try:
-        response = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        response = requests.get(url, headers=headers, timeout=TIMEOUT)
         response.raise_for_status()
     except requests.RequestException as e:
         assert False, f"Request failed: {e}"
 
+    # Validate response content type
+    content_type = response.headers.get("Content-Type", "")
+    assert "application/json" in content_type, "Response content type is not JSON"
+
+    # Validate response JSON schema basics: expect a list of payment history records
     try:
-        data = response.json()
+        payments = response.json()
     except ValueError:
         assert False, "Response is not a valid JSON"
 
-    assert isinstance(data, list), "Response JSON should be a list of payment history records"
+    assert isinstance(payments, list), "Response JSON is not a list"
 
-    for record in data:
-        assert isinstance(record, dict), "Each payment record should be a dictionary"
-        assert "id" in record, "Payment record missing 'id' field"
-        assert "client_id" in record or "cliente_id" in record, "Payment record missing client identifier"
-        assert "plan_id" in record or "plano_id" in record, "Payment record missing plan identifier"
-        assert "payment_date" in record or "data_pagamento" in record, "Payment record missing payment date"
-        assert "amount" in record or "valor" in record, "Payment record missing amount/payment value"
+    # If there are records, validate expected keys in each record
+    if payments:
+        required_keys = {"id", "client_plan_id", "payment_date", "amount", "status"}
+        for payment in payments:
+            assert isinstance(payment, dict), "Payment record is not a dictionary"
+            assert required_keys.issubset(payment.keys()), f"Payment record missing required keys: {required_keys - payment.keys()}"
 
+            # Validate basic types
+            assert isinstance(payment["id"], int), "Payment id is not an integer"
+            assert isinstance(payment["client_plan_id"], int), "Client plan id is not an integer"
+            assert isinstance(payment["payment_date"], str) and payment["payment_date"], "Payment date is empty or not a string"
+            assert (isinstance(payment["amount"], (int, float)) and payment["amount"] >= 0), "Payment amount is invalid"
+            assert payment["status"] in {"paid", "pending", "failed", "cancelled"}, f"Unexpected payment status: {payment['status']}"
 
 test_fetch_payment_history_for_plans()

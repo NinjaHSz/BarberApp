@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
   <head>
     <!-- Configurações de Cabeçalho (Metadados, Fontes e Bibliotecas) -->
@@ -21,8 +21,14 @@
       rel="stylesheet"
     />
 
-    <!-- Configuração do Tema Tailwind -->
+    <!-- ConfiguraÃ§Ã£o do Tema Tailwind -->
     <script>
+      window.onerror = function (msg, url, line, col, error) {
+        alert("Erro Global: " + msg + "\nURL: " + url + "\nLinha: " + line);
+        console.error("Erro Global:", error);
+        return false;
+      };
+
       tailwind.config = {
         theme: {
           extend: {
@@ -62,10 +68,8 @@
       }
       .bg-pattern {
         background-color: var(--bg-950);
-        background-image: linear-gradient(
-            rgba(255, 255, 255, 0.02) 1px,
-            transparent 1px
-          ),
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
           linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
         background-size: 40px 40px;
       }
@@ -89,8 +93,12 @@
       .transition-all,
       .transition-colors,
       .group-hover {
-        transition: border-color 0.2s, background-color 0.2s, color 0.1s,
-          transform 0.2s, box-shadow 0.2s;
+        transition:
+          border-color 0.2s,
+          background-color 0.2s,
+          color 0.1s,
+          transform 0.2s,
+          box-shadow 0.2s;
       }
 
       [contenteditable="true"]:focus {
@@ -151,6 +159,6 @@
     </div>
 
     <!-- Arquivo Lógica Principal -->
-    <script type="module" src="index.js"></script>
+    <script type="module" src="js/main.js"></script>
   </body>
 </html>
