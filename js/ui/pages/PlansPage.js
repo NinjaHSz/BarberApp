@@ -47,6 +47,7 @@ export const PlansPage = () => {
       plano: formData.get("plano"),
       plano_pagamento: new Date().toISOString().split("T")[0],
       limite_cortes: parseInt(formData.get("limite_cortes")) || 99,
+      valor_plano: parseFloat(formData.get("valor_plano")) || 0,
     };
 
     try {
@@ -275,6 +276,18 @@ export const PlansPage = () => {
                                            class="bg-transparent border-none text-[10px] font-black ${isPending ? "text-rose-500" : "text-white"} p-0 outline-none cursor-pointer" style="color-scheme: dark">
                                 </div>
 
+                                <!-- Valor do Plano -->
+                                <div class="flex flex-col w-full md:w-24 shrink-0">
+                                    <p class="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1">Valor</p>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[10px] text-text-muted font-black">R$</span>
+                                        <div contenteditable="true" onblur="window.updateClientPlan('${c.id}', { valor_plano: parseFloat(this.innerText) || 0 })"
+                                             class="text-[10px] font-black text-white outline-none focus:text-brand-primary transition-colors min-w-[20px]">
+                                            ${(c.valor_plano || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Observações Silenciosas -->
                                 <div class="flex-1 min-w-0 w-full">
                                     <div contenteditable="true" onblur="window.updateClientPlan('${c.id}', { observacoes_plano: this.innerText.trim() })"
@@ -334,6 +347,13 @@ export const PlansPage = () => {
                                 <div class="relative">
                                     <input type="number" name="limite_cortes" value="99" min="1" max="99" class="w-full bg-dark-950 border border-transparent p-3 rounded-xl outline-none focus:border-transparent transition-all font-bold text-white pl-10">
                                     <i class="fas fa-scissors absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Valor do Plano (R$)</label>
+                                <div class="relative">
+                                    <input type="number" step="0.01" name="valor_plano" placeholder="0,00" class="w-full bg-dark-950 border border-transparent p-3 rounded-xl outline-none focus:border-transparent transition-all font-bold text-white pl-10">
+                                    <i class="fas fa-dollar-sign absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
                                 </div>
                             </div>
                             <div class="pt-4">
