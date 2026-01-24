@@ -195,8 +195,10 @@ export const ClientsPage = () => {
 
   const isClients = state.clientView === "clients";
 
+  const isCompact = state.displayMode === "compact";
+
   return `
-        <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+        <div class="px-4 ${isCompact ? "py-2" : "py-6"} sm:px-8 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 class="text-2xl sm:text-3xl font-display font-bold">Gestão Local</h2>
@@ -313,19 +315,19 @@ export const ClientsPage = () => {
                                               .map(
                                                 (c) => `
                                                 <tr class="hover:bg-white/[0.01] transition-colors group">
-                                                    <td class="px-4 py-4 font-bold text-white uppercase cursor-pointer hover:text-brand-primary transition-colors whitespace-nowrap" onclick="navigate('client-profile', '${c.id}')">
+                                                    <td class="px-4 ${isCompact ? "py-1" : "py-4"} font-bold text-white uppercase cursor-pointer hover:text-brand-primary transition-colors whitespace-nowrap" onclick="navigate('client-profile', '${c.id}')">
                                                         ${c.nome} ${c.novo_cliente ? '<span class="ml-1 bg-brand-primary/20 text-brand-primary text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ""}
                                                     </td>
-                                                    <td class="px-4 py-4 text-center">
+                                                    <td class="px-4 ${isCompact ? "py-1" : "py-4"} text-center">
                                                         <span class="px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${c.plano === "Mensal" ? "bg-brand-primary/10 text-brand-primary border border-transparent" : c.plano === "Anual" ? "bg-slate-500/10 text-slate-500 border border-slate-500/20" : "text-slate-500 border border-transparent"}">
                                                             ${c.plano || "Nenhum"}
                                                         </span>
                                                     </td>
-                                                    <td class="px-4 py-4">
+                                                    <td class="px-4 ${isCompact ? "py-1" : "py-4"}">
                                                         <div contenteditable="true" id="edit_mgmt_obs_${c.id}" spellcheck="false" autocomplete="off"
                                                              onblur="window.updateClientField('${c.id}', 'observacoes_cliente', this.innerText.trim())" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="bg-transparent text-[10px] text-slate-400 font-medium outline-none hover:text-white transition-colors whitespace-pre-wrap break-words min-w-[120px] max-w-[200px] cursor-text">${!c.observacoes_cliente || c.observacoes_cliente.includes("...") || c.observacoes_cliente.includes("permanentes") ? "Adcionar Nota..." : c.observacoes_cliente}</div>
                                                     </td>
-                                                    <td class="px-4 py-4 text-right">
+                                                    <td class="px-4 ${isCompact ? "py-1" : "py-4"} text-right">
                                                         <div class="flex justify-end space-x-1.5">
                                                             <button onclick='window.editClient(${JSON.stringify(c)})' class="w-8 h-8 rounded-xl bg-slate-400/10 text-slate-400 hover:bg-slate-400 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-edit text-xs"></i></button>
                                                             <button onclick="window.deleteClient('${c.id}')" class="w-8 h-8 rounded-xl bg-slate-600/10 text-slate-600 hover:bg-slate-600 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button>
@@ -390,9 +392,9 @@ export const ClientsPage = () => {
                                               .map(
                                                 (p) => `
                                                 <tr class="hover:bg-white/[0.01] transition-colors group">
-                                                    <td class="px-4 py-4 font-bold text-white uppercase whitespace-nowrap">${p.nome}</td>
-                                                    <td class="px-4 py-4 text-slate-300 font-black">R$ ${p.preco.toFixed(2).replace(".", ",")}</td>
-                                                    <td class="px-4 py-4 text-right">
+                                                    <td class="px-4 ${isCompact ? "py-1" : "py-4"} font-bold text-white uppercase whitespace-nowrap">${p.nome}</td>
+                                                    <td class="px-4 ${isCompact ? "py-1" : "py-4"} text-slate-300 font-black">R$ ${p.preco.toFixed(2).replace(".", ",")}</td>
+                                                    <td class="px-4 ${isCompact ? "py-1" : "py-4"} text-right">
                                                         <div class="flex justify-end space-x-1.5">
                                                             <button onclick='window.editProcedure(${JSON.stringify(p)})' class="w-8 h-8 rounded-xl bg-slate-400/10 text-slate-400 hover:bg-slate-400 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-edit text-xs"></i></button>
                                                             <button onclick="window.deleteProcedure('${p.id}')" class="w-8 h-8 rounded-xl bg-slate-600/10 text-slate-600 hover:bg-slate-600 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button>

@@ -101,8 +101,10 @@ export const RecordsPage = () => {
     }
   }
 
+  const isCompact = state.displayMode === "compact";
+
   return `
-        <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 sm:space-y-8">
+        <div class="px-4 ${isCompact ? "py-2" : "py-6"} sm:px-8 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
                     <h2 class="text-text-primary text-2xl sm:text-3xl font-display font-bold">Histórico</h2>

@@ -1,5 +1,7 @@
 import { state } from "../../core/state.js";
 
+const maskPrivacy = (val) => (state.privacyMode ? "R$ ••••" : val);
+
 export const KPICard = (title, value, icon) => `
     <div class="bg-surface-section/30 p-5 rounded-2xl group transition-all duration-300 relative border border-transparent hover:bg-surface-section/50">
         <div class="flex items-center gap-4">
@@ -8,7 +10,7 @@ export const KPICard = (title, value, icon) => `
             </div>
             <div>
                 <p class="text-[9px] font-black text-text-muted uppercase tracking-widest">${title}</p>
-                <h2 class="text-text-primary text-xl sm:text-2xl font-display font-black tracking-tighter">${value}</h2>
+                <h2 class="text-text-primary text-xl sm:text-2xl font-display font-black tracking-tighter">${maskPrivacy(value)}</h2>
             </div>
         </div>
     </div>
@@ -204,7 +206,7 @@ export const Dashboard = () => {
         <div class="px-4 py-6 sm:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8 max-w-7xl mx-auto">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div class="space-y-0.5">
-                    <h2 class="text-text-primary text-xl font-display font-black uppercase tracking-tighter">PAINEL DA BARBEARIA</h2>
+                    <h2 class="text-text-primary text-xl font-display font-black uppercase tracking-tighter">${state.barbershopName} — PAINEL</h2>
                     <p class="text-[9px] text-text-muted font-black uppercase tracking-widest">Painel de Performance Estratégica</p>
                 </div>
                 <button onclick="window.navigate('expenses')" 

@@ -146,137 +146,158 @@ export const PlansPage = () => {
     return name.includes(search);
   });
 
+  // Metrics calculation
+  const pendingRenewals = clientsWithPlans.filter((c) => {
+    if (!c.plano_pagamento) return true;
+    const diff =
+      (new Date() - new Date(c.plano_pagamento)) / (1000 * 60 * 60 * 24);
+    return diff > 30;
+  }).length;
+
+  const mrrTotal = clientsWithPlans.reduce(
+    (acc, c) => acc + (parseFloat(c.valor_plano) || 0),
+    0,
+  );
+
   return `
-        <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div class="flex justify-between items-end">
-                <div>
-                    <h2 class="text-2xl sm:text-3xl font-display font-bold">Planos</h2>
-                    <p class="text-slate-500 text-xs sm:text-sm mt-1">Gestão de Assinaturas</p>
-                </div>
-                <div class="hidden sm:flex items-center gap-4">
-                    <button onclick="window.toggleAddPlanModal(true)" class="bg-brand-primary text-surface-page px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-lg shadow-brand-primary/20">
-                        <i class="fas fa-plus mr-2"></i> Novo Plano
+        <div class="px-4 py-6 sm:px-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-32 max-w-7xl mx-auto">
+            <!-- Header & KPIs -->
+            <div class="space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
+                    <div class="space-y-1">
+                        <h2 class="text-2xl font-display font-black text-white uppercase tracking-tighter">Gestão de Planos</h2>
+                        <p class="text-[9px] text-text-muted font-black uppercase tracking-widest italic">Performance e Retenção de Assinantes</p>
+                    </div>
+                    <button onclick="window.toggleAddPlanModal(true)" class="w-full sm:w-auto px-6 py-3 bg-brand-primary text-surface-page rounded-xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-xl shadow-brand-primary/10">
+                        <i class="fas fa-plus text-[10px]"></i> Novo Assinante
                     </button>
-                    <div class="bg-brand-primary/10 text-brand-primary px-4 py-2 rounded-2xl border border-transparent flex items-center gap-3">
-                        <i class="fas fa-chart-pie"></i>
-                        <span class="text-xs font-black uppercase tracking-widest">${clientsWithPlans.length} Clientes Ativos</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-surface-section/30 p-5 rounded-2xl flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-brand-primary/5 flex items-center justify-center text-text-muted"><i class="fas fa-users text-sm"></i></div>
+                        <div>
+                            <p class="text-[8px] font-black text-text-muted uppercase tracking-widest">Ativos</p>
+                            <h3 class="text-xl font-display font-black text-white">${clientsWithPlans.length}</h3>
+                        </div>
+                    </div>
+                    <div class="bg-surface-section/30 p-5 rounded-2xl flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-brand-primary/5 flex items-center justify-center text-text-muted"><i class="fas fa-clock text-sm"></i></div>
+                        <div>
+                            <p class="text-[8px] font-black text-text-muted uppercase tracking-widest">Pendentes</p>
+                            <h3 class="text-xl font-display font-black text-white">${pendingRenewals}</h3>
+                        </div>
+                    </div>
+                    <div class="bg-surface-section/30 p-5 rounded-2xl flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-brand-primary/5 flex items-center justify-center text-text-muted"><i class="fas fa-sack-dollar text-sm"></i></div>
+                        <div>
+                            <p class="text-[8px] font-black text-text-muted uppercase tracking-widest">Receita Mensal</p>
+                            <h3 class="text-xl font-display font-black text-brand-primary">R$ ${mrrTotal.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}</h3>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Main Content -->
             <div class="space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h3 class="text-lg font-bold text-brand-primary uppercase tracking-widest text-sm flex items-center gap-2 ml-2">
-                        <i class="fas fa-crown"></i> Assinantes Ativos
-                    </h3>
-                    <div class="relative w-full sm:w-80">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                        <input type="text" id="planSearchInput" placeholder="Filtrar assinantes..." 
-                               oninput="window.handlePlanSearch(this.value)" value="${state.planSearchTerm}"
-                               class="w-full bg-dark-900 border border-transparent py-2.5 pl-11 pr-4 rounded-xl text-xs outline-none focus:border-brand-primary transition-all font-medium">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
+                    <div class="flex items-center gap-3">
+                        <h3 class="text-[10px] font-black text-white uppercase tracking-widest italic">Lista de Assinantes</h3>
+                        <span class="px-2 py-0.5 bg-white/5 rounded text-[8px] font-black text-text-muted uppercase">${filteredPlans.length} resultados</span>
                     </div>
-                </div>
-                
-                <div class="hidden md:grid grid-cols-12 gap-4 px-8 py-3 text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-transparent bg-white/[0.01]">
-                    <div class="col-span-2 pl-2 text-left cursor-pointer hover:text-brand-primary transition-colors flex items-center gap-2" onclick="window.togglePlanSort('nome')">
-                        Cliente
-                        <i class="fas fa-sort-${state.planSort === "nome_asc" ? "alpha-down" : "alpha-up"} text-brand-primary text-xs"></i>
+                    <div class="relative w-full sm:w-64">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[10px]"></i>
+                        <input type="text" id="planSearchInput" placeholder="BUSCAR..." 
+                               oninput="window.handlePlanSearch(this.value)" value="${state.planSearchTerm || ""}"
+                               class="w-full bg-surface-section/50 border-none py-2 pl-9 pr-4 rounded-lg text-[10px] font-black uppercase tracking-widest text-white outline-none focus:bg-surface-section transition-all">
                     </div>
-                    <div class="col-span-2 text-left">Uso</div>
-                    <div class="col-span-2 text-left">Últ. Pagto</div>
-                    <div class="col-span-4 text-left">Observações</div>
-                    <div class="col-span-1 text-left">Status</div>
-                    <div class="col-span-1 text-left pr-2">Ações</div>
                 </div>
 
-                <div class="bg-dark-900/30 rounded-b-[2rem] rounded-t-none border border-transparent border-t-0 overflow-hidden min-h-[400px]">
+                <div class="space-y-1">
                     ${
                       filteredPlans.length === 0
-                        ? `
-                        <div class="h-[400px] flex flex-col items-center justify-center text-slate-500 space-y-4">
-                            <i class="fas fa-user-slash text-4xl opacity-20"></i>
-                            <p class="italic text-sm">Nenhum assinante encontrado para "${state.planSearchTerm}".</p>
-                        </div>
-                    `
-                        : `
-                        <div class="divide-y divide-transparent max-h-[700px] overflow-y-auto custom-scroll">
-                            ${filteredPlans
-                              .map((c) => {
-                                const planStats = window.getClientPlanUsage
-                                  ? window.getClientPlanUsage(c.nome)
-                                  : { usageCount: 0 };
-                                return `
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-6 hover:bg-white/[0.02] transition-colors group plan-client-card" data-name="${c.nome}">
-                                    <div class="md:col-span-2 flex items-center justify-start gap-3 cursor-pointer group/name" onclick="navigate('client-profile', '${c.id}')">
-                                        <div class="w-8 h-8 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold shrink-0 group-hover/name:bg-brand-primary group-hover/name:text-surface-page transition-all relative">
-                                            ${c.nome.charAt(0)}
-                                            ${c.novo_cliente ? `<div class="absolute -top-1 -right-1 w-2 h-2 bg-brand-primary rounded-full border-2 border-dark-900 animate-pulse"></div>` : ""}
-                                        </div>
-                                        <div class="min-w-0 text-left">
-                                            <p class="font-bold text-white group-hover/name:text-brand-primary transition-colors truncate text-[11px]" title="${c.nome}">${c.nome}</p>
-                                        </div>
+                        ? `<div class="p-20 text-center text-text-muted text-[10px] font-black uppercase tracking-widest italic opacity-20">Nenhum registro encontrado</div>`
+                        : filteredPlans
+                            .map((c) => {
+                              const planStats = window.getClientPlanUsage
+                                ? window.getClientPlanUsage(c.nome)
+                                : { usageCount: 0 };
+                              const usagePercent = Math.min(
+                                100,
+                                ((planStats?.usageCount || 0) /
+                                  (c.limite_cortes || 99)) *
+                                  100,
+                              );
+                              const isOver =
+                                planStats?.usageCount >=
+                                (c.limite_cortes || 99);
+                              const isPending =
+                                c.plano_pagamento &&
+                                (new Date() - new Date(c.plano_pagamento)) /
+                                  (1000 * 60 * 60 * 24) >
+                                  30;
+
+                              return `
+                            <div class="bg-surface-section/20 hover:bg-surface-section/40 p-4 sm:p-5 rounded-2xl transition-all group flex flex-col md:flex-row items-center gap-6">
+                                <!-- Info Principal -->
+                                <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
+                                    <div class="w-10 h-10 rounded-full bg-surface-page flex items-center justify-center text-text-muted font-black text-xs shadow-xl border border-white/5 group-hover:text-brand-primary transition-colors">
+                                        ${c.nome.charAt(0)}
                                     </div>
-                                    <div class="md:col-span-2 flex flex-col justify-center gap-1">
-                                        <div class="flex items-center gap-1.5 text-[11px] font-black tracking-tighter group/limit">
-                                            <span class="${planStats?.usageCount >= (c.limite_cortes || 99) ? "text-slate-600" : "text-slate-300"}">${planStats?.usageCount || 0}</span>
-                                            <span class="text-slate-600">/</span>
-                                            <input type="number" value="${c.limite_cortes || 99}" min="1" max="99" id="limit_input_${c.id}"
-                                                   onchange="window.updateClientPlan('${c.id}', { limite_cortes: parseInt(this.value) || 99 })"
-                                                   class="w-6 bg-transparent border-none text-[11px] font-black p-0 outline-none text-white/60 focus:text-brand-primary hover:text-white transition-colors text-center cursor-pointer [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
-                                            <div class="flex flex-col gap-0.5 opacity-50 group-hover/limit:opacity-100 transition-opacity">
-                                                <button onclick="window.adjustLimitCortes('${c.id}', parseInt(document.getElementById('limit_input_${c.id}').value || 99) + 1)"
-                                                        class="w-4 h-3 rounded-sm bg-white/5 text-slate-500 hover:bg-slate-300/30 hover:text-slate-300 active:scale-90 transition-all flex items-center justify-center text-[7px]">
-                                                    <i class="fas fa-chevron-up"></i>
-                                                </button>
-                                                <button onclick="window.adjustLimitCortes('${c.id}', parseInt(document.getElementById('limit_input_${c.id}').value || 99) - 1)"
-                                                        class="w-4 h-3 rounded-sm bg-white/5 text-slate-500 hover:bg-slate-600/30 hover:text-slate-600 active:scale-90 transition-all flex items-center justify-center text-[7px]">
-                                                    <i class="fas fa-chevron-down"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden mt-1">
-                                            <div class="h-full ${planStats?.usageCount >= (c.limite_cortes || 99) ? "bg-slate-600" : "bg-slate-300"} transition-all duration-500" 
-                                                 style="width: ${Math.min(100, ((planStats?.usageCount || 0) / (c.limite_cortes || 99)) * 100)}%"></div>
-                                        </div>
-                                    </div>
-                                    <div class="md:col-span-2 flex flex-col justify-start">
-                                        <input type="date" value="${c.plano_pagamento || ""}" 
-                                               onchange="window.updateClientPlan('${c.id}', { plano_pagamento: this.value })"
-                                               style="color-scheme: dark"
-                                               class="w-full bg-dark-900 border ${c.plano_pagamento && (new Date() - new Date(c.plano_pagamento)) / (1000 * 60 * 60 * 24) > 30 ? "border-slate-600/50" : "border-transparent"} text-[10px] font-bold rounded-xl px-2 py-2 outline-none focus:border-transparent transition-all text-white cursor-pointer hover:bg-white/5 text-left">
-                                        ${c.plano_pagamento && (new Date() - new Date(c.plano_pagamento)) / (1000 * 60 * 60 * 24) > 30 ? `<span class="text-[8px] text-slate-600 font-bold mt-1 uppercase tracking-tighter ml-1">Vencido</span>` : ""}
-                                    </div>
-                                    <div class="md:col-span-4 relative group/obs text-left">
-                                        <div contenteditable="true" id="edit_plan_obs_${c.id}" spellcheck="false" autocomplete="off"
-                                             onblur="window.updateClientPlan('${c.id}', { observacoes_plano: this.innerText.trim() })" onfocus="window.selectAll(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="w-full bg-dark-900 border border-transparent text-[10px] font-bold rounded-xl px-3 py-2.5 outline-none focus:border-transparent transition-all text-slate-400 focus:text-white whitespace-pre-wrap break-words cursor-text overflow-hidden text-left">${!c.observacoes_plano || c.observacoes_plano.includes("...") ? "Adicionar Nota..." : c.observacoes_plano}</div>
-                                    </div>
-                                    <div class="md:col-span-1 flex justify-start">
-                                        <select onchange="window.updateClientPlan('${c.id}', { plano: this.value })" 
-                                                class="w-full bg-dark-950 border border-transparent text-[10px] font-bold rounded-lg px-0 py-2 outline-none focus:border-brand-primary transition-all cursor-pointer appearance-none text-left hover:border-transparent ${c.plano === "Pausado" ? "text-text-primary" : "text-white"}">
-                                            <option value="Mensal" ${c.plano === "Mensal" ? "selected" : ""}>MES</option>
-                                            <option value="Semestral" ${c.plano === "Semestral" ? "selected" : ""}>SEM</option>
-                                            <option value="Anual" ${c.plano === "Anual" ? "selected" : ""}>ANO</option>
-                                            <option value="Pausado" ${c.plano === "Pausado" ? "selected" : ""}>PAUSE</option>
-                                        </select>
-                                    </div>
-                                    <div class="md:col-span-1 flex justify-start gap-1">
-                                        <button onclick="window.updateClientPlan('${c.id}', { plano: 'Pausado' })" 
-                                                class="w-8 h-8 rounded-lg bg-text-primary/10 text-text-primary hover:bg-text-primary hover:text-surface-page transition-all flex items-center justify-center border border-text-primary/20 active:scale-95 shadow-lg shadow-text-primary/5"
-                                                title="Pausar">
-                                            <i class="fas fa-pause text-[10px]"></i>
-                                        </button>
-                                        <button onclick="if(confirm('Resetar ciclo?')){ window.updateClientPlan('${c.id}', { plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
-                                                class="w-8 h-8 rounded-lg bg-slate-300/10 text-slate-300 hover:bg-slate-300 hover:text-white transition-all flex items-center justify-center border border-slate-300/20 active:scale-95 shadow-lg shadow-slate-300/5"
-                                                title="Resetar">
-                                            <i class="fas fa-rotate text-[10px]"></i>
-                                        </button>
+                                    <div class="min-w-0 cursor-pointer" onclick="navigate('client-profile', '${c.id}')">
+                                        <h4 class="text-[11px] font-black text-white uppercase tracking-tighter truncate group-hover:text-brand-primary transition-colors">${c.nome}</h4>
+                                        <p class="text-[8px] font-bold text-text-muted uppercase tracking-widest">${c.plano}</p>
                                     </div>
                                 </div>
+
+                                <!-- Uso / Medidor -->
+                                <div class="flex flex-col gap-1 w-full md:w-40 shrink-0">
+                                    <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter">
+                                        <div class="flex items-center gap-1">
+                                            <span class="${isOver ? "text-rose-500" : "text-white"}">${planStats?.usageCount || 0}</span>
+                                            <span class="text-text-muted">/</span>
+                                            <input type="number" value="${c.limite_cortes || 99}" 
+                                                   onchange="window.updateClientPlan('${c.id}', { limite_cortes: parseInt(this.value) || 99 })"
+                                                   class="bg-transparent border-none w-6 p-0 text-text-muted focus:text-white outline-none">
+                                        </div>
+                                        <span class="text-[8px] text-text-muted font-bold">${usagePercent.toFixed(0)}%</span>
+                                    </div>
+                                    <div class="h-1 bg-white/5 rounded-full overflow-hidden">
+                                        <div class="h-full ${isOver ? "bg-rose-500" : usagePercent > 80 ? "bg-brand-primary" : "bg-text-muted"} transition-all duration-700" style="width: ${usagePercent}%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Vencimento / Ciclo -->
+                                <div class="flex flex-col w-full md:w-32 shrink-0">
+                                    <p class="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1">Último Pagamento</p>
+                                    <input type="date" value="${c.plano_pagamento || ""}" 
+                                           onchange="window.updateClientPlan('${c.id}', { plano_pagamento: this.value })"
+                                           class="bg-transparent border-none text-[10px] font-black ${isPending ? "text-rose-500" : "text-white"} p-0 outline-none cursor-pointer" style="color-scheme: dark">
+                                </div>
+
+                                <!-- Observações Silenciosas -->
+                                <div class="flex-1 min-w-0 w-full">
+                                    <div contenteditable="true" onblur="window.updateClientPlan('${c.id}', { observacoes_plano: this.innerText.trim() })"
+                                         class="text-[10px] text-text-muted hover:text-white transition-colors italic outline-none truncate max-w-sm">
+                                        ${!c.observacoes_plano || c.observacoes_plano.includes("...") ? "Adicionar nota..." : c.observacoes_plano}
+                                    </div>
+                                </div>
+
+                                <!-- Ações -->
+                                <div class="flex items-center gap-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="if(confirm('Reiniciar ciclo?')){ window.updateClientPlan('${c.id}', { plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
+                                            class="p-2 text-text-muted hover:text-brand-primary transition-colors" title="Reset">
+                                        <i class="fas fa-rotate text-[10px]"></i>
+                                    </button>
+                                    <button onclick="window.updateClientPlan('${c.id}', { plano: 'Pausado' })" 
+                                            class="p-2 text-text-muted hover:text-white transition-colors" title="Pausar">
+                                        <i class="fas fa-pause text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
                             `;
-                              })
-                              .join("")}
-                        </div>
-                    `
+                            })
+                            .join("")
                     }
                 </div>
             </div>

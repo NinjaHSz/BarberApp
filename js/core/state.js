@@ -54,4 +54,9 @@ export const state = {
   expenseSort: "vencimento_asc",
   expensePeriodFilter: "mensal",
   planSort: "nome_asc",
+  // UI Settings (Option B)
+  barbershopName: localStorage.getItem("barbershopName") || "LUCAS DO CORTE",
+  displayMode: localStorage.getItem("displayMode") || "comfortable",
+  privacyMode: localStorage.getItem("privacyMode") === "true",
+  customLogo: localStorage.getItem("customLogo") || "assets/logo.png",
 };

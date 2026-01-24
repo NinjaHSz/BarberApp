@@ -7,12 +7,12 @@ export const Sidebar = () => `
         <div class="h-24 flex items-center group-hover/sidebar:justify-start transition-all overflow-hidden shrink-0">
             <div class="w-20 shrink-0 flex items-center justify-center">
                 <div class="w-12 h-12 rounded-full overflow-hidden shadow-2xl border border-white/5 bg-surface-page">
-                    <img src="assets/logo.png" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=L&background=09090B&color=D4D4D8'">
+                    <img src="${state.customLogo}" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${state.barbershopName.charAt(0)}&background=09090B&color=D4D4D8'">
                 </div>
             </div>
             <div class="flex flex-col opacity-0 group-hover/sidebar:opacity-100 transition-opacity whitespace-nowrap">
-                <h1 class="text-xs font-black text-white uppercase tracking-tighter">L. DO CORTE</h1>
-                <p class="text-[8px] text-brand-primary font-black uppercase tracking-widest">Premium Admin</p>
+                <h1 class="text-[10px] font-black text-white uppercase tracking-tighter truncate max-w-[140px]">${state.barbershopName}</h1>
+                <p class="text-[8px] text-brand-primary font-black uppercase tracking-widest">Premium Unit</p>
             </div>
         </div>
         
