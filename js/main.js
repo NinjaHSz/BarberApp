@@ -8,14 +8,15 @@ import {
 import { syncFromSheet } from "./api/sync.js";
 import { render } from "./ui/render.js";
 import { setupGlobalHandlers } from "./ui/handlers.js";
+import { syncFromHash } from "./ui/navigation.js";
 import "./utils/dom.js"; // Registers selectAll globally
 
 // Run initialization directly since script is a module (deferred by default)
 setupGlobalHandlers();
 applyTheme();
 
-// Initial render to show skeleton or setup page if not integrated
-render();
+// Sync state with URL Hash
+syncFromHash();
 
 // Background data fetch
 (async () => {

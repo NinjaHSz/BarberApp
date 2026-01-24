@@ -245,9 +245,16 @@ export const PlansPage = () => {
                                     <div class="w-10 h-10 rounded-full bg-surface-page flex items-center justify-center text-text-muted font-black text-xs shadow-xl border border-white/5 group-hover:text-brand-primary transition-colors">
                                         ${c.nome.charAt(0)}
                                     </div>
-                                    <div class="min-w-0 cursor-pointer" onclick="navigate('client-profile', '${c.id}')">
-                                        <h4 class="text-[11px] font-black text-white uppercase tracking-tighter truncate group-hover:text-brand-primary transition-colors">${c.nome}</h4>
-                                        <p class="text-[8px] font-bold text-text-muted uppercase tracking-widest">${c.plano}</p>
+                                    <div class="min-w-0">
+                                        <h4 class="text-[11px] font-black text-white uppercase tracking-tighter truncate group-hover:text-brand-primary transition-colors cursor-pointer" onclick="navigate('client-profile', '${c.id}')">${c.nome}</h4>
+                                        <select onchange="window.updateClientPlan('${c.id}', { plano: this.value })" 
+                                                class="bg-transparent border-none text-[8px] font-bold text-text-muted uppercase tracking-widest p-0 outline-none cursor-pointer hover:text-white transition-colors appearance-none">
+                                            <option value="Mensal" ${c.plano === "Mensal" ? "selected" : ""} class="bg-surface-page">Mensal</option>
+                                            <option value="Semestral" ${c.plano === "Semestral" ? "selected" : ""} class="bg-surface-page">Semestral</option>
+                                            <option value="Anual" ${c.plano === "Anual" ? "selected" : ""} class="bg-surface-page">Anual</option>
+                                            <option value="Pausado" ${c.plano === "Pausado" ? "selected" : ""} class="bg-surface-page">Pausado</option>
+                                            <option value="Nenhum" ${c.plano === "Nenhum" ? "selected" : ""} class="bg-surface-page">Nenhum</option>
+                                        </select>
                                     </div>
                                 </div>
 

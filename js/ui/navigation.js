@@ -1,7 +1,7 @@
 import { state } from "../core/state.js";
 import { fetchExpenses, fetchCards } from "../api/supabase.js";
 
-export function navigate(page, data = null) {
+export function navigateInternal(page, data = null) {
   if (page === "manage") {
     if (window.openAddModal) {
       window.openAddModal(
@@ -31,6 +31,34 @@ export function navigate(page, data = null) {
   if (window.render) window.render();
 }
 
+export function syncFromHash() {
+  const hash = window.location.hash.substring(1);
+  if (!hash) {
+    navigateInternal("dashboard");
+    return;
+  }
+
+  const parts = hash.split("/");
+  const page = parts[0];
+  const data = parts[1] ? decodeURIComponent(parts[1]) : null;
+
+  navigateInternal(page, data);
+}
+
+export function navigate(page, data = null) {
+  if (page === "manage") {
+    navigateInternal(page, data);
+    return;
+  }
+
+  const newHash = page + (data ? `/${encodeURIComponent(data)}` : "");
+  if (window.location.hash !== `#${newHash}`) {
+    window.location.hash = newHash;
+  } else {
+    navigateInternal(page, data);
+  }
+}
+
 export const NavLink = (page, icon, label) => {
   const isActive = state.currentPage === page;
   return `
@@ -57,4 +85,5 @@ export const MobileNavLink = (page, icon, label) => {
     `;
 };
 
+window.addEventListener("hashchange", syncFromHash);
 window.navigate = navigate;
