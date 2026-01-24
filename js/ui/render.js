@@ -43,7 +43,7 @@ export function render() {
   const content = contentFn();
 
   app.innerHTML = `
-        <div class="flex h-full w-full bg-pattern text-white">
+        <div class="flex h-full w-full bg-pattern text-text-primary">
             ${Sidebar()}
             <div class="flex-1 flex flex-col min-w-0 h-full relative">
                 ${Header()}

@@ -17,7 +17,7 @@ export const setupAutocomplete = () => {
             const hasPlan = planStats !== null;
             return `
           <div onmousedown="window.selectClient('${c.nome.replace(/'/g, "\\'")}')" 
-               class="p-3 hover:bg-amber-500/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
+               class="p-3 hover:bg-brand-primary/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
               <div class="flex flex-col">
                   <span class="font-bold text-slate-300 group-hover:text-white uppercase text-xs">${c.nome}</span>
                   <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">${c.telefone || "SEM TELEFONE..."}</span>
@@ -26,7 +26,7 @@ export const setupAutocomplete = () => {
                 hasPlan
                   ? `
                   <div class="text-right">
-                      <span class="${planStats.usageCount >= planStats.limit ? "text-rose-500" : "text-emerald-500"} font-black text-[10px] block">
+                      <span class="${planStats.usageCount >= planStats.limit ? "text-slate-600" : "text-slate-300"} font-black text-[10px] block">
                           ${planStats.usageCount}/${planStats.limit}
                       </span>
                       <span class="text-[8px] text-slate-600 font-black uppercase tracking-tighter block">CORTES</span>
@@ -101,7 +101,7 @@ export const setupAutocomplete = () => {
             const hasPlan = planStats !== null;
             return `
           <div onmousedown="window.selectClientModal('${c.nome.replace(/'/g, "\\'")}')" 
-               class="p-3 hover:bg-amber-500/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
+               class="p-3 hover:bg-brand-primary/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
               <div class="flex flex-col">
                   <span class="font-bold text-slate-300 group-hover:text-white uppercase text-xs">${c.nome}</span>
                   <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">${c.telefone || "SEM TELEFONE..."}</span>
@@ -110,7 +110,7 @@ export const setupAutocomplete = () => {
                 hasPlan
                   ? `
                   <div class="text-right">
-                      <span class="${planStats.usageCount >= planStats.limit ? "text-rose-500" : "text-emerald-500"} font-black text-[10px] block">
+                      <span class="${planStats.usageCount >= planStats.limit ? "text-slate-600" : "text-slate-300"} font-black text-[10px] block">
                           ${planStats.usageCount}/${planStats.limit}
                       </span>
                       <span class="text-[8px] text-slate-600 font-black uppercase tracking-tighter block">CORTES</span>
@@ -194,9 +194,9 @@ export const setupAutocomplete = () => {
           .map(
             (p) => `
           <div onmousedown="window.selectProcedure('${p.nome.replace(/'/g, "\\'")}', ${p.preco})" 
-               class="p-3 hover:bg-amber-500/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
+               class="p-3 hover:bg-brand-primary/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
               <span class="font-bold text-slate-300 group-hover:text-white uppercase text-xs">${p.nome}</span>
-              <span class="text-[10px] font-black text-amber-500/50 group-hover:text-amber-500">R$ ${p.preco.toFixed(2)}</span>
+              <span class="text-[10px] font-black text-brand-primary/50 group-hover:text-brand-primary">R$ ${p.preco.toFixed(2)}</span>
           </div>
       `,
           )
@@ -235,9 +235,9 @@ export const setupAutocomplete = () => {
           .map(
             (p) => `
           <div onmousedown="window.selectProcedureModal('${p.nome.replace(/'/g, "\\'")}', ${p.preco})" 
-               class="p-3 hover:bg-amber-500/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
+               class="p-3 hover:bg-brand-primary/10 rounded-xl cursor-pointer transition-all group flex justify-between items-center text-left">
               <span class="font-bold text-slate-300 group-hover:text-white uppercase text-xs">${p.nome}</span>
-              <span class="text-[10px] font-black text-amber-500/50 group-hover:text-amber-500">R$ ${p.preco.toFixed(2)}</span>
+              <span class="text-[10px] font-black text-brand-primary/50 group-hover:text-brand-primary">R$ ${p.preco.toFixed(2)}</span>
           </div>
       `,
           )

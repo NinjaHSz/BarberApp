@@ -22,8 +22,8 @@ export const state = {
   },
   charts: {},
   theme: {
-    accent: localStorage.getItem("themeAccent") || "#F59E0B",
-    accentRgb: localStorage.getItem("themeAccentRgb") || "245 158 11",
+    accent: "#D4D4D8",
+    accentRgb: "212 212 216",
   },
   profitFilter: "diario",
   editingRecord: null,

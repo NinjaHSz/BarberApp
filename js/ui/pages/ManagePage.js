@@ -21,9 +21,9 @@ export const ManagePage = () => {
 
   return `
         <div class="p-4 sm:p-8 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div class="glass-card p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-white/5">
+            <div class="glass-card p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border border-transparent">
                 <div class="flex items-center space-x-4 mb-8 sm:mb-10">
-                    <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+                    <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary shrink-0">
                         <i class="fas ${isEditing ? "fa-edit" : "fa-calendar-plus"} text-2xl sm:text-3xl"></i>
                     </div>
                     <div>
@@ -36,19 +36,19 @@ export const ManagePage = () => {
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Data</label>
                         <input type="date" name="date" required value="${initialValues.date}"
-                               class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold">
+                               class="w-full bg-dark-900 border border-transparent p-4 rounded-2xl outline-none focus:border-transparent transition-all font-bold">
                     </div>
 
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Horário</label>
                         <input type="time" name="time" required value="${initialValues.time}"
-                               class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold">
+                               class="w-full bg-dark-900 border border-transparent p-4 rounded-2xl outline-none focus:border-transparent transition-all font-bold">
                     </div>
 
                     <div class="space-y-2 col-span-1 md:col-span-2">
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Cliente</label>
-                            <button type="button" onclick="window.setToBreak(false)" class="text-[10px] font-black uppercase tracking-widest text-amber-500 hover:text-amber-400 transition-all">
+                            <button type="button" onclick="window.setToBreak(false)" class="text-[10px] font-black uppercase tracking-widest text-brand-primary hover:text-brand-hover transition-all">
                                 <i class="fas fa-coffee mr-1"></i> Marcar como Pausa do Barbeiro
                             </button>
                         </div>
@@ -63,11 +63,11 @@ export const ManagePage = () => {
                                    onfocus="window.openClientDropdown()"
                                    oninput="window.filterClients(this.value)"
                                    onkeydown="window.handleEnterSelection(event, 'clientDropdown')"
-                                   class="w-full bg-dark-900 border border-white/5 py-4 pl-12 pr-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold">
+                                   class="w-full bg-dark-900 border border-transparent py-4 pl-12 pr-4 rounded-2xl outline-none focus:border-transparent transition-all font-bold">
                             
                             <input type="hidden" name="client" value="${state.clientSearch || ""}">
 
-                            <div id="clientDropdown" class="hidden absolute z-50 left-0 right-0 mt-2 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scroll p-2">
+                            <div id="clientDropdown" class="hidden absolute z-50 left-0 right-0 mt-2 bg-dark-900 border border-transparent rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scroll p-2">
                             </div>
                         </div>
                     </div>
@@ -83,11 +83,11 @@ export const ManagePage = () => {
                                    onfocus="window.openProcedureDropdown()"
                                    oninput="window.filterProcedures(this.value)"
                                    onkeydown="window.handleEnterSelection(event, 'procedureDropdown')"
-                                   class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold uppercase">
+                                   class="w-full bg-dark-900 border border-transparent p-4 rounded-2xl outline-none focus:border-transparent transition-all font-bold uppercase">
                             
                             <input type="hidden" name="service" value="${initialValues.service || initialValues.procedimento || ""}">
 
-                            <div id="procedureDropdown" class="hidden absolute z-50 left-0 right-0 mt-2 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scroll p-2">
+                            <div id="procedureDropdown" class="hidden absolute z-50 left-0 right-0 mt-2 bg-dark-900 border border-transparent rounded-2xl shadow-2xl max-h-60 overflow-y-auto custom-scroll p-2">
                             </div>
                         </div>
                     </div>
@@ -95,14 +95,14 @@ export const ManagePage = () => {
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Valor (R$)</label>
                         <input type="number" step="0.01" name="value" placeholder="0,00" value="${initialValues.value || initialValues.valor}"
-                               class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold">
+                               class="w-full bg-dark-900 border border-transparent p-4 rounded-2xl outline-none focus:border-transparent transition-all font-bold">
                     </div>
 
                     <div class="space-y-2 col-span-1 md:col-span-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Forma de Pagamento</label>
                         <div class="relative">
                             <select name="payment" required
-                                    class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
+                                    class="w-full bg-dark-900 border border-transparent p-4 rounded-2xl outline-none focus:border-transparent transition-all font-bold appearance-none">
                                 ${[
                                   "PIX",
                                   "DINHEIRO",
@@ -126,12 +126,12 @@ export const ManagePage = () => {
                     <div class="space-y-2 col-span-1 md:col-span-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Observações</label>
                         <textarea name="observations" rows="3" placeholder="Escreva aqui detalhes importantes sobre o atendimento..."
-                                  class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-medium custom-scroll resize-none">${initialValues.observations || initialValues.observacoes || ""}</textarea>
+                                  class="w-full bg-dark-900 border border-transparent p-4 rounded-2xl outline-none focus:border-transparent transition-all font-medium custom-scroll resize-none">${initialValues.observations || initialValues.observacoes || ""}</textarea>
                     </div>
 
                     <div class="col-span-1 md:col-span-2 pt-6">
                         <button type="submit" ${state.clients.length === 0 ? "disabled" : ""}
-                                class="w-full bg-amber-500 disabled:bg-white/5 disabled:text-white/20 text-dark-950 font-black py-5 rounded-2xl border border-transparent shadow-xl shadow-amber-500/20 transform hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-widest">
+                                class="w-full bg-brand-primary disabled:bg-white/5 disabled:text-white/20 text-surface-page font-black py-5 rounded-2xl border border-transparent shadow-xl shadow-brand-primary/20 transform hover:-translate-y-1 transition-all active:scale-95 uppercase tracking-widest">
                             ${isEditing ? "Salvar Alterações" : "Salvar Agendamento"}
                         </button>
                     </div>

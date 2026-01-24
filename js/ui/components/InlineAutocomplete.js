@@ -41,7 +41,7 @@ export const setupInlineAutocomplete = () => {
     dropdown.innerHTML = matches
       .map(
         (name) => `
-        <div class="px-3 py-2 hover:bg-amber-500 hover:text-dark-950 cursor-pointer rounded-lg transition-colors font-bold uppercase truncate text-[11px]"
+        <div class="px-3 py-2 hover:bg-brand-primary hover:text-surface-page cursor-pointer rounded-lg transition-colors font-bold uppercase truncate text-[11px]"
              onmousedown="window.selectInlineData(this, '${uiId}', '${field}', '${name}')">
             <i class="fas ${field === "service" ? "fa-cut" : "fa-user text-slate-400"} mr-2 text-[10px]"></i>
             ${name}

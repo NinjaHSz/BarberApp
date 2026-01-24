@@ -202,13 +202,13 @@ export const ClientsPage = () => {
                     <h2 class="text-2xl sm:text-3xl font-display font-bold">Gestão Local</h2>
                     <p class="text-slate-500 text-xs sm:text-sm mt-1">Gerencie sua base de clientes e tabela de preços</p>
                 </div>
-                <div class="flex bg-dark-900 border border-white/5 p-1 rounded-2xl w-full sm:w-auto">
+                <div class="flex bg-dark-900 border border-transparent p-1 rounded-2xl w-full sm:w-auto">
                     <button onclick="window.switchClientView('clients')" 
-                            class="flex-1 sm:flex-none px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${isClients ? "bg-amber-500 text-dark-950 shadow-lg shadow-amber-500/20" : "text-slate-500 hover:text-white"}">
+                            class="flex-1 sm:flex-none px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${isClients ? "bg-brand-primary text-surface-page shadow-lg shadow-brand-primary/20" : "text-slate-500 hover:text-white"}">
                         Clientes
                     </button>
                     <button onclick="window.switchClientView('procedures')" 
-                            class="flex-1 sm:flex-none px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${!isClients ? "bg-amber-500 text-dark-950 shadow-lg shadow-amber-500/20" : "text-slate-500 hover:text-white"}">
+                            class="flex-1 sm:flex-none px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${!isClients ? "bg-brand-primary text-surface-page shadow-lg shadow-brand-primary/20" : "text-slate-500 hover:text-white"}">
                         Procedimentos
                     </button>
                 </div>
@@ -216,71 +216,49 @@ export const ClientsPage = () => {
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-1">
-                    <div class="glass-card p-8 rounded-[2rem] border border-white/5">
+                    <div class="glass-card p-8 rounded-[2rem] border border-transparent">
                         ${
                           isClients
                             ? `
                             <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-lg font-bold text-amber-500 uppercase tracking-widest text-sm">${state.editingClient ? "Editar Cliente" : "Novo Cliente"}</h3>
+                                <h3 class="text-lg font-bold text-brand-primary uppercase tracking-widest text-sm">${state.editingClient ? "Editar Cliente" : "Novo Cliente"}</h3>
                                 ${state.editingClient ? `<button onclick="window.cancelEditClient()" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase tracking-widest">Cancelar</button>` : ""}
                             </div>
                             <form onsubmit="window.saveNewClient(event)" class="space-y-6">
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Nome Completo</label>
                                     <input type="text" name="nome" required placeholder="Ex: Lucas Ferreira" value="${state.editingClient?.nome || ""}"
-                                           class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold">
+                                           class="w-full bg-dark-900 border border-transparent p-4 rounded-xl outline-none focus:border-transparent transition-all font-bold">
                                 </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Tipo de Plano</label>
-                                    <select name="plano" onchange="document.getElementById('plan-dates-container').classList.toggle('hidden', this.value === 'Nenhum')"
-                                            class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold appearance-none">
-                                        <option value="Nenhum" ${state.editingClient?.plano === "Nenhum" ? "selected" : ""}>Nenhum Plano</option>
-                                        <option value="Mensal" ${state.editingClient?.plano === "Mensal" ? "selected" : ""}>Plano Mensal</option>
-                                        <option value="Semestral" ${state.editingClient?.plano === "Semestral" ? "selected" : ""}>Plano Semestral</option>
-                                        <option value="Anual" ${state.editingClient?.plano === "Anual" ? "selected" : ""}>Plano Anual</option>
-                                    </select>
-                                </div>
-                                <div id="plan-dates-container" class="grid grid-cols-2 gap-4 ${!state.editingClient?.plano || state.editingClient?.plano === "Nenhum" ? "hidden" : ""}">
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Início do Plano</label>
-                                        <input type="date" name="plano_inicio" style="color-scheme: dark" value="${state.editingClient?.plano_inicio || ""}"
-                                               class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold text-xs">
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Último Pagamento</label>
-                                        <input type="date" name="plano_pagamento" style="color-scheme: dark" value="${state.editingClient?.plano_pagamento || ""}"
-                                               class="w-full bg-dark-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-amber-500/50 transition-all font-bold text-xs">
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3 bg-dark-900 border border-white/5 p-4 rounded-xl mb-4">
+                                <div class="flex items-center gap-3 bg-dark-900 border border-transparent p-4 rounded-xl mb-4">
                                     <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
-                                        <input type="checkbox" name="novo_cliente" id="novo_cliente_toggle" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer translate-x-1 top-1 transition-transform checked:translate-x-5 checked:border-amber-500" ${state.editingClient?.novo_cliente ? "checked" : ""}/>
-                                        <label for="novo_cliente_toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-800 cursor-pointer border border-white/5"></label>
+                                        <input type="checkbox" name="novo_cliente" id="novo_cliente_toggle" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer translate-x-1 top-1 transition-transform checked:translate-x-5 checked:border-brand-primary" ${state.editingClient?.novo_cliente ? "checked" : ""}/>
+                                        <label for="novo_cliente_toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-800 cursor-pointer border border-transparent"></label>
                                     </div>
                                     <label for="novo_cliente_toggle" class="text-xs font-bold text-white uppercase tracking-widest cursor-pointer">Marcar como Novo Cliente</label>
                                 </div>
-                                <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl border border-transparent transition-all uppercase tracking-widest text-sm shadow-xl shadow-amber-500/10 active:scale-95">
+                                <button type="submit" class="w-full bg-brand-primary text-surface-page font-black py-4 rounded-xl border border-transparent transition-all uppercase tracking-widest text-sm shadow-xl shadow-brand-primary/10 active:scale-95">
                                     ${state.editingClient ? "Salvar Alterações" : "Cadastrar Cliente"}
                                 </button>
                             </form>
                         `
                             : `
                             <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-lg font-bold text-amber-500 uppercase tracking-widest text-sm">${state.editingProcedure ? "Editar Serviço" : "Novo Serviço"}</h3>
+                                <h3 class="text-lg font-bold text-brand-primary uppercase tracking-widest text-sm">${state.editingProcedure ? "Editar Serviço" : "Novo Serviço"}</h3>
                                 ${state.editingProcedure ? `<button onclick="window.cancelEditProcedure()" class="text-[10px] font-bold text-slate-500 hover:text-white uppercase tracking-widest">Cancelar</button>` : ""}
                             </div>
                             <form onsubmit="window.saveProcedure(event)" class="space-y-6">
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Nome do Serviço</label>
                                     <input type="text" name="nome" required placeholder="Ex: Corte Degradê" value="${state.editingProcedure?.nome || ""}"
-                                           class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold">
+                                           class="w-full bg-dark-900 border border-transparent p-4 rounded-xl outline-none focus:border-transparent transition-all font-bold">
                                 </div>
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black uppercase text-slate-500 ml-1 tracking-widest">Preço Sugerido (R$ - Opcional)</label>
                                     <input type="number" step="0.01" name="preco" placeholder="0,00" value="${state.editingProcedure?.preco || ""}"
-                                           class="w-full bg-dark-900 border border-white/5 p-4 rounded-xl outline-none focus:border-amber-500/50 transition-all font-bold">
+                                           class="w-full bg-dark-900 border border-transparent p-4 rounded-xl outline-none focus:border-transparent transition-all font-bold">
                                 </div>
-                                <button type="submit" class="w-full bg-amber-500 text-dark-950 font-black py-4 rounded-xl hover:bg-amber-400 transition-all uppercase tracking-widest text-sm shadow-xl shadow-amber-500/10 active:scale-95">
+                                <button type="submit" class="w-full bg-brand-primary text-surface-page font-black py-4 rounded-xl hover:bg-brand-hover transition-all uppercase tracking-widest text-sm shadow-xl shadow-brand-primary/10 active:scale-95">
                                     ${state.editingProcedure ? "Salvar Alterações" : "Adicionar Serviço"}
                                 </button>
                             </form>
@@ -290,14 +268,14 @@ export const ClientsPage = () => {
                 </div>
 
                 <div class="lg:col-span-2">
-                    <div class="glass-card rounded-[2rem] overflow-hidden border border-white/5">
-                        <div class="p-6 bg-white/[0.02] border-b border-white/5 space-y-4">
+                    <div class="glass-card rounded-[2rem] overflow-hidden border border-transparent">
+                        <div class="p-6 bg-white/[0.02] border-b border-transparent space-y-4">
                             <div class="flex justify-between items-center">
                                 <h3 class="font-bold flex items-center">
-                                    <i class="fas ${isClients ? "fa-users-viewfinder" : "fa-list-check"} mr-3 text-amber-500"></i>
+                                    <i class="fas ${isClients ? "fa-users-viewfinder" : "fa-list-check"} mr-3 text-brand-primary"></i>
                                     ${isClients ? `Clientes Registrados (${state.clients.length})` : `Procedimentos Ativos (${state.procedures.length})`}
                                 </h3>
-                                <button onclick="${isClients ? "fetchClients()" : "fetchProcedures()"}" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-amber-500/10 hover:text-amber-500 transition-all flex items-center justify-center">
+                                <button onclick="${isClients ? "fetchClients()" : "fetchProcedures()"}" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-brand-primary/10 hover:text-brand-primary transition-all flex items-center justify-center">
                                     <i class="fas fa-sync-alt"></i>
                                 </button>
                             </div>
@@ -305,7 +283,7 @@ export const ClientsPage = () => {
                                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
                                 <input type="text" id="managementSearchInput" placeholder="Pesquisar ${isClients ? "cliente" : "procedimento"}..." 
                                        oninput="window.handleManagementSearch(this.value)" value="${state.managementSearch}"
-                                       class="w-full bg-dark-900 border border-white/5 py-3 pl-12 pr-4 rounded-xl text-sm outline-none focus:border-amber-500/50 transition-all font-medium">
+                                       class="w-full bg-dark-900 border border-transparent py-3 pl-12 pr-4 rounded-xl text-sm outline-none focus:border-transparent transition-all font-medium">
                             </div>
                         </div>
                         
@@ -317,13 +295,13 @@ export const ClientsPage = () => {
                                     <table class="w-full text-left">
                                         <thead class="bg-white/[0.01] text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                             <tr>
-                                                <th class="px-4 py-4 border-b border-white/5">Nome</th>
-                                                <th class="px-4 py-4 border-b border-white/5 text-center">Plano</th>
-                                                <th class="px-4 py-4 border-b border-white/5">Observações</th>
-                                                <th class="px-4 py-4 border-b border-white/5 text-right">Ações</th>
+                                                <th class="px-4 py-4 border-b border-transparent">Nome</th>
+                                                <th class="px-4 py-4 border-b border-transparent text-center">Plano</th>
+                                                <th class="px-4 py-4 border-b border-transparent">Observações</th>
+                                                <th class="px-4 py-4 border-b border-transparent text-right">Ações</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-white/5 text-sm">
+                                        <tbody class="divide-y divide-transparent text-sm">
                                             ${state.clients
                                               .filter((c) =>
                                                 c.nome
@@ -335,11 +313,11 @@ export const ClientsPage = () => {
                                               .map(
                                                 (c) => `
                                                 <tr class="hover:bg-white/[0.01] transition-colors group">
-                                                    <td class="px-4 py-4 font-bold text-white uppercase cursor-pointer hover:text-amber-500 transition-colors whitespace-nowrap" onclick="navigate('client-profile', '${c.id}')">
-                                                        ${c.nome} ${c.novo_cliente ? '<span class="ml-1 bg-amber-500/20 text-amber-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ""}
+                                                    <td class="px-4 py-4 font-bold text-white uppercase cursor-pointer hover:text-brand-primary transition-colors whitespace-nowrap" onclick="navigate('client-profile', '${c.id}')">
+                                                        ${c.nome} ${c.novo_cliente ? '<span class="ml-1 bg-brand-primary/20 text-brand-primary text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Novo</span>' : ""}
                                                     </td>
                                                     <td class="px-4 py-4 text-center">
-                                                        <span class="px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${c.plano === "Mensal" ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : c.plano === "Anual" ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" : "text-slate-500 border border-white/5"}">
+                                                        <span class="px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${c.plano === "Mensal" ? "bg-brand-primary/10 text-brand-primary border border-transparent" : c.plano === "Anual" ? "bg-slate-500/10 text-slate-500 border border-slate-500/20" : "text-slate-500 border border-transparent"}">
                                                             ${c.plano || "Nenhum"}
                                                         </span>
                                                     </td>
@@ -349,8 +327,8 @@ export const ClientsPage = () => {
                                                     </td>
                                                     <td class="px-4 py-4 text-right">
                                                         <div class="flex justify-end space-x-1.5">
-                                                            <button onclick='window.editClient(${JSON.stringify(c)})' class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-edit text-xs"></i></button>
-                                                            <button onclick="window.deleteClient('${c.id}')" class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button>
+                                                            <button onclick='window.editClient(${JSON.stringify(c)})' class="w-8 h-8 rounded-xl bg-slate-400/10 text-slate-400 hover:bg-slate-400 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-edit text-xs"></i></button>
+                                                            <button onclick="window.deleteClient('${c.id}')" class="w-8 h-8 rounded-xl bg-slate-600/10 text-slate-600 hover:bg-slate-600 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -360,7 +338,7 @@ export const ClientsPage = () => {
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="sm:hidden divide-y divide-white/5">
+                                <div class="sm:hidden divide-y divide-transparent">
                                     ${state.clients
                                       .filter((c) =>
                                         c.nome
@@ -374,15 +352,15 @@ export const ClientsPage = () => {
                                         <div class="p-6 space-y-4">
                                             <div class="flex justify-between items-start">
                                                 <div onclick="navigate('client-profile', '${c.id}')" class="cursor-pointer group/name">
-                                                    <p class="text-lg font-bold text-white uppercase group-hover/name:text-amber-500 transition-colors">${c.nome}</p>
+                                                    <p class="text-lg font-bold text-white uppercase group-hover/name:text-brand-primary transition-colors">${c.nome}</p>
                                                 </div>
                                                 <div class="flex space-x-2">
-                                                    <button onclick='window.editClient(${JSON.stringify(c)})' class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><i class="fas fa-edit"></i></button>
-                                                    <button onclick="window.deleteClient('${c.id}')" class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center"><i class="fas fa-trash-alt"></i></button>
+                                                    <button onclick='window.editClient(${JSON.stringify(c)})' class="w-10 h-10 rounded-xl bg-slate-400/10 text-slate-400 flex items-center justify-center"><i class="fas fa-edit"></i></button>
+                                                    <button onclick="window.deleteClient('${c.id}')" class="w-10 h-10 rounded-xl bg-slate-600/10 text-slate-600 flex items-center justify-center"><i class="fas fa-trash-alt"></i></button>
                                                 </div>
                                             </div>
                                             <div class="flex items-center space-x-4">
-                                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${c.plano === "Mensal" ? "bg-amber-500/10 text-amber-500" : "text-slate-500 border border-white/5"}">${c.plano || "Nenhum"}</span>
+                                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${c.plano === "Mensal" ? "bg-brand-primary/10 text-brand-primary" : "text-slate-500 border border-transparent"}">${c.plano || "Nenhum"}</span>
                                             </div>
                                         </div>
                                     `,
@@ -395,12 +373,12 @@ export const ClientsPage = () => {
                                     <table class="w-full text-left">
                                         <thead class="bg-white/[0.01] text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                             <tr>
-                                                <th class="px-4 py-4 border-b border-white/5">Serviço</th>
-                                                <th class="px-4 py-4 border-b border-white/5">Preço Base</th>
-                                                <th class="px-4 py-4 border-b border-white/5 text-right">Ações</th>
+                                                <th class="px-4 py-4 border-b border-transparent">Serviço</th>
+                                                <th class="px-4 py-4 border-b border-transparent">Preço Base</th>
+                                                <th class="px-4 py-4 border-b border-transparent text-right">Ações</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-white/5 text-sm">
+                                        <tbody class="divide-y divide-transparent text-sm">
                                             ${state.procedures
                                               .filter((p) =>
                                                 p.nome
@@ -413,11 +391,11 @@ export const ClientsPage = () => {
                                                 (p) => `
                                                 <tr class="hover:bg-white/[0.01] transition-colors group">
                                                     <td class="px-4 py-4 font-bold text-white uppercase whitespace-nowrap">${p.nome}</td>
-                                                    <td class="px-4 py-4 text-emerald-400 font-black">R$ ${p.preco.toFixed(2).replace(".", ",")}</td>
+                                                    <td class="px-4 py-4 text-slate-300 font-black">R$ ${p.preco.toFixed(2).replace(".", ",")}</td>
                                                     <td class="px-4 py-4 text-right">
                                                         <div class="flex justify-end space-x-1.5">
-                                                            <button onclick='window.editProcedure(${JSON.stringify(p)})' class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-edit text-xs"></i></button>
-                                                            <button onclick="window.deleteProcedure('${p.id}')" class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button>
+                                                            <button onclick='window.editProcedure(${JSON.stringify(p)})' class="w-8 h-8 rounded-xl bg-slate-400/10 text-slate-400 hover:bg-slate-400 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-edit text-xs"></i></button>
+                                                            <button onclick="window.deleteProcedure('${p.id}')" class="w-8 h-8 rounded-xl bg-slate-600/10 text-slate-600 hover:bg-slate-600 hover:text-white transition-all transform active:scale-90 flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -427,7 +405,7 @@ export const ClientsPage = () => {
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="sm:hidden divide-y divide-white/5">
+                                <div class="sm:hidden divide-y divide-transparent">
                                     ${state.procedures
                                       .filter((p) =>
                                         p.nome
@@ -441,11 +419,11 @@ export const ClientsPage = () => {
                                         <div class="p-6 flex justify-between items-center">
                                             <div>
                                                 <p class="text-lg font-bold text-white uppercase">${p.nome}</p>
-                                                <p class="text-emerald-400 font-black">R$ ${p.preco.toFixed(2).replace(".", ",")}</p>
+                                                <p class="text-slate-300 font-black">R$ ${p.preco.toFixed(2).replace(".", ",")}</p>
                                             </div>
                                             <div class="flex space-x-2">
-                                                <button onclick='window.editProcedure(${JSON.stringify(p)})' class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><i class="fas fa-edit"></i></button>
-                                                <button onclick="window.deleteProcedure('${p.id}')" class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center"><i class="fas fa-trash-alt"></i></button>
+                                                <button onclick='window.editProcedure(${JSON.stringify(p)})' class="w-10 h-10 rounded-xl bg-slate-400/10 text-slate-400 flex items-center justify-center"><i class="fas fa-edit"></i></button>
+                                                <button onclick="window.deleteProcedure('${p.id}')" class="w-10 h-10 rounded-xl bg-slate-600/10 text-slate-600 flex items-center justify-center"><i class="fas fa-trash-alt"></i></button>
                                             </div>
                                         </div>
                                     `,

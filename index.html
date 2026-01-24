@@ -21,7 +21,7 @@
       rel="stylesheet"
     />
 
-    <!-- ConfiguraÃ§Ã£o do Tema Tailwind -->
+    <!-- Configuração do Tema Tailwind -->
     <script>
       window.onerror = function (msg, url, line, col, error) {
         alert("Erro Global: " + msg + "\nURL: " + url + "\nLinha: " + line);
@@ -33,20 +33,65 @@
         theme: {
           extend: {
             colors: {
+              brand: {
+                primary: "#D4D4D8",
+                hover: "#A1A1AA",
+                active: "#71717A",
+              },
+              surface: {
+                page: "#09090B",
+                section: "#18181B",
+                card: "rgba(24, 24, 27, 0.8)",
+                subtle: "#27272A",
+                elevated: "#3F3F46",
+              },
+              text: {
+                primary: "#FFFFFF",
+                secondary: "#A1A1AA",
+                muted: "#52525B",
+              },
+              status: {
+                success: "#D1D1D1",
+                warning: "#71717A",
+                error: "#3F3F46",
+              },
               dark: {
-                950: "var(--bg-950)",
-                900: "var(--bg-900)",
-                800: "var(--bg-800)",
+                950: "#09090B",
+                900: "#18181B",
+                800: "#27272A",
               },
-              amber: {
-                500: "rgb(var(--accent-rgb))",
-                400: "rgba(var(--accent-rgb), 0.8)",
-                600: "rgba(var(--accent-rgb), 0.9)",
+              border: {
+                default: "transparent",
+                subtle: "transparent",
+                focus: "rgba(255, 255, 255, 0.1)",
               },
+            },
+            spacing: {
+              1: "4px",
+              2: "8px",
+              3: "12px",
+              4: "16px",
+              6: "24px",
+              8: "32px",
+              12: "48px",
+              16: "64px",
+              20: "80px",
+            },
+            borderRadius: {
+              sm: "4px",
+              md: "6px",
+              lg: "8px",
+              xl: "12px",
+              "2xl": "16px",
+            },
+            boxShadow: {
+              "button-primary": "0 0 0 1px rgba(255, 255, 255, 0.1)",
+              card: "0 4px 20px rgba(0, 0, 0, 0.5)",
+              "card-hover": "0 10px 30px rgba(0, 0, 0, 0.6)",
             },
             fontFamily: {
               sans: ["Inter", "sans-serif"],
-              display: ["Montserrat", "sans-serif"],
+              display: ["Inter", "sans-serif"],
             },
           },
         },
@@ -56,61 +101,112 @@
     <!-- Estilos CSS (Variáveis e Scrollbars) -->
     <style>
       :root {
-        --bg-950: #121212;
-        --bg-900: #1a1a1a;
-        --bg-800: #262626;
-        --accent-rgb: 245 158 11;
+        /* Tokens de Cores */
+        --text-primary: #ffffff;
+        --text-secondary: #a1a1aa;
+        --text-muted: #52525b;
+        --surface-page: #09090b;
+        --surface-section: #18181b;
+        --surface-card: rgba(24, 24, 27, 0.8);
+        --surface-subtle: #27272a;
+        --surface-elevated: #3f3f46;
+        --action-primary: #d4d4d8;
+        --action-primary-hover: #a1a1aa;
+        --action-strong: #ffffff;
+        --border-default: transparent;
+        --border-subtle: transparent;
+        --border-focus: rgba(255, 255, 255, 0.1);
+
+        /* Legacy support for existing variables */
+        --bg-950: var(--surface-page);
+        --bg-900: var(--surface-section);
+        --bg-800: var(--surface-subtle);
       }
+
+      /* Global Border Reset */
+      *,
+      ::before,
+      ::after {
+        border-color: transparent !important;
+        border-width: 0 !important;
+      }
+
+      /* Permite bordas apenas para foco específico se necessário */
+      .focus-ring:focus {
+        box-shadow: 0 0 0 2px var(--border-focus) !important;
+      }
+
       body {
-        background-color: var(--bg-950);
-        color: #f3f4f6;
+        background-color: var(--surface-page);
+        color: var(--text-primary);
         font-family: "Inter", sans-serif;
       }
+
       .bg-pattern {
-        background-color: var(--bg-950);
-        background-image:
-          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-        background-size: 40px 40px;
+        background-color: var(--surface-page);
+        background-image: none;
       }
+
+      .glass-card {
+        background: var(--surface-card);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      }
+
+      .glass-card:hover {
+        background: var(--surface-subtle);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      }
+
+      /* Botões Padronizados */
+      .btn-primary {
+        background-color: var(--action-primary);
+        color: #121212;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        transition: all 0.2s;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--action-primary-hover);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background-color: var(--surface-card);
+        color: var(--text-primary);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.2s;
+      }
+
+      /* Custom Scrollbar */
       .custom-scroll::-webkit-scrollbar {
         width: 6px;
       }
       .custom-scroll::-webkit-scrollbar-track {
-        background: var(--bg-900);
+        background: var(--surface-section);
       }
       .custom-scroll::-webkit-scrollbar-thumb {
-        background: var(--bg-800);
+        background: var(--surface-subtle);
         border-radius: 10px;
-      }
-      .glass-card {
-        background: rgba(23, 23, 23, 0.7);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-      }
-      /* Estilizar transições de forma granulada para evitar 'flash' no render */
-      button,
-      .transition-all,
-      .transition-colors,
-      .group-hover {
-        transition:
-          border-color 0.2s,
-          background-color 0.2s,
-          color 0.1s,
-          transform 0.2s,
-          box-shadow 0.2s;
       }
 
       [contenteditable="true"]:focus {
         outline: none;
-        background: rgba(var(--accent-rgb), 0.05);
-        box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: none;
         border-radius: 8px;
       }
+
       [contenteditable="true"]:hover {
         cursor: text;
         background: rgba(255, 255, 255, 0.03);
       }
+
       [contenteditable="true"] {
         padding: 2px 4px;
         transition: background 0.2s;
@@ -119,19 +215,26 @@
 
       [contenteditable="true"]:empty:before {
         content: attr(placeholder);
-        color: #64748b;
+        color: var(--text-muted);
         font-style: italic;
         pointer-events: none;
       }
-      /* Prevenir quebra de linha indesejada em elementos pequenos */
-      .line-clamp-1,
+
+      .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+      }
       .line-clamp-2 {
         display: -webkit-box;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
       }
 
-      /* Esconder ícone nativo do input date */
       input[type="date"]::-webkit-calendar-picker-indicator {
         opacity: 0;
         cursor: pointer;
@@ -145,9 +248,9 @@
       input[type="date"] {
         position: relative;
       }
-      /* Estilo para opções do select (Dropdowns) */
+
       select option {
-        background-color: var(--bg-950);
+        background-color: var(--surface-page);
         color: white;
       }
     </style>

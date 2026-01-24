@@ -33,9 +33,9 @@ export const setupExpenseAutocomplete = () => {
     dropdown.innerHTML = matches
       .map(
         (match) => `
-        <div class="px-3 py-2 hover:bg-amber-500 hover:text-dark-950 cursor-pointer rounded-lg transition-colors font-bold uppercase truncate text-[11px]"
+        <div class="px-3 py-2 hover:bg-brand-primary hover:text-surface-page cursor-pointer rounded-lg transition-colors font-bold uppercase truncate text-[11px]"
              onmousedown="window.selectExpenseData('${id}', '${match.nome}', ${isModal}, '${type}')">
-            <i class="fas ${type === "card" ? "fa-credit-card" : "fa-tag"} mr-2 text-[10px] text-amber-500/50"></i>
+            <i class="fas ${type === "card" ? "fa-credit-card" : "fa-tag"} mr-2 text-[10px] text-brand-primary/50"></i>
             ${match.nome}
         </div>
     `,

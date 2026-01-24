@@ -9,7 +9,7 @@ export const RecordsPage = () => {
                 <div class="text-center space-y-4">
                     <i class="fas fa-table text-6xl text-white/5 mb-4"></i>
                     <h2 class="text-2xl font-bold">Sem dados sincronizados</h2>
-                    <button onclick="navigate('setup')" class="bg-amber-500 text-dark-950 px-6 py-2 rounded-xl font-bold border border-transparent transition-all">Conectar Planilha</button>
+                    <button onclick="navigate('setup')" class="bg-brand-primary text-surface-page px-6 py-2 rounded-xl font-bold border border-transparent transition-all">Conectar Planilha</button>
                 </div>
             </div>
         `;
@@ -105,20 +105,20 @@ export const RecordsPage = () => {
         <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 sm:space-y-8">
              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-display font-bold">Histórico</h2>
-                    <p class="text-slate-500 text-xs sm:text-sm mt-1">Sincronização Ativa</p>
+                    <h2 class="text-text-primary text-2xl sm:text-3xl font-display font-bold">Histórico</h2>
+                    <p class="text-text-secondary text-xs sm:text-sm mt-1">Sincronização Ativa</p>
                 </div>
                 <div class="relative w-full sm:w-auto flex flex-col sm:flex-row gap-2 items-center">
                     <button onclick="navigate('manage')" 
-                            class="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500 text-dark-950 hover:bg-amber-400 hover:scale-110 transition-all shadow-lg shadow-amber-500/50 shrink-0 border border-amber-400"
+                            class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-primary text-surface-page hover:bg-brand-hover hover:scale-110 transition-all shadow-lg shadow-brand-primary/50 shrink-0 border-none"
                             title="Novo Agendamento">
                         <i class="fas fa-plus text-lg"></i>
                     </button>
                     <button onclick="window.toggleEmptySlots()" 
-                            class="flex items-center justify-center w-10 h-10 rounded-xl border border-white/5 bg-dark-900/50 hover:bg-white/10 transition-all shrink-0 ${
+                            class="flex items-center justify-center w-10 h-10 rounded-xl border-none bg-surface-section/50 hover:bg-surface-subtle transition-all shrink-0 ${
                               state.showEmptySlots
-                                ? "text-amber-500 border-amber-500/30"
-                                : "text-slate-500 hover:text-white"
+                                ? "text-brand-primary"
+                                : "text-text-secondary hover:text-text-primary"
                             }"
                             title="${
                               state.showEmptySlots
@@ -130,19 +130,19 @@ export const RecordsPage = () => {
                         }"></i>
                     </button>
                     <div class="relative flex-1 sm:w-80">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"></i>
                         <input type="text" 
                                id="recordsSearchInput"
                                placeholder="Buscar agendamento..." 
                                oninput="window.handleSearch(this)"
                                value="${state.searchTerm}"
-                               class="bg-dark-900 border border-white/5 py-2.5 pl-11 pr-4 rounded-xl text-sm outline-none focus:border-amber-500/50 w-full transition-all font-medium">
+                               class="bg-surface-section border-none py-2.5 pl-11 pr-4 rounded-xl text-sm text-text-primary outline-none focus:ring-1 focus:ring-border-focus w-full transition-all font-medium">
                     </div>
                 </div>
             </div>
 
-            <div class="space-y-4 md:space-y-0 md:bg-dark-900/30 md:rounded-[2rem] border border-white/5">
-                <div class="hidden md:grid md:grid-cols-[70px_1.5fr_1.2fr_1fr_100px_130px_100px] gap-4 bg-white/[0.02] border-b border-white/5 px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest items-center">
+            <div class="space-y-4 md:space-y-0 md:bg-surface-section/30 md:rounded-2xl border-none">
+                <div class="hidden md:grid md:grid-cols-[70px_1.5fr_1.2fr_1fr_100px_130px_100px] gap-4 bg-white/[0.02] border-none px-6 py-4 text-[10px] font-bold text-text-secondary uppercase tracking-widest items-center">
                     <div class="text-left">Horário</div>
                     <div class="text-left">Cliente</div>
                     <div class="text-left">Procedimentos</div>
@@ -152,7 +152,7 @@ export const RecordsPage = () => {
                     <div class="text-right pr-4">Ações</div>
                 </div>
 
-                <div id="tableBody" class="divide-y divide-white/5">
+                <div id="tableBody" class="divide-y-0">
                     ${recordsToDisplay.map((r) => RecordRow(r)).join("")}
                 </div>
             </div>

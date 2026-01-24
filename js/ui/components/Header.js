@@ -46,9 +46,9 @@ export const Header = () => {
   }).format(today);
 
   return `
-        <header class="h-14 md:h-14 border-b border-white/5 flex items-center justify-between px-3 md:px-8 bg-dark-950/80 backdrop-blur-xl sticky top-0 z-20">
+        <header class="h-14 md:h-14 border-none flex items-center justify-between px-3 md:px-8 bg-surface-page/80 backdrop-blur-xl sticky top-0 z-20">
             <div class="flex items-center space-x-1.5 md:space-x-4">
-                <select onchange="window.updateFilter('day', this.value)" class="bg-dark-900 border border-white/10 text-[10px] md:text-xs font-bold rounded-lg px-2 md:px-3 py-1.5 outline-none focus:border-amber-500 w-20 md:w-auto">
+                <select onchange="window.updateFilter('day', this.value)" class="bg-surface-section border-none text-[10px] md:text-xs font-bold rounded-lg px-2 md:px-3 py-1.5 outline-none focus:ring-1 focus:ring-border-focus w-20 md:w-auto text-text-primary">
                     ${days
                       .map((d) => {
                         const dayDate = new Date(
@@ -65,23 +65,23 @@ export const Header = () => {
                       })
                       .join("")}
                 </select>
-                <select onchange="window.updateFilter('month', this.value)" class="bg-dark-900 border border-white/10 text-[10px] md:text-xs font-bold rounded-lg px-1.5 md:px-3 py-1.5 outline-none focus:border-amber-500 w-16 md:w-auto">
+                <select onchange="window.updateFilter('month', this.value)" class="bg-surface-section border-none text-[10px] md:text-xs font-bold rounded-lg px-1.5 md:px-3 py-1.5 outline-none focus:ring-1 focus:ring-border-focus w-16 md:w-auto text-text-primary">
                     ${months.map((m, i) => `<option value="${i + 1}" ${state.filters.month === i + 1 ? "selected" : ""}>${m.substring(0, 3).toUpperCase()}</option>`).join("")}
                 </select>
-                <select onchange="window.updateFilter('year', this.value)" class="bg-dark-900 border border-white/10 text-[10px] md:text-xs font-bold rounded-lg px-1.5 md:px-3 py-1.5 outline-none focus:border-amber-500 w-14 md:w-auto">
+                <select onchange="window.updateFilter('year', this.value)" class="bg-surface-section border-none text-[10px] md:text-xs font-bold rounded-lg px-1.5 md:px-3 py-1.5 outline-none focus:ring-1 focus:ring-border-focus w-14 md:w-auto text-text-primary">
                     <option value="2025" ${state.filters.year === 2025 ? "selected" : ""}>'25</option>
                     <option value="2026" ${state.filters.year === 2026 ? "selected" : ""}>'26</option>
                 </select>
             </div>
             <div class="flex items-center space-x-2 md:space-x-4">
-                <div class="hidden sm:flex items-center space-x-2 text-xs md:text-sm text-slate-400">
+                <div class="hidden sm:flex items-center space-x-2 text-xs md:text-sm text-text-secondary">
                     <i class="fas fa-calendar"></i>
                     <span class="font-medium">${formattedDate}</span>
                 </div>
                 <div class="md:hidden flex items-center mr-2">
-                    <h1 class="text-sm font-display font-black text-amber-500 italic tracking-tighter">BARBER</h1>
+                    <h1 class="text-sm font-display font-black text-brand-primary italic tracking-tighter">BARBER</h1>
                 </div>
-                <button onclick="window.syncAll()" class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 hover:bg-amber-500/10 hover:text-amber-500 transition-all flex items-center justify-center border border-white/5 uppercase">
+                <button onclick="window.syncAll()" class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-surface-subtle hover:bg-brand-primary/10 hover:text-brand-primary transition-all flex items-center justify-center border-none uppercase">
                     <i id="globalSyncBtn" class="fas fa-sync-alt text-xs md:text-sm"></i>
                 </button>
             </div>
