@@ -2,15 +2,16 @@ import { state } from "../../core/state.js";
 
 const maskPrivacy = (val) => (state.privacyMode ? "R$ ••••" : val);
 
-export const KPICard = (title, value, icon) => `
-    <div class="bg-surface-section/30 p-5 rounded-2xl group transition-all duration-300 relative border border-transparent hover:bg-surface-section/50">
-        <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl bg-brand-primary/5 flex items-center justify-center text-text-muted group-hover:text-brand-primary transition-colors">
-                <i class="fas ${icon} text-sm"></i>
+export const KPICard = (title, value, icon, colSpan = "") => `
+    <div class="bg-surface-section/30 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] group hover:bg-surface-section/50 transition-all duration-500 relative overflow-hidden ${colSpan}">
+        <div class="absolute -right-4 -top-4 w-16 h-16 sm:w-24 sm:h-24 bg-brand-primary/5 rounded-full blur-2xl group-hover:bg-brand-primary/10 transition-all"></div>
+        <div class="flex items-center gap-3 sm:gap-6">
+            <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-[1.25rem] bg-brand-primary/5 flex items-center justify-center text-text-muted group-hover:scale-110 group-hover:bg-brand-primary group-hover:text-surface-page transition-all duration-500 shadow-lg shadow-brand-primary/5 flex-shrink-0">
+                <i class="fas ${icon} text-sm sm:text-2xl"></i>
             </div>
-            <div>
-                <p class="text-[9px] font-black text-text-muted uppercase tracking-widest">${title}</p>
-                <h2 class="text-text-primary text-xl sm:text-2xl font-display font-black tracking-tighter">${maskPrivacy(value)}</h2>
+            <div class="flex-1 min-w-0">
+                <p class="text-text-muted text-[8px] sm:text-[10px] font-black uppercase tracking-widest leading-none">${title}</p>
+                <h2 class="text-text-primary text-base sm:text-2xl lg:text-3xl font-display font-black mt-1 tracking-tighter whitespace-nowrap overflow-hidden text-ellipsis">${maskPrivacy(value)}</h2>
             </div>
         </div>
     </div>

@@ -239,6 +239,7 @@ export async function syncFromSheet(url) {
     state.sheetUrl = url;
     localStorage.setItem("sheetUrl", url);
     localStorage.setItem("isIntegrated", "true");
+    localStorage.setItem("records", JSON.stringify(state.records));
 
     if (window.updateInternalStats) window.updateInternalStats();
     state.syncStatus = "idle";

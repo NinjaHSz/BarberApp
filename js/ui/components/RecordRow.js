@@ -30,7 +30,7 @@ export const RecordRow = (record) => {
             
             <!-- HORARIO -->
             <div class="w-full text-xs md:text-sm text-brand-primary md:text-text-secondary font-black md:font-medium flex justify-between md:block">
-                <span class="md:hidden text-text-muted font-bold uppercase text-[10px]">Horário:</span>
+                <span class="md:hidden text-text-muted font-bold uppercase text-[10px] whitespace-nowrap shrink-0">Horário:</span>
                 <input type="time" id="edit_time_${rowId}" data-id="${id}" data-ui-id="${rowId}" data-field="time" data-time="${record.time}" data-date="${record.date}"
                      onblur="window.saveInlineEdit(this)" onkeydown="window.handleInlineKey(event)" onfocus="window.clearPlaceholder(this)"
                      value="${record.time.substring(0, 5)}"
@@ -39,7 +39,7 @@ export const RecordRow = (record) => {
             
             <!-- CLIENTE -->
             <div class="w-full text-sm md:text-sm font-bold md:font-semibold flex justify-between md:block relative min-w-0">
-                <span class="md:hidden text-text-muted font-bold uppercase text-[10px]">Cliente:</span>
+                <span class="md:hidden text-text-muted font-bold uppercase text-[10px] whitespace-nowrap shrink-0">Cliente:</span>
                 <div class="flex items-center justify-start gap-2 max-w-full">
                     <div contenteditable="true" id="edit_client_${rowId}" spellcheck="false" data-id="${id}" data-ui-id="${rowId}" data-field="client" data-time="${record.time}" data-date="${record.date}"
                          onblur="window.saveInlineEdit(this)" onkeydown="window.handleInlineKey(event)" oninput="window.showInlineAutocomplete(this)" onfocus="window.clearPlaceholder(this)"
@@ -74,7 +74,7 @@ export const RecordRow = (record) => {
 
             <!-- SERVIÇO -->
             <div class="w-full text-xs md:text-sm flex justify-between md:block md:text-left relative min-w-0">
-                <span class="md:hidden text-text-muted font-bold uppercase text-[10px]">Serviço:</span>
+                <span class="md:hidden text-text-muted font-bold uppercase text-[10px] whitespace-nowrap shrink-0">Serviço:</span>
                 <div contenteditable="true" id="edit_service_${rowId}" spellcheck="false" data-id="${id}" data-ui-id="${rowId}" data-field="service" data-time="${record.time}" data-date="${record.date}"
                      onblur="window.saveInlineEdit(this)" onkeydown="window.handleInlineKey(event)" oninput="window.showInlineAutocomplete(this)" onfocus="window.clearPlaceholder(this)"
                      class="outline-none rounded px-1 focus:bg-brand-primary/10 focus:ring-1 focus:ring-brand-primary/50 text-left truncate w-full ${isBreak ? "text-text-muted italic" : isEmpty ? "text-text-secondary" : record.service === "A DEFINIR" ? "text-status-error font-black animate-pulse" : "text-text-primary font-medium"} uppercase">
@@ -85,7 +85,7 @@ export const RecordRow = (record) => {
 
             <!-- OBS -->
             <div class="w-full text-[10px] md:text-xs flex justify-between md:block md:text-left relative group/obs min-w-0">
-                <span class="md:hidden text-text-muted font-bold uppercase text-[10px]">Obs:</span>
+                <span class="md:hidden text-text-muted font-bold uppercase text-[10px] whitespace-nowrap shrink-0">Obs:</span>
                 <div contenteditable="true" id="edit_obs_${rowId}" spellcheck="false" autocomplete="off" data-id="${id}" data-ui-id="${rowId}" data-field="observations" data-time="${record.time}" data-date="${record.date}"
                      onblur="window.saveInlineEdit(this)" onkeydown="window.handleInlineKey(event)" onfocus="window.clearPlaceholder(this)"
                      class="outline-none rounded px-1 focus:bg-surface-subtle focus:ring-1 focus:ring-border-focus text-text-secondary hover:text-text-primary transition-all italic truncate focus:whitespace-normal focus:break-words w-full cursor-text"
@@ -96,7 +96,7 @@ export const RecordRow = (record) => {
 
             <!-- VALOR -->
             <div class="w-full text-sm md:text-sm font-bold md:font-bold ${isBreak ? "text-text-muted/50" : "text-text-primary md:text-brand-primary/90"} flex justify-between md:block md:text-left relative">
-                <span class="md:hidden text-text-muted font-bold uppercase text-[10px]">Valor:</span>
+                <span class="md:hidden text-text-muted font-bold uppercase text-[10px] whitespace-nowrap shrink-0">Valor:</span>
                 <div contenteditable="true" id="edit_value_${rowId}" spellcheck="false" autocomplete="off" data-id="${id}" data-ui-id="${rowId}" data-field="value" data-time="${record.time}" data-date="${record.date}"
                      onblur="window.saveInlineEdit(this)" onkeydown="window.handleInlineKey(event)" onfocus="window.clearPlaceholder(this)"
                      class="outline-none rounded px-1 focus:bg-brand-primary/10 focus:ring-1 focus:ring-brand-primary/50">
@@ -106,7 +106,7 @@ export const RecordRow = (record) => {
 
             <!-- PAGAMENTO -->
             <div class="w-full flex justify-between md:justify-start items-center">
-                <span class="md:hidden text-text-muted font-bold uppercase text-[10px]">Pagamento:</span>
+                <span class="md:hidden text-text-muted font-bold uppercase text-[10px] whitespace-nowrap shrink-0">Pagamento:</span>
                 ${
                   isBreak
                     ? `

@@ -13,6 +13,15 @@ import { setupGlobalHandlers } from "./ui/handlers.js";
 import { syncFromHash } from "./ui/navigation.js";
 import "./utils/dom.js"; // Registers selectAll globally
 
+window.addEventListener("online", () => {
+  state.isOffline = false;
+  if (window.render) window.render();
+});
+window.addEventListener("offline", () => {
+  state.isOffline = true;
+  if (window.render) window.render();
+});
+
 // Run initialization directly since script is a module (deferred by default)
 setupGlobalHandlers();
 applyTheme();

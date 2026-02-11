@@ -114,6 +114,16 @@ export const Header = () => {
                 <div class="md:hidden flex items-center mr-2">
                     <h1 class="text-sm font-display font-black text-brand-primary italic tracking-tighter">BARBER</h1>
                 </div>
+                ${
+                  state.isOffline
+                    ? `
+                    <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/10 text-rose-500 animate-pulse">
+                        <i class="fas fa-plane text-[10px]"></i>
+                        <span class="text-[8px] font-black uppercase tracking-widest">Offline</span>
+                    </div>
+                `
+                    : ""
+                }
                 <button onclick="window.syncAll()" class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-surface-subtle hover:bg-brand-primary/10 hover:text-brand-primary transition-all flex items-center justify-center border-none uppercase">
                     <i id="globalSyncBtn" class="fas fa-sync-alt text-xs md:text-sm"></i>
                 </button>

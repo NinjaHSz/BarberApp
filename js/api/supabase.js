@@ -14,6 +14,7 @@ export async function fetchClients() {
     );
     if (res.ok) {
       state.clients = await res.json();
+      localStorage.setItem("clients", JSON.stringify(state.clients));
       if (window.render) window.render();
     }
   } catch (err) {
@@ -37,6 +38,7 @@ export async function fetchProcedures() {
     );
     if (res.ok) {
       state.procedures = await res.json();
+      localStorage.setItem("procedures", JSON.stringify(state.procedures));
       if (window.render) window.render();
     }
   } catch (err) {
@@ -104,6 +106,10 @@ export async function fetchAllPlanPayments() {
     );
     if (res.ok) {
       state.allPlanPayments = await res.json();
+      localStorage.setItem(
+        "allPlanPayments",
+        JSON.stringify(state.allPlanPayments),
+      );
       if (window.updateInternalStats) window.updateInternalStats();
     }
   } catch (e) {
@@ -124,6 +130,7 @@ export async function fetchExpenses() {
     );
     if (res.ok) {
       state.expenses = await res.json();
+      localStorage.setItem("expenses", JSON.stringify(state.expenses));
       if (window.render) window.render();
     }
   } catch (err) {
@@ -144,6 +151,7 @@ export async function fetchCards() {
     );
     if (res.ok) {
       state.cards = await res.json();
+      localStorage.setItem("cards", JSON.stringify(state.cards));
       if (window.render) window.render();
     }
   } catch (err) {
