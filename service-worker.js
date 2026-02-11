@@ -1,4 +1,4 @@
-const CACHE_NAME = "barber-app-v1";
+const CACHE_NAME = "barber-app-v3";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -29,6 +29,7 @@ const ASSETS_TO_CACHE = [
   "./js/ui/pages/ClientProfilePage.js",
   "./js/ui/pages/ManagePage.js",
   "./js/utils/dom.js",
+  "./manifest.json",
   "./assets/logo.png",
   "./assets/logo.ico",
   "https://cdn.tailwindcss.com",
