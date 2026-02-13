@@ -168,4 +168,66 @@ export const setupGlobalHandlers = () => {
 
   window.navigate = navigate;
   window.hasGlobalHandlers = true;
+
+  // NOVAS FUNÇÕES: Sugestão de Horários e Máscara de Moeda
+  window.formatCurrencyInput = (el) => {
+    let value = el.value.replace(/\D/g, "");
+    if (value === "") {
+      el.value = "";
+      return;
+    }
+    value = (parseInt(value) / 100).toFixed(2);
+    el.value = value;
+  };
+
+  window.suggestTimes = (date) => {
+    if (!date) return;
+    const records = state.records.filter((r) => r.date === date);
+    const occupied = records.map((r) =>
+      (r.time || r.horario || "").substring(0, 5),
+    );
+
+    const dayStartMin = 7 * 60 + 20; // 07:20
+    const dayEndMin = 22 * 60; // 22:00
+    const interval = 40;
+
+    const suggestions = [];
+    let currentMin = dayStartMin;
+
+    while (currentMin <= dayEndMin) {
+      const h = Math.floor(currentMin / 60);
+      const m = currentMin % 60;
+      const timeStr = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+
+      const isLunch = currentMin >= 12 * 60 && currentMin <= 12 * 60 + 40;
+
+      if (!occupied.includes(timeStr) && !isLunch) {
+        suggestions.push(timeStr);
+      }
+      currentMin += interval;
+    }
+
+    const container = document.getElementById("timeSuggestionsModal");
+    if (container) {
+      container.innerHTML = suggestions
+        .slice(0, 8)
+        .map(
+          (t) => `
+                <button type="button" onclick="window.selectSuggestedTime('${t}')" 
+                        class="px-2 py-1.5 bg-white/5 hover:bg-brand-primary hover:text-surface-page rounded-lg text-[10px] font-black transition-all">
+                    ${t}
+                </button>
+            `,
+        )
+        .join("");
+    }
+  };
+
+  window.selectSuggestedTime = (time) => {
+    const timeInput = document.querySelector('input[name="time"]');
+    if (timeInput) {
+      timeInput.value = time;
+      // Trigger any UI updates if needed
+    }
+  };
 };

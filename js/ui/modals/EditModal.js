@@ -44,11 +44,22 @@ export const EditModal = () => {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="space-y-1">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Data</label>
-                            <input type="date" name="date" required value="${r.date || r.data}" class="w-full bg-dark-900 border border-transparent p-3 rounded-xl outline-none focus:border-transparent transition-all font-bold text-sm">
+                            <input type="date" name="date" required value="${r.date || r.data}" 
+                                   onchange="window.suggestTimes(this.value)"
+                                   oninput="window.suggestTimes(this.value)"
+                                   class="w-full bg-dark-900 border border-transparent p-3 rounded-xl outline-none focus:border-transparent transition-all font-bold text-sm">
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Horário</label>
-                            <input type="time" name="time" required value="${r.time || r.horario}" class="w-full bg-dark-900 border border-transparent p-3 rounded-xl outline-none focus:border-transparent transition-all font-bold text-sm">
+                            <input type="time" name="time" required value="${r.time || r.horario}" 
+                                   class="w-full bg-dark-900 border border-transparent p-3 rounded-xl outline-none focus:border-transparent transition-all font-bold text-sm">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Sugestões de Horário Livre</label>
+                        <div id="timeSuggestionsModal" class="flex flex-wrap gap-2 min-h-[30px]">
+                            <p class="text-[10px] text-slate-600 italic">Selecione uma data para ver horários...</p>
                         </div>
                     </div>
 
@@ -65,7 +76,10 @@ export const EditModal = () => {
 
                     <div class="space-y-1">
                         <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Valor (R$)</label>
-                        <input type="number" step="0.01" name="value" value="${r.value || r.valor || ""}" class="w-full bg-dark-900 border border-transparent p-3 rounded-xl outline-none focus:border-transparent transition-all font-bold text-sm">
+                        <input type="text" inputmode="decimal" name="value" placeholder="0.00" 
+                               value="${r.value || r.valor ? parseFloat(r.value || r.valor).toFixed(2) : ""}" 
+                               oninput="window.formatCurrencyInput(this)"
+                               class="w-full bg-dark-900 border border-transparent p-3 rounded-xl outline-none focus:border-transparent transition-all font-bold text-sm">
                     </div>
 
                     <div class="space-y-1">
@@ -101,6 +115,8 @@ export const EditModal = () => {
                         </button>
                     </div>
                 </form>
+                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
+                     onload="window.suggestTimes('${r.date || r.data}')" style="display:none">
             </div>
         </div>
     `;
