@@ -192,7 +192,9 @@ export const setupGlobalHandlers = () => {
       .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
 
     const dayStartMin = 7 * 60 + 20; // 07:20
-    const dayEndMin = 22 * 60; // 22:00
+    const dayEndMin = 20 * 60 + 40; // 20:40
+    const lunchStartMin = 12 * 60; // 12:00
+    const lunchEndMin = 13 * 60; // 13:00
     const slotDuration = 40;
 
     const toMin = (t) => {
@@ -212,26 +214,23 @@ export const setupGlobalHandlers = () => {
     const unhandledReals = [...realAppointments];
 
     while (currentMin <= dayEndMin) {
-      const nextReal = unhandledReals[0];
-      const nextRealMin = nextReal ? toMin(nextReal.time) : null;
-
-      if (nextRealMin !== null && nextRealMin <= currentMin + 20) {
-        unhandledReals.shift();
-        currentMin = nextRealMin + slotDuration;
-      } else {
-        const timeStr = fromMin(currentMin);
-
-        // Excluir Almoço (12:00 - 12:40)
-        const lunchStart = 12 * 60;
-        const lunchEnd = 12 * 60 + 40;
-        const overlapsLunch =
-          currentMin < lunchEnd && currentMin + slotDuration > lunchStart;
-
-        if (!overlapsLunch) {
-          suggestions.push(timeStr);
-        }
-        currentMin += slotDuration;
+      // Pular horário de almoço
+      if (currentMin >= lunchStartMin && currentMin < lunchEndMin) {
+        currentMin = lunchEndMin;
+        continue;
       }
+
+      // Detectar se o slot está ocupado (tolerância de +/- 20 min)
+      const isOccupied = realAppointments.some((r) => {
+        const m = toMin(r.time);
+        return m >= currentMin - 10 && m < currentMin + 30;
+      });
+
+      if (!isOccupied) {
+        const timeStr = fromMin(currentMin);
+        suggestions.push(timeStr);
+      }
+      currentMin += slotDuration;
       if (suggestions.length > 50) break;
     }
 

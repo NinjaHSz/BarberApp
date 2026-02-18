@@ -53,7 +53,10 @@ export const RecordsPage = () => {
         a.time.localeCompare(b.time),
       );
       const dayStartMin = 7 * 60 + 20; // 07:20
-      const dayEndMin = 22 * 60; // 22:00
+      const dayEndMin = 20 * 60 + 40; // 20:40
+      const lunchStartMin = 12 * 60; // 12:00
+      const lunchEndMin = 13 * 60; // 13:00
+      const slotDuration = 40;
 
       const toMin = (t) => {
         const [h, m] = t.split(":").map(Number);
@@ -71,13 +74,18 @@ export const RecordsPage = () => {
       let currentMin = dayStartMin;
 
       while (currentMin <= dayEndMin) {
+        // Pular horário de almoço
+        if (currentMin >= lunchStartMin && currentMin < lunchEndMin) {
+          currentMin = lunchEndMin;
+          continue;
+        }
+
         const nextReal = unhandledReals[0];
         const nextRealMin = nextReal ? toMin(nextReal.time) : null;
 
         if (nextRealMin !== null && nextRealMin <= currentMin + 20) {
           records.push(nextReal);
           unhandledReals.shift();
-          currentMin = nextRealMin + 40;
         } else {
           records.push({
             time: fromMin(currentMin),
@@ -88,9 +96,9 @@ export const RecordsPage = () => {
             isEmpty: true,
             date: dayPrefix,
           });
-          currentMin += 40;
         }
-        if (records.length > 60) break;
+        currentMin += slotDuration;
+        if (records.length > 100) break;
       }
       unhandledReals.forEach((r) => records.push(r));
       recordsToDisplay = records.sort((a, b) => a.time.localeCompare(b.time));
