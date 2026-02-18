@@ -54,23 +54,18 @@ export const Header = () => {
     "Dezembro",
   ];
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const today = new Date();
-  const formattedDate = new Intl.DateTimeFormat("pt-BR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(today);
 
   return `
-        <header class="h-14 md:h-14 border-none flex items-center justify-between px-3 md:px-8 bg-surface-page/80 backdrop-blur-xl sticky top-0 z-20">
-            <div class="flex items-center space-x-1 md:space-x-2">
-                <!-- Data Nav Group -->
-                <div class="flex items-center bg-surface-section/50 rounded-xl p-0.5">
+        <header class="h-16 md:h-14 border-none flex items-center justify-between px-4 md:px-8 bg-surface-page sticky top-0 z-20">
+            <!-- Navegação de Data Estilo Imagem -->
+            <div class="flex items-center space-x-2">
+                <!-- Dia/Dia Semana -->
+                <div class="flex items-center bg-surface-section rounded-2xl p-0.5">
                     <button onclick="window.changeDay(-1)" class="w-8 h-8 flex items-center justify-center text-text-muted hover:text-white transition-colors">
                         <i class="fas fa-chevron-left text-[10px]"></i>
                     </button>
                     
-                    <select onchange="window.updateFilter('day', this.value)" class="bg-transparent border-none text-[10px] md:text-xs font-bold px-2 py-1.5 outline-none w-16 md:w-auto text-text-primary text-center appearance-none cursor-pointer">
+                    <select onchange="window.updateFilter('day', this.value)" class="bg-transparent border-none text-[11px] font-black px-2 py-1.5 outline-none w-[75px] text-text-primary text-center appearance-none cursor-pointer uppercase">
                         ${days
                           .map((d) => {
                             const dayDate = new Date(
@@ -93,39 +88,31 @@ export const Header = () => {
                     </button>
                 </div>
 
-                <div class="flex items-center bg-surface-section/50 rounded-xl p-0.5">
-                    <select onchange="window.updateFilter('month', this.value)" class="bg-transparent border-none text-[10px] md:text-xs font-bold px-2 md:px-3 py-1.5 outline-none w-14 md:w-auto text-text-primary appearance-none cursor-pointer text-center">
+                <!-- Mês -->
+                <div class="flex items-center bg-surface-section rounded-2xl p-0.5">
+                    <select onchange="window.updateFilter('month', this.value)" class="bg-transparent border-none text-[11px] font-black px-3 py-1.5 outline-none min-w-[50px] text-text-primary appearance-none cursor-pointer text-center uppercase">
                         ${months.map((m, i) => `<option value="${i + 1}" ${state.filters.month === i + 1 ? "selected" : ""} class="bg-surface-page">${m.substring(0, 3).toUpperCase()}</option>`).join("")}
                     </select>
                 </div>
 
-                <div class="flex items-center bg-surface-section/50 rounded-xl p-0.5">
-                    <select onchange="window.updateFilter('year', this.value)" class="bg-transparent border-none text-[10px] md:text-xs font-bold px-2 md:px-3 py-1.5 outline-none w-14 md:w-auto text-text-primary appearance-none cursor-pointer text-center">
+                <!-- Ano -->
+                <div class="hidden sm:flex items-center bg-surface-section rounded-2xl p-0.5">
+                    <select onchange="window.updateFilter('year', this.value)" class="bg-transparent border-none text-[11px] font-black px-3 py-1.5 outline-none text-text-primary appearance-none cursor-pointer text-center">
                         <option value="2025" ${state.filters.year === 2025 ? "selected" : ""} class="bg-surface-page">'25</option>
                         <option value="2026" ${state.filters.year === 2026 ? "selected" : ""} class="bg-surface-page">'26</option>
                     </select>
                 </div>
+
+                <!-- Ano Mobile (Compact) -->
+                <div class="sm:hidden flex items-center bg-surface-section rounded-2xl p-0.5 px-3 py-2">
+                   <span class="text-[11px] font-black text-text-primary">'${String(state.filters.year).slice(-2)}</span>
+                </div>
             </div>
-            <div class="flex items-center space-x-2 md:space-x-4">
-                <div class="hidden sm:flex items-center space-x-2 text-xs md:text-sm text-text-secondary">
-                    <i class="fas fa-calendar"></i>
-                    <span class="font-medium">${formattedDate}</span>
-                </div>
-                <div class="md:hidden flex items-center mr-2">
-                    <h1 class="text-sm font-display font-black text-brand-primary italic tracking-tighter">BARBER</h1>
-                </div>
-                ${
-                  state.isOffline
-                    ? `
-                    <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/10 text-rose-500 animate-pulse">
-                        <i class="fas fa-plane text-[10px]"></i>
-                        <span class="text-[8px] font-black uppercase tracking-widest">Offline</span>
-                    </div>
-                `
-                    : ""
-                }
-                <button onclick="window.syncAll()" class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-surface-subtle hover:bg-brand-primary/10 hover:text-brand-primary transition-all flex items-center justify-center border-none uppercase">
-                    <i id="globalSyncBtn" class="fas fa-sync-alt text-xs md:text-sm"></i>
+
+            <div class="flex items-center gap-3">
+                <h1 class="text-sm font-display font-black text-brand-primary italic tracking-tighter opacity-80">BARBER</h1>
+                <button onclick="window.syncAll()" class="w-9 h-9 rounded-2xl bg-surface-section hover:bg-surface-subtle transition-all flex items-center justify-center border-none">
+                    <i id="globalSyncBtn" class="fas fa-arrows-rotate text-[11px] text-text-primary"></i>
                 </button>
             </div>
         </header>
