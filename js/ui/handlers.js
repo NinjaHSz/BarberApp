@@ -182,44 +182,75 @@ export const setupGlobalHandlers = () => {
 
   window.suggestTimes = (date) => {
     if (!date) return;
-    const records = state.records.filter((r) => r.date === date);
-    const occupied = records.map((r) =>
-      (r.time || r.horario || "").substring(0, 5),
-    );
+
+    const currentId = state.editingRecord?.id;
+    const realAppointments = state.records
+      .filter(
+        (r) =>
+          r.date === date && (!currentId || String(r.id) !== String(currentId)),
+      )
+      .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
 
     const dayStartMin = 7 * 60 + 20; // 07:20
     const dayEndMin = 22 * 60; // 22:00
-    const interval = 40;
+    const slotDuration = 40;
+
+    const toMin = (t) => {
+      if (!t) return 0;
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    };
+
+    const fromMin = (m) => {
+      const h = Math.floor(m / 60);
+      const min = m % 60;
+      return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+    };
 
     const suggestions = [];
     let currentMin = dayStartMin;
+    const unhandledReals = [...realAppointments];
 
     while (currentMin <= dayEndMin) {
-      const h = Math.floor(currentMin / 60);
-      const m = currentMin % 60;
-      const timeStr = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      const nextReal = unhandledReals[0];
+      const nextRealMin = nextReal ? toMin(nextReal.time) : null;
 
-      const isLunch = currentMin >= 12 * 60 && currentMin <= 12 * 60 + 40;
+      if (nextRealMin !== null && nextRealMin <= currentMin + 20) {
+        unhandledReals.shift();
+        currentMin = nextRealMin + slotDuration;
+      } else {
+        const timeStr = fromMin(currentMin);
 
-      if (!occupied.includes(timeStr) && !isLunch) {
-        suggestions.push(timeStr);
+        // Excluir Almoço (12:00 - 12:40)
+        const lunchStart = 12 * 60;
+        const lunchEnd = 12 * 60 + 40;
+        const overlapsLunch =
+          currentMin < lunchEnd && currentMin + slotDuration > lunchStart;
+
+        if (!overlapsLunch) {
+          suggestions.push(timeStr);
+        }
+        currentMin += slotDuration;
       }
-      currentMin += interval;
+      if (suggestions.length > 50) break;
     }
 
     const container = document.getElementById("timeSuggestionsModal");
     if (container) {
-      container.innerHTML = suggestions
-        .slice(0, 8)
-        .map(
-          (t) => `
-                <button type="button" onclick="window.selectSuggestedTime('${t}')" 
-                        class="px-2 py-1.5 bg-white/5 hover:bg-brand-primary hover:text-surface-page rounded-lg text-[10px] font-black transition-all">
-                    ${t}
-                </button>
-            `,
-        )
-        .join("");
+      if (suggestions.length === 0) {
+        container.innerHTML = `<p class="text-[10px] text-slate-600 italic">Nenhum horário disponível.</p>`;
+      } else {
+        container.innerHTML = suggestions
+          .map(
+            (t) => `
+                  <button type="button" onclick="window.selectSuggestedTime('${t}')" 
+                          class="px-2 py-1.5 bg-white/5 hover:bg-brand-primary hover:text-surface-page rounded-lg text-[10px] font-black transition-all">
+                      ${t}
+                  </button>
+              `,
+          )
+          .join("");
+      }
     }
   };
 
