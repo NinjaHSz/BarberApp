@@ -39,7 +39,7 @@ export const saveNewRecord = async (e) => {
     });
 
     if (res.ok) {
-      alert("✅ Sucesso!");
+      if (window.showAlert) window.showAlert("Sucesso!");
       state.editingRecord = null;
       state.isEditModalOpen = false;
       if (state.currentPage === "manage") navigate("records");
@@ -47,10 +47,10 @@ export const saveNewRecord = async (e) => {
       syncFromSheet(state.sheetUrl);
     } else {
       const err = await res.json();
-      alert(`Erro: ${err.message}`);
+      if (window.showAlert) window.showAlert(`Erro: ${err.message}`, "error");
     }
   } catch (err) {
-    alert("Erro de conexão.");
+    if (window.showAlert) window.showAlert("Erro de conexão.", "error");
   } finally {
     btn.disabled = false;
     btn.innerHTML = isEditing ? "Salvar Alterações" : "Salvar Agendamento";
@@ -252,21 +252,32 @@ export const saveInlineEdit = async (el) => {
 };
 
 export const cancelAppointment = async (id) => {
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/agendamentos?id=eq.${id}`,
-      {
-        method: "DELETE",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: "Bearer " + SUPABASE_KEY,
+  const performCancel = async () => {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/agendamentos?id=eq.${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: "Bearer " + SUPABASE_KEY,
+          },
         },
-      },
+      );
+      if (res.ok) syncFromSheet(state.sheetUrl);
+      else {
+        if (window.showAlert) window.showAlert("Erro ao cancelar.", "error");
+      }
+    } catch (err) {
+      if (window.showAlert) window.showAlert("Erro de conexão.", "error");
+    }
+  };
+
+  if (window.showConfirm) {
+    window.showConfirm(
+      "Tem certeza que deseja cancelar este agendamento?",
+      performCancel,
     );
-    if (res.ok) syncFromSheet(state.sheetUrl);
-    else alert("Erro ao cancelar.");
-  } catch (err) {
-    alert("Erro de conexão.");
   }
 };
 

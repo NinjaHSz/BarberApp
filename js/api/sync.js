@@ -58,9 +58,16 @@ export async function syncFromSheet(url, silent = false) {
         if (!Array.isArray(data)) {
           if (data.erro) {
             console.error("[Sync] Erro do Script:", data.erro);
-            alert(
-              `Atenção: ${data.erro}. O robô não encontrou dados formatados na sua planilha.`,
-            );
+            if (window.showAlert) {
+              window.showAlert(
+                `Atenção: ${data.erro}. O robô não encontrou dados formatados na sua planilha.`,
+                "error",
+              );
+            } else {
+              console.warn(
+                `Atenção: ${data.erro}. O robô não encontrou dados formatados na sua planilha.`,
+              );
+            }
           }
           return false;
         }

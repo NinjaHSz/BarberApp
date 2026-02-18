@@ -27,34 +27,39 @@ export const SetupPage = () => {
 
   window.validateConnection = async () => {
     const url = document.getElementById("sheetUrl").value.trim();
-    if (!url) return alert("Por favor, insira a URL da planilha ou do script.");
+    if (!url) {
+      window.showAlert("Por favor, insira a URL da planilha.", "info");
+      return;
+    }
     state.isValidating = true;
     if (window.render) window.render();
     const success = await syncFromSheet(url);
     state.isValidating = false;
     if (success) {
-      alert("Conectado com sucesso!");
+      window.showAlert("Conectado com sucesso!");
     } else {
-      alert(
+      window.showAlert(
         "Não foi possível ler dados neste link. Verifique se o link está correto e público.",
+        "error",
       );
     }
     if (window.render) window.render();
   };
 
   window.disconnectSheet = () => {
-    if (
-      confirm(
-        "Deseja realmente desconectar a planilha? Todos os dados locais serão limpos.",
-      )
-    ) {
+    const performDisconnect = () => {
       localStorage.removeItem("sheetUrl");
       localStorage.removeItem("isIntegrated");
       state.sheetUrl = "";
       state.isIntegrated = false;
       state.records = [];
       if (window.render) window.render();
-    }
+    };
+
+    window.showConfirm(
+      "Deseja realmente desconectar a planilha? Todos os dados locais serão limpos.",
+      performDisconnect,
+    );
   };
 
   return `

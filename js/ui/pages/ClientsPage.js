@@ -69,16 +69,16 @@ export const ClientsPage = () => {
         fetchClients();
       } else {
         const errorData = await res.json();
-        if (errorData.code === "23505")
-          alert("⚠ ERRO: Este cliente já está cadastrado.");
-        else
-          alert(
-            "⚠ Erro ao salvar: " +
-              (errorData.message || "Falha no banco de dados."),
-          );
+        const msg =
+          errorData.code === "23505"
+            ? "ERRO: Este cliente já está cadastrado."
+            : "Erro ao salvar: " +
+              (errorData.message || "Falha no banco de dados.");
+        if (window.showAlert) window.showAlert(msg, "error");
       }
     } catch (err) {
-      alert("⚠ Erro de conexão.");
+      console.error(err);
+      if (window.showAlert) window.showAlert("Erro de conexão.", "error");
     } finally {
       btn.disabled = false;
       btn.innerHTML = isEditing ? "Salvar Alterações" : "Cadastrar Cliente";
@@ -98,23 +98,34 @@ export const ClientsPage = () => {
   };
 
   window.deleteClient = async (id) => {
-    if (
-      !confirm(
+    const performDelete = async () => {
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/clientes?id=eq.${id}`, {
+          method: "DELETE",
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: "Bearer " + SUPABASE_KEY,
+          },
+        });
+        fetchClients();
+      } catch (err) {
+        if (window.showAlert)
+          window.showAlert("Erro ao excluir cliente.", "error");
+      }
+    };
+
+    if (window.showConfirm) {
+      window.showConfirm(
         "Deseja excluir este cliente? Isso não afetará os agendamentos já feitos.",
+        performDelete,
+      );
+    } else {
+      if (
+        confirm(
+          "Deseja excluir este cliente? Isso não afetará os agendamentos já feitos.",
+        )
       )
-    )
-      return;
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/clientes?id=eq.${id}`, {
-        method: "DELETE",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: "Bearer " + SUPABASE_KEY,
-        },
-      });
-      fetchClients();
-    } catch (err) {
-      alert("Erro ao excluir cliente.");
+        performDelete();
     }
   };
 
@@ -153,10 +164,11 @@ export const ClientsPage = () => {
         e.target.reset();
         fetchProcedures();
       } else {
-        alert("⚠ Erro ao salvar procedimento.");
+        if (window.showAlert)
+          window.showAlert("Erro ao salvar procedimento.", "error");
       }
     } catch (err) {
-      alert("⚠ Erro de conexão.");
+      if (window.showAlert) window.showAlert("Erro de conexão.", "error");
     } finally {
       btn.disabled = false;
       btn.innerHTML = isEditing
@@ -178,18 +190,26 @@ export const ClientsPage = () => {
   };
 
   window.deleteProcedure = async (id) => {
-    if (!confirm("Deseja excluir este procedimento?")) return;
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/procedimentos?id=eq.${id}`, {
-        method: "DELETE",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: "Bearer " + SUPABASE_KEY,
-        },
-      });
-      fetchProcedures();
-    } catch (err) {
-      alert("Erro ao excluir procedimento.");
+    const performDelete = async () => {
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/procedimentos?id=eq.${id}`, {
+          method: "DELETE",
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: "Bearer " + SUPABASE_KEY,
+          },
+        });
+        fetchProcedures();
+      } catch (err) {
+        if (window.showAlert)
+          window.showAlert("Erro ao excluir procedimento.", "error");
+      }
+    };
+
+    if (window.showConfirm) {
+      window.showConfirm("Deseja excluir este procedimento?", performDelete);
+    } else {
+      if (confirm("Deseja excluir este procedimento?")) performDelete();
     }
   };
 
@@ -202,8 +222,8 @@ export const ClientsPage = () => {
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div class="space-y-1">
-                    <h2 class="text-3xl md:text-4xl font-display font-black tracking-tighter text-white">Central de Gestão</h2>
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted">Controle sua base de dados e serviços</p>
+                    <h2 class="text-4xl md:text-3xl font-display font-black tracking-tight text-white">Central de Gestão</h2>
+                    <p class="text-[10px] md:text-[8px] font-black uppercase tracking-[0.2em] text-text-muted">Controle sua base de dados e serviços</p>
                 </div>
                 
                 <!-- Tab Control -->
@@ -223,8 +243,8 @@ export const ClientsPage = () => {
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <!-- Action Form Card -->
-                <div class="lg:col-span-4 sticky top-6">
-                    <div class="bg-surface-section/30 p-8 rounded-[2.5rem] space-y-8 group hover:bg-surface-section/40 transition-all duration-500">
+                <div class="lg:col-span-4 lg:sticky lg:top-6">
+                    <div class="bg-surface-section/30 p-8 rounded-[2.5rem] space-y-8 group transition-all duration-500">
                         <div class="flex justify-between items-center">
                             <div class="space-y-1">
                                 <h3 class="text-[11px] font-black text-brand-primary uppercase tracking-[0.2em]">
@@ -257,7 +277,7 @@ export const ClientsPage = () => {
                                            value="${state.editingClient?.nome || ""}"
                                            class="w-full bg-surface-page/50 border-none p-4 rounded-2xl outline-none font-black text-white uppercase text-sm tracking-tight placeholder:text-text-muted/30 focus:bg-surface-page transition-all">
                                 </div>
-                                <div class="flex items-center gap-4 bg-surface-page/30 p-4 rounded-2xl cursor-pointer hover:bg-surface-page/50 transition-all relative">
+                                <div class="flex items-center gap-4 bg-surface-page/30 p-4 rounded-2xl cursor-pointer transition-all relative">
                                     <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in pointer-events-none">
                                         <input type="checkbox" name="novo_cliente" id="novo_cliente_toggle" 
                                                class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer translate-x-1 top-1 transition-transform checked:translate-x-5 checked:border-brand-primary" 
@@ -301,16 +321,12 @@ export const ClientsPage = () => {
                     <!-- Search & Tools -->
                     <div class="bg-surface-section/20 p-4 rounded-[2rem] flex flex-col md:flex-row items-center gap-4">
                         <div class="relative flex-1 group w-full">
-                            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-text-muted text-xs group-focus-within:text-brand-primary transition-colors"></i>
+                            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-text-muted text-lg md:text-xs group-focus-within:text-brand-primary transition-colors"></i>
                             <input type="text" id="managementSearchInput" 
                                    placeholder="BUSCAR ${isClients ? "CLIENTE..." : "SERVIÇO..."}" 
                                    oninput="window.handleManagementSearch(this.value)" value="${state.managementSearch}"
-                                   class="w-full bg-surface-page/40 border-none py-4 pl-14 pr-6 rounded-2xl text-[10px] font-black uppercase tracking-widest outline-none focus:bg-surface-page/60 transition-all text-white placeholder:opacity-30">
+                                   class="w-full bg-surface-page/40 border-none h-14 md:py-4 pl-14 pr-6 rounded-3xl md:rounded-2xl text-base md:text-[10px] font-black uppercase tracking-widest outline-none focus:bg-surface-page/60 transition-all text-white placeholder:opacity-30">
                         </div>
-                        <button onclick="${isClients ? "fetchClients()" : "fetchProcedures()"}" 
-                                class="w-12 h-12 rounded-2xl bg-surface-page/40 text-text-muted hover:text-white hover:bg-surface-page transition-all flex items-center justify-center shrink-0">
-                            <i class="fas fa-sync-alt text-xs"></i>
-                        </button>
                     </div>
 
                     <!-- Data Display -->
@@ -340,7 +356,7 @@ export const ClientsPage = () => {
                                           )
                                           .map(
                                             (c) => `
-                                            <tr class="hover:bg-white/[0.02] transition-colors group">
+                                            <tr class="transition-colors group">
                                                 <td class="px-8 ${isCompact ? "py-3" : "py-6"} cursor-pointer" onclick="navigate('client-profile', '${c.id}')">
                                                     <div class="flex items-center gap-4">
                                                         <div class="w-10 h-10 rounded-xl bg-surface-page flex items-center justify-center text-[10px] font-black text-brand-primary group-hover:scale-110 transition-transform">
@@ -441,7 +457,7 @@ export const ClientsPage = () => {
                                           )
                                           .map(
                                             (p) => `
-                                            <tr class="hover:bg-white/[0.02] transition-colors group">
+                                            <tr class="transition-colors group">
                                                 <td class="px-8 ${isCompact ? "py-3" : "py-6"}">
                                                     <div class="flex items-center gap-4">
                                                         <div class="w-8 h-8 rounded-lg bg-surface-page flex items-center justify-center text-[10px] text-text-muted group-hover:text-brand-primary transition-colors">

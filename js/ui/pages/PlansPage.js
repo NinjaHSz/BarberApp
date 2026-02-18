@@ -74,11 +74,12 @@ export const PlansPage = () => {
         state.isAddPlanModalOpen = false;
         fetchClients();
       } else {
-        alert("Erro ao salvar dados do cliente.");
+        if (window.showAlert)
+          window.showAlert("Erro ao salvar dados do cliente.", "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Erro de conexão.");
+      if (window.showAlert) window.showAlert("Erro de conexão.", "error");
     } finally {
       btn.disabled = false;
       btn.innerHTML = originalText;
@@ -107,7 +108,7 @@ export const PlansPage = () => {
       .map(
         (c) => `
         <div onclick="window.selectPlanModalClient('${c.nome}')" 
-             class="p-4 hover:bg-white/5 cursor-pointer transition-colors flex justify-between items-center group/item border-b border-transparent last:border-0">
+             class="p-4 cursor-pointer transition-colors flex justify-between items-center group/item border-b border-transparent last:border-0">
             <span class="font-bold text-white text-sm group-hover/item:text-brand-primary transition-colors">${c.nome}</span>
         </div>
     `,
@@ -239,7 +240,7 @@ export const PlansPage = () => {
                                   30;
 
                               return `
-                            <div class="bg-surface-section/20 hover:bg-surface-section/40 p-4 sm:p-5 rounded-2xl transition-all group flex flex-col md:flex-row items-center gap-6">
+                            <div class="bg-surface-section/20 p-4 sm:p-5 rounded-2xl transition-all group flex flex-col md:flex-row items-center gap-6">
                                 <!-- Info Principal -->
                                 <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
                                     <div class="w-10 h-10 rounded-full bg-surface-page flex items-center justify-center text-text-muted font-black text-xs shadow-xl border border-white/5 group-hover:text-brand-primary transition-colors">
@@ -305,8 +306,8 @@ export const PlansPage = () => {
 
                                 <!-- Ações -->
                                 <div class="flex items-center gap-3 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="if(confirm('Reiniciar ciclo?')){ window.updateClientPlan('${c.id}', { plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
-                                            class="p-2 text-text-muted hover:text-brand-primary transition-colors" title="Reset">
+                                    <button onclick="if(window.showConfirm) { window.showConfirm('Reiniciar ciclo?', () => window.updateClientPlan('${c.id}', { plano_pagamento: new Date().toISOString().split('T')[0] })) }" 
+                                             class="p-2 text-text-muted hover:text-brand-primary transition-colors" title="Reset">
                                         <i class="fas fa-rotate text-[10px]"></i>
                                     </button>
                                     <button onclick="window.updateClientPlan('${c.id}', { plano: 'Pausado' })" 

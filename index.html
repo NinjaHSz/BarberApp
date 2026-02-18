@@ -45,7 +45,9 @@
     <!-- Configuração do Tema Tailwind -->
     <script>
       window.onerror = function (msg, url, line, col, error) {
-        alert("Erro Global: " + msg + "\nURL: " + url + "\nLinha: " + line);
+        const errorMsg =
+          "Erro Global: " + msg + "\nURL: " + url + "\nLinha: " + line;
+        if (window.showAlert) window.showAlert(errorMsg, "error");
         console.error("Erro Global:", error);
         return false;
       };
@@ -175,7 +177,6 @@
       }
 
       .glass-card:hover {
-        background: var(--surface-subtle);
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
       }
 

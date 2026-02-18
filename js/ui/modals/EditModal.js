@@ -18,7 +18,7 @@ export const EditModal = () => {
                             <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest truncate max-w-[150px] sm:max-w-none">${isNew ? "Preencha os dados abaixo" : r.client || r.cliente}</p>
                         </div>
                     </div>
-                    <button onclick="window.closeEditModal()" class="w-10 h-10 rounded-xl hover:bg-white/5 flex items-center justify-center transition-all shrink-0">
+                    <button onclick="window.closeEditModal()" class="w-10 h-10 rounded-xl flex items-center justify-center transition-all shrink-0">
                         <i class="fas fa-times text-slate-500"></i>
                     </button>
                 </div>

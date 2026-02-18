@@ -271,7 +271,8 @@ export const setupGlobalHandlers = () => {
 
     const suggestions = window.getAvailableTimesList(targetDate);
     if (suggestions.length === 0) {
-      alert("Nenhum horário disponível para copiar.");
+      if (window.showAlert)
+        window.showAlert("Nenhum horário disponível para copiar.", "error");
       return;
     }
 

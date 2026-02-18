@@ -10,6 +10,7 @@ export const ExpensesPage = () => {
   const searchTerm = (state.expenseSearchTerm || "").toLowerCase();
   const statusFilter = state.expenseStatusFilter || "TODOS";
   const periodFilter = state.expensePeriodFilter || "mensal";
+  const isCompact = state.displayMode === "compact";
 
   let filteredExpenses = state.expenses;
   const selectedDate = new Date(
@@ -95,18 +96,23 @@ export const ExpensesPage = () => {
   };
 
   window.deleteExpense = async (id) => {
-    if (!confirm("Excluir esta conta permanentemente?")) return;
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/saidas?id=eq.${id}`, {
-        method: "DELETE",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: "Bearer " + SUPABASE_KEY,
-        },
-      });
-      if (res.ok) fetchExpenses();
-    } catch (err) {
-      console.error(err);
+    const performDelete = async () => {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/saidas?id=eq.${id}`, {
+          method: "DELETE",
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: "Bearer " + SUPABASE_KEY,
+          },
+        });
+        if (res.ok) fetchExpenses();
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    if (window.showConfirm) {
+      window.showConfirm("Excluir esta conta permanentemente?", performDelete);
     }
   };
 
@@ -243,7 +249,7 @@ export const ExpensesPage = () => {
         <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 animate-in fade-in duration-500 pb-32">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 text-sm">
                 <div>
-                    <h2 class="text-3xl font-display font-black">Saídas <span class="text-slate-600">${periodFilter === "total" ? "Totais" : periodFilter === "diario" ? `${state.filters.day} de ${monthsLong[targetMonth - 1]}` : periodFilter === "semanal" ? "da Semana" : `${monthsLong[targetMonth - 1]}${targetYear !== new Date().getFullYear() ? " " + targetYear : ""}`}</span></h2>
+                    <h2 class="text-4xl md:text-3xl font-display font-black tracking-tight">Saídas <span class="text-slate-600 font-medium md:text-3xl text-2xl">${periodFilter === "total" ? "Totais" : periodFilter === "diario" ? `${state.filters.day} de ${monthsLong[targetMonth - 1]}` : periodFilter === "semanal" ? "da Semana" : `${monthsLong[targetMonth - 1]}${targetYear !== new Date().getFullYear() ? " " + targetYear : ""}`}</span></h2>
                     <div class="flex items-center gap-2 mt-2">
                         <div class="flex bg-dark-900 border border-transparent rounded-xl p-0.5">
                             ${["diario", "semanal", "mensal", "total"]
@@ -276,10 +282,10 @@ export const ExpensesPage = () => {
             </div>
 
             <div class="flex flex-wrap gap-4 items-center bg-dark-900/50 p-4 rounded-[1.5rem] border border-transparent shadow-2xl">
-                <div class="flex-1 min-w-[240px] relative group">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs group-focus-within:text-slate-600 transition-colors"></i>
+                <div class="flex-1 min-w-[240px] relative group w-full">
+                    <i class="fas fa-search absolute left-5 md:left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg md:text-xs group-focus-within:text-slate-600 transition-colors"></i>
                     <input type="text" id="expenseSearchInput" placeholder="Buscar por descrição ou cartão..." value="${state.expenseSearchTerm || ""}" oninput="window.setExpenseFilter('expenseSearchTerm', this.value)"
-                           class="w-full bg-dark-950 border border-transparent pl-10 pr-4 py-3 rounded-xl outline-none focus:border-slate-600/50 transition-all font-bold text-xs uppercase text-white shadow-inner">
+                           class="w-full bg-dark-950 border border-transparent pl-14 md:pl-10 pr-4 h-14 md:h-auto rounded-3xl md:rounded-xl outline-none focus:border-slate-600/50 transition-all font-bold text-sm md:text-xs uppercase text-white shadow-inner">
                 </div>
                 <div class="flex gap-2 flex-wrap sm:flex-nowrap">
                     <select onchange="window.setExpenseFilter('expenseStatusFilter', this.value)" class="bg-dark-950 border border-transparent px-4 py-3 rounded-xl outline-none focus:border-slate-600/50 transition-all font-bold text-xs uppercase text-white cursor-pointer min-w-[160px]">
@@ -308,7 +314,7 @@ export const ExpensesPage = () => {
                     <div class="text-center">Pagamento</div>
                     <div class="text-center">Ações</div>
                 </div>
-                <div class="divide-y divide-transparent">
+                <div id="expensesTableBody" class="space-y-1 md:space-y-0 md:divide-y md:divide-white/[0.02]">
                     ${
                       filteredExpenses.length === 0
                         ? `<div class="px-8 py-20 text-center text-slate-500 italic">Nenhuma conta registrada para este mês.</div>`
@@ -322,68 +328,105 @@ export const ExpensesPage = () => {
                                   new Date(todayDate + "T00:00:00")) /
                                   (1000 * 60 * 60 * 24),
                               );
-                              return `
-                        <div class="flex flex-col md:grid md:grid-cols-[120px_130px_1fr_100px_110px_120px_80px] items-center px-6 py-2.5 hover:bg-white/[0.02] transition-colors group relative border-b border-transparent">
-                            <div class="w-full md:w-auto flex items-center gap-3">
-                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Vencimento</span>
-                                <div class="flex items-center gap-1.5">
-                                    <div class="w-1.5 h-1.5 rounded-full ${e.paga ? "bg-slate-300" : diffDays < 0 ? "bg-slate-600 animate-pulse" : "bg-brand-primary"}"></div>
-                                    <div class="flex items-center -ml-1 gap-1">
-                                        <i class="far fa-calendar-alt text-[9px] text-slate-500 mt-0.5"></i>
-                                        <input type="date" data-id="${e.id}" data-field="vencimento" value="${e.vencimento}" onchange="window.saveExpenseInline(this)" style="color-scheme: dark" class="bg-transparent border-none text-[12px] font-bold text-white outline-none cursor-pointer hover:bg-white/5 rounded pl-0.5 pr-1 transition-all">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="w-full md:w-auto px-2 mt-2 md:mt-0 relative min-w-0">
-                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase block mb-1">Cartão/Outro</span>
-                                <div class="flex flex-col gap-0.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <i class="fas fa-credit-card text-[10px] text-slate-500/50"></i>
-                                        <div contenteditable="true" data-id="${e.id}" data-field="cartao" onfocus="window.selectAll(this)" onblur="window.saveExpenseInline(this)" onkeydown="window.handleInlineKey(event)" oninput="window.showExpenseAutocomplete(this)" class="text-[10px] font-black text-brand-primary uppercase tracking-tight outline-none focus:bg-white/5 hover:bg-white/5 px-1 rounded transition-all truncate cursor-text">
-                                            ${e.cartao || "OUTROS"}
+
+                              const mobileRow = `
+                                <div class="md:hidden grid grid-cols-[70px_1fr_90px] gap-3 items-center px-5 ${isCompact ? "py-2.5" : "py-4"} bg-surface-section/40 rounded-2xl mx-1 my-1 border-none focus-within:z-[100] z-[1]">
+                                    <!-- Data & Status -->
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-1.5 h-1.5 rounded-full shrink-0 ${e.paga ? "bg-slate-300" : diffDays < 0 ? "bg-slate-600 animate-pulse" : "bg-brand-primary"}"></div>
+                                        <div class="text-[13px] text-text-primary font-bold">
+                                            ${e.vencimento.split("-")[2]}/${e.vencimento.split("-")[1]}
                                         </div>
                                     </div>
-                                    ${(() => {
-                                      const card = state.cards.find(
-                                        (c) => c.nome === e.cartao,
-                                      );
-                                      return card && card.titular
-                                        ? `<div class="flex items-center gap-1.5 ml-0.5 opacity-60"><i class="fas fa-user-circle text-[9px] text-slate-500/80"></i><span class="text-[9px] font-bold text-slate-400 uppercase truncate">${card.titular}</span></div>`
-                                        : "";
-                                    })()}
+                                    
+                                    <!-- Info -->
+                                    <div class="flex flex-col min-w-0">
+                                        <div class="text-[13px] font-black truncate uppercase text-white leading-tight">
+                                            ${e.descricao}
+                                        </div>
+                                        <div class="text-[10px] font-black text-brand-primary tracking-tight">
+                                            R$ ${(parseFloat(e.valor) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                        </div>
+                                    </div>
+
+                                    <!-- Ações -->
+                                    <div class="flex justify-end items-center gap-2">
+                                        <button onclick="window.openExpenseModal(${JSON.stringify(e).replace(/"/g, "&quot;")})" 
+                                                class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-subtle text-text-secondary active:scale-95 transition-all">
+                                            <i class="fas fa-edit text-base"></i>
+                                        </button>
+                                        <button onclick="window.deleteExpense(${e.id})" 
+                                                class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-subtle text-text-secondary active:scale-95 transition-all">
+                                            <i class="fas fa-trash-can text-base"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div id="expenseAutocomplete_${e.id}" class="hidden absolute left-0 right-0 top-full mt-1 bg-dark-800 border border-transparent rounded-xl shadow-2xl z-50 p-1"></div>
-                            </div>
-                            <div class="w-full md:w-auto px-4 mt-2 md:mt-0 min-w-0">
-                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase block mb-1">Descrição</span>
-                                <div contenteditable="true" data-id="${e.id}" data-field="descricao" onfocus="window.selectAll(this)" onblur="window.saveExpenseInline(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="font-black text-xs text-white uppercase tracking-wider outline-none focus:bg-white/5 hover:bg-white/5 px-1 rounded transition-all truncate hover:whitespace-normal cursor-text w-full">
-                                    ${e.descricao}
+                              `;
+
+                              const desktopRow = `
+                                <div class="hidden md:grid md:grid-cols-[120px_130px_1fr_100px_110px_120px_80px] items-center px-6 py-2.5 transition-colors group relative border-b border-transparent">
+                                    <div class="w-full md:w-auto flex items-center gap-3">
+                                        <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Vencimento</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <div class="w-1.5 h-1.5 rounded-full ${e.paga ? "bg-slate-300" : diffDays < 0 ? "bg-slate-600 animate-pulse" : "bg-brand-primary"}"></div>
+                                            <div class="flex items-center -ml-1 gap-1">
+                                                <i class="far fa-calendar-alt text-[9px] text-slate-500 mt-0.5"></i>
+                                                <input type="date" data-id="${e.id}" data-field="vencimento" value="${e.vencimento}" onchange="window.saveExpenseInline(this)" style="color-scheme: dark" class="bg-transparent border-none text-[12px] font-bold text-white outline-none cursor-pointer rounded pl-0.5 pr-1 transition-all">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full md:w-auto px-2 mt-2 md:mt-0 relative min-w-0">
+                                        <span class="md:hidden text-[9px] font-black text-slate-500 uppercase block mb-1">Cartão/Outro</span>
+                                        <div class="flex flex-col gap-0.5">
+                                            <div class="flex items-center gap-1.5">
+                                                <i class="fas fa-credit-card text-[10px] text-slate-500/50"></i>
+                                                <div contenteditable="true" data-id="${e.id}" data-field="cartao" onfocus="window.selectAll(this)" onblur="window.saveExpenseInline(this)" onkeydown="window.handleInlineKey(event)" oninput="window.showExpenseAutocomplete(this)" class="text-[10px] font-black text-brand-primary uppercase tracking-tight outline-none focus:bg-white/5 px-1 rounded transition-all truncate cursor-text">
+                                                    ${e.cartao || "OUTROS"}
+                                                </div>
+                                            </div>
+                                            ${(() => {
+                                              const card = state.cards.find(
+                                                (c) => c.nome === e.cartao,
+                                              );
+                                              return card && card.titular
+                                                ? `<div class="flex items-center gap-1.5 ml-0.5 opacity-60"><i class="fas fa-user-circle text-[9px] text-slate-500/80"></i><span class="text-[9px] font-bold text-slate-400 uppercase truncate">${card.titular}</span></div>`
+                                                : "";
+                                            })()}
+                                        </div>
+                                        <div id="expenseAutocomplete_${e.id}" class="hidden absolute left-0 right-0 top-full mt-1 bg-dark-800 border border-transparent rounded-xl shadow-2xl z-50 p-1"></div>
+                                    </div>
+                                    <div class="w-full md:w-auto px-4 mt-2 md:mt-0 min-w-0">
+                                        <span class="md:hidden text-[9px] font-black text-slate-500 uppercase block mb-1">Descrição</span>
+                                        <div contenteditable="true" data-id="${e.id}" data-field="descricao" onfocus="window.selectAll(this)" onblur="window.saveExpenseInline(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="font-black text-xs text-white uppercase tracking-wider outline-none focus:bg-white/5 px-1 rounded transition-all truncate hover:whitespace-normal cursor-text w-full">
+                                            ${e.descricao}
+                                        </div>
+                                    </div>
+                                    <div class="text-center mt-2 md:mt-0">
+                                        <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Valor</span>
+                                        <div contenteditable="true" data-id="${e.id}" data-field="valor" onfocus="window.selectAll(this)" onblur="window.saveExpenseInline(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="font-black text-[12px] text-white outline-none focus:bg-white/5 px-1 rounded transition-all cursor-text inline-block">
+                                            ${(parseFloat(e.valor) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                        </div>
+                                    </div>
+                                    <div class="text-center mt-2 md:mt-0 px-2">
+                                        <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Status</span>
+                                        <select onchange="window.toggleExpenseStatus('${e.id}', this.value)" class="bg-white/5 border border-transparent text-[10px] font-black uppercase rounded-lg px-2 py-1 outline-none transition-all w-full ${e.paga ? "text-slate-300" : diffDays < 0 ? "text-slate-600" : "text-brand-primary"}">
+                                            <option value="PAGO" ${e.paga ? "selected" : ""}>PAGO</option>
+                                            <option value="A VENCER" ${!e.paga && diffDays >= 0 ? "selected" : ""}>A VENCER</option>
+                                            <option value="VENCIDO" ${!e.paga && diffDays < 0 ? "selected" : ""}>VENCIDO</option>
+                                        </select>
+                                    </div>
+                                    <div class="text-center mt-2 md:mt-0">
+                                        <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Pagamento</span>
+                                        <input type="date" data-id="${e.id}" data-field="data_pagamento" value="${e.data_pagamento || ""}" onchange="window.saveExpenseInline(this)" style="color-scheme: dark" class="bg-transparent border-none text-[11px] font-bold text-slate-400 w-full text-center outline-none cursor-pointer rounded px-1 transition-all">
+                                    </div>
+                                    <div class="flex justify-center gap-2 mt-2 md:mt-0">
+                                        <button onclick="window.openExpenseModal(${JSON.stringify(e).replace(/"/g, "&quot;")})" class="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary hover:bg-brand-primary hover:text-surface-page transition-all flex items-center justify-center"><i class="fas fa-edit text-[10px]"></i></button>
+                                        <button onclick="window.deleteExpense(${e.id})" class="w-8 h-8 rounded-full bg-slate-600/10 text-slate-600 hover:bg-slate-600 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-trash text-[10px]"></i></button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="text-center mt-2 md:mt-0">
-                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Valor</span>
-                                <div contenteditable="true" data-id="${e.id}" data-field="valor" onfocus="window.selectAll(this)" onblur="window.saveExpenseInline(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="font-black text-[12px] text-white outline-none focus:bg-white/5 hover:bg-white/5 px-1 rounded transition-all cursor-text inline-block">
-                                    ${(parseFloat(e.valor) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                                </div>
-                            </div>
-                            <div class="text-center mt-2 md:mt-0 px-2">
-                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Status</span>
-                                <select onchange="window.toggleExpenseStatus('${e.id}', this.value)" class="bg-white/5 border border-transparent text-[10px] font-black uppercase rounded-lg px-2 py-1 outline-none transition-all w-full ${e.paga ? "text-slate-300" : diffDays < 0 ? "text-slate-600" : "text-brand-primary"}">
-                                    <option value="PAGO" ${e.paga ? "selected" : ""}>PAGO</option>
-                                    <option value="A VENCER" ${!e.paga && diffDays >= 0 ? "selected" : ""}>A VENCER</option>
-                                    <option value="VENCIDO" ${!e.paga && diffDays < 0 ? "selected" : ""}>VENCIDO</option>
-                                </select>
-                            </div>
-                            <div class="text-center mt-2 md:mt-0">
-                                <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Pagamento</span>
-                                <input type="date" data-id="${e.id}" data-field="data_pagamento" value="${e.data_pagamento || ""}" onchange="window.saveExpenseInline(this)" style="color-scheme: dark" class="bg-transparent border-none text-[11px] font-bold text-slate-400 w-full text-center outline-none cursor-pointer hover:bg-white/5 rounded px-1 transition-all">
-                            </div>
-                            <div class="flex justify-center gap-2 mt-2 md:mt-0">
-                                <button onclick="window.openExpenseModal(${JSON.stringify(e).replace(/"/g, "&quot;")})" class="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary hover:bg-brand-primary hover:text-surface-page transition-all flex items-center justify-center"><i class="fas fa-edit text-[10px]"></i></button>
-                                <button onclick="window.deleteExpense(${e.id})" class="w-8 h-8 rounded-full bg-slate-600/10 text-slate-600 hover:bg-slate-600 hover:text-white transition-all flex items-center justify-center"><i class="fas fa-trash text-[10px]"></i></button>
-                            </div>
-                        </div>
-                      `;
+                              `;
+
+                              return mobileRow + desktopRow;
                             })
                             .join("")
                     }
@@ -398,7 +441,7 @@ export const ExpensesPage = () => {
                     <div class="glass-card w-full max-w-md rounded-[2.5rem] border border-transparent shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden">
                         <div class="py-4 px-6 border-b border-transparent flex justify-between items-center bg-dark-900/50">
                             <h3 class="text-xl font-bold">${state.editingExpense?.id ? "Editar Conta" : "Nova Conta"}</h3>
-                            <button onclick="window.closeExpenseModal()" class="w-10 h-10 rounded-xl hover:bg-white/5 flex items-center justify-center text-slate-500"><i class="fas fa-times"></i></button>
+                            <button onclick="window.closeExpenseModal()" class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500"><i class="fas fa-times"></i></button>
                         </div>
                         <form onsubmit="window.saveExpense(event)" id="expenseModal" class="p-5 space-y-4">
                             <div class="grid grid-cols-2 gap-4">

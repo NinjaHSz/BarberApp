@@ -56,33 +56,38 @@ export const CardsPage = () => {
       } else {
         const errorData = await res.json().catch(() => ({}));
         console.error("Erro Supabase:", errorData);
-        if (errorData.code === "23505")
-          alert("⚠ ERRO: Já existe um cartão com este nome.");
-        else
-          alert(
-            "⚠ Erro ao salvar: " +
-              (errorData.message || "Falha no banco de dados."),
-          );
+        const msg =
+          errorData.code === "23505"
+            ? "ERRO: Já existe um cartão com este nome."
+            : "Erro ao salvar: " +
+              (errorData.message || "Falha no banco de dados.");
+        if (window.showAlert) window.showAlert(msg, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("⚠ Erro de conexão ao salvar cartão.");
+      if (window.showAlert)
+        window.showAlert("Erro de conexão ao salvar cartão.", "error");
     }
   };
 
   window.deleteCard = async (id) => {
-    if (!confirm("Excluir este cartão?")) return;
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/cartoes?id=eq.${id}`, {
-        method: "DELETE",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: "Bearer " + SUPABASE_KEY,
-        },
-      });
-      if (res.ok) fetchCards();
-    } catch (err) {
-      console.error(err);
+    const performDelete = async () => {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/cartoes?id=eq.${id}`, {
+          method: "DELETE",
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: "Bearer " + SUPABASE_KEY,
+          },
+        });
+        if (res.ok) fetchCards();
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    if (window.showConfirm) {
+      window.showConfirm("Deseja excluir este cartão?", performDelete);
     }
   };
 
@@ -115,7 +120,8 @@ export const CardsPage = () => {
       if (res.ok) {
         fetchCards();
       } else {
-        alert("Erro ao salvar alteração.");
+        if (window.showAlert)
+          window.showAlert("Erro ao salvar alteração.", "error");
         fetchCards();
       }
     } catch (err) {
@@ -195,7 +201,7 @@ export const CardsPage = () => {
                     <div class="bg-surface-section w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300 space-y-6">
                         <div class="flex justify-between items-center">
                             <h3 class="text-[10px] font-black text-white uppercase tracking-widest">${state.editingCard?.id ? "Editar Registro" : "Novo Registro"}</h3>
-                            <button onclick="window.closeCardModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-text-muted hover:text-white transition-all"><i class="fas fa-times text-[10px]"></i></button>
+                            <button onclick="window.closeCardModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-muted hover:text-white transition-all"><i class="fas fa-times text-[10px]"></i></button>
                         </div>
                         <form onsubmit="window.saveCard(event)" class="space-y-4">
                             <div class="space-y-1.5">

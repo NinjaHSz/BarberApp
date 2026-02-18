@@ -160,15 +160,18 @@ export async function fetchCards() {
 }
 
 export async function renewPlan(clientId) {
-  if (
-    !confirm(
+  const performRenew = async () => {
+    const today = new Date().toISOString().split("T")[0];
+    if (window.updateClientPlan)
+      await window.updateClientPlan(clientId, { plano_pagamento: today });
+  };
+
+  if (window.showConfirm) {
+    window.showConfirm(
       "Deseja renovar o ciclo do plano para hoje? Isso resetará a contagem de cortes/dias.",
-    )
-  )
-    return;
-  const today = new Date().toISOString().split("T")[0];
-  if (window.updateClientPlan)
-    await window.updateClientPlan(clientId, { plano_pagamento: today });
+      performRenew,
+    );
+  }
 }
 
 export async function updateClientPlan(clientId, data, skipRender = false) {

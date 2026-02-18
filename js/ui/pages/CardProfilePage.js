@@ -93,7 +93,8 @@ export const CardProfilePage = () => {
       if (res.ok) {
         fetchCards();
       } else {
-        alert("Erro ao salvar alteração no banco.");
+        if (window.showAlert)
+          window.showAlert("Erro ao salvar alteração no banco.", "error");
         Object.assign(card, { [field]: originalValue });
         if (window.render) window.render();
         fetchCards();
@@ -102,7 +103,8 @@ export const CardProfilePage = () => {
       console.error("Erro no salvamento parcial do cartão:", err);
       Object.assign(card, { [field]: originalValue });
       if (window.render) window.render();
-      alert("⚠ Erro de conexão ao salvar alteração.");
+      if (window.showAlert)
+        window.showAlert("Erro de conexão ao salvar alteração.", "error");
       fetchCards();
     }
   };
@@ -146,7 +148,7 @@ export const CardProfilePage = () => {
             
             <!-- Dynamic Stats Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-surface-section/30 p-6 rounded-[2rem] space-y-3 group hover:bg-surface-section/50 transition-colors">
+                <div class="bg-surface-section/30 p-6 rounded-[2rem] space-y-3 group transition-colors">
                     <div class="flex items-center gap-2 text-text-muted group-hover:text-brand-primary transition-colors">
                         <i class="fas fa-calendar-minus text-[10px]"></i>
                         <p class="text-[9px] font-black uppercase tracking-widest">Fechamento</p>
@@ -155,7 +157,7 @@ export const CardProfilePage = () => {
                            class="w-full bg-surface-page/50 border-none p-4 rounded-xl outline-none font-black text-white text-sm cursor-pointer" style="color-scheme: dark">
                 </div>
                 
-                <div class="bg-surface-section/30 p-6 rounded-[2rem] space-y-3 group hover:bg-surface-section/50 transition-colors">
+                <div class="bg-surface-section/30 p-6 rounded-[2rem] space-y-3 group transition-colors">
                     <div class="flex items-center gap-2 text-text-muted group-hover:text-brand-primary transition-colors">
                         <i class="fas fa-calendar-check text-[10px]"></i>
                         <p class="text-[9px] font-black uppercase tracking-widest">Vencimento</p>
@@ -164,7 +166,7 @@ export const CardProfilePage = () => {
                            class="w-full bg-surface-page/50 border-none p-4 rounded-xl outline-none font-black text-brand-primary text-sm cursor-pointer" style="color-scheme: dark">
                 </div>
 
-                <div class="bg-surface-section/30 p-6 rounded-[2rem] flex flex-col justify-between group hover:bg-surface-section/50 transition-colors">
+                <div class="bg-surface-section/30 p-6 rounded-[2rem] flex flex-col justify-between group transition-colors">
                     <div class="flex justify-between items-start gap-4">
                         <div class="space-y-1">
                             <p class="text-[9px] font-black text-text-muted uppercase tracking-widest">Faturamento</p>
@@ -206,7 +208,7 @@ export const CardProfilePage = () => {
                             .slice(0, 15)
                             .map(
                               (e) => `
-                        <div class="flex items-center gap-4 px-6 py-4 hover:bg-white/[0.02] rounded-2xl transition-all group cursor-pointer border-none">
+                        <div class="flex items-center gap-4 px-6 py-4 rounded-2xl transition-all group cursor-pointer border-none">
                             <div class="w-10 h-10 rounded-xl bg-surface-section flex items-center justify-center text-text-muted shrink-0 group-hover:text-brand-primary transition-colors">
                                 <i class="fas ${e.paga ? "fa-check-circle" : "fa-clock"} text-xs"></i>
                             </div>

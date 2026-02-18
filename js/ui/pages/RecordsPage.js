@@ -54,8 +54,6 @@ export const RecordsPage = () => {
       );
       const dayStartMin = 7 * 60 + 20; // 07:20
       const dayEndMin = 20 * 60 + 40; // 20:40
-      const lunchStartMin = 12 * 60; // 12:00
-      const lunchEndMin = 13 * 60; // 13:00
       const slotDuration = 40;
 
       const toMin = (t) => {
@@ -74,8 +72,9 @@ export const RecordsPage = () => {
       let currentMin = dayStartMin;
 
       while (currentMin <= dayEndMin) {
-        if (currentMin >= lunchStartMin && currentMin < lunchEndMin) {
-          currentMin = lunchEndMin;
+        if (currentMin >= 720 && currentMin < 780) {
+          // Almoço 12-13h
+          currentMin = 780;
           continue;
         }
 
@@ -112,52 +111,70 @@ export const RecordsPage = () => {
 
   return `
         <div class="px-4 py-8 md:px-8 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 pb-32">
-             <!-- TÍTULOS -->
-             <div class="mb-2">
+             
+             <!-- MOBILE HEADER (As requested) -->
+             <div class="md:hidden">
                 <h2 class="text-text-primary text-4xl font-black tracking-tight">Histórico</h2>
                 <p class="text-text-secondary text-base mt-2 font-medium opacity-60">Sincronização Ativa</p>
-            </div>
-
-            <!-- BARRA DE AÇÕES -->
-            <div class="flex items-center gap-3 w-full">
-                <button onclick="navigate('manage')" 
-                        class="flex items-center justify-center w-12 h-12 rounded-full bg-text-primary text-surface-page active:scale-95 transition-all shadow-lg shadow-white/10 shrink-0 border-none">
-                    <i class="fas fa-plus text-xl"></i>
-                </button>
                 
-                <button onclick="window.toggleEmptySlots()" 
-                        class="flex items-center justify-center w-12 h-12 rounded-2xl border-none bg-surface-section active:scale-95 transition-all shrink-0">
-                    <i class="fas ${state.showEmptySlots ? "fa-eye-slash" : "fa-eye"} text-text-primary text-lg"></i>
-                </button>
-                
-                <button onclick="window.handleCopyTimes(event)" 
-                        class="flex items-center justify-center w-12 h-12 rounded-2xl border-none bg-surface-section active:scale-95 transition-all shrink-0">
-                    <i class="fas fa-copy text-text-primary text-lg"></i>
-                </button>
-
-                <div class="relative flex-1">
-                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-text-muted text-lg"></i>
-                    <input type="text" 
-                           id="recordsSearchInput"
-                           placeholder="Buscar agendamento..." 
-                           oninput="window.handleSearch(this)"
-                           value="${state.searchTerm}"
-                           class="bg-surface-section border-none h-14 pl-14 pr-6 rounded-3xl text-base text-text-primary outline-none w-full transition-all font-medium placeholder:text-text-muted">
+                <div class="flex items-center gap-3 w-full mt-6">
+                    <button onclick="navigate('manage')" 
+                            class="flex items-center justify-center w-12 h-12 rounded-full bg-text-primary text-surface-page active:scale-95 transition-all shadow-lg shadow-white/10 shrink-0 border-none">
+                        <i class="fas fa-plus text-xl"></i>
+                    </button>
+                    <button onclick="window.toggleEmptySlots()" 
+                            class="flex items-center justify-center w-12 h-12 rounded-2xl border-none bg-surface-section active:scale-95 transition-all shrink-0">
+                        <i class="fas ${state.showEmptySlots ? "fa-eye-slash" : "fa-eye"} text-text-primary text-lg"></i>
+                    </button>
+                    <div class="relative flex-1">
+                        <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-text-muted text-lg"></i>
+                        <input type="text" placeholder="Buscar agendamento..." oninput="window.handleSearch(this)" value="${state.searchTerm}"
+                               class="bg-surface-section border-none h-14 pl-14 pr-6 rounded-3xl text-base text-text-primary outline-none w-full font-medium">
+                    </div>
                 </div>
             </div>
 
-            <!-- TABELA / LISTA -->
-            <div class="mt-8 space-y-1">
-                <!-- Cabeçalho (Simplificado Mobile: Horário, Cliente, Ações) -->
-                <div class="grid grid-cols-[70px_1fr_80px] md:grid-cols-[70px_1.5fr_1.2fr_1fr_100px_130px_100px] gap-4 px-6 py-2 text-[11px] font-black text-text-secondary uppercase tracking-widest opacity-60">
-                    <div class="text-left">Horário</div>
-                    <div class="text-left">Cliente</div>
-                    <div class="hidden md:block text-left">Serviço</div>
-                    <div class="hidden md:block text-left">Valor</div>
-                    <div class="text-right pr-2">Ações</div>
+            <!-- DESKTOP HEADER (Restored) -->
+            <div class="hidden md:flex flex-row justify-between items-end gap-4">
+                <div>
+                    <h2 class="text-text-primary text-3xl font-display font-bold">Histórico</h2>
+                    <p class="text-text-secondary text-sm mt-1">Sincronização Ativa</p>
+                </div>
+                <div class="relative flex flex-row gap-2 items-center">
+                    <button onclick="navigate('manage')" 
+                            class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-primary text-surface-page hover:scale-110 transition-all shadow-lg shadow-brand-primary/50 shrink-0 border-none">
+                        <i class="fas fa-plus text-lg"></i>
+                    </button>
+                    <button onclick="window.toggleEmptySlots()" 
+                            class="flex items-center justify-center w-10 h-10 rounded-xl border-none bg-surface-section/50 transition-all shrink-0 ${state.showEmptySlots ? "text-brand-primary" : "text-text-secondary"}">
+                        <i class="fas ${state.showEmptySlots ? "fa-eye-slash" : "fa-eye"}"></i>
+                    </button>
+                    <button onclick="window.handleCopyTimes(event)" 
+                            class="flex items-center justify-center w-10 h-10 rounded-xl border-none bg-surface-section/50 transition-all text-text-secondary shrink-0">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <div class="relative w-80">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"></i>
+                        <input type="text" placeholder="Buscar agendamento..." oninput="window.handleSearch(this)" value="${state.searchTerm}"
+                               class="bg-surface-section border-none py-2.5 pl-11 pr-4 rounded-xl text-sm text-text-primary outline-none focus:ring-1 focus:ring-border-focus w-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABELA RESTAURADA -->
+            <div class="space-y-4 md:space-y-0 md:bg-surface-section/30 md:rounded-2xl border-none overflow-hidden">
+                <!-- Cabeçalho de Tabela Desktop (FIXED) -->
+                <div class="hidden md:grid md:grid-cols-[70px_1.5fr_1.2fr_1fr_100px_130px_100px] gap-4 bg-white/[0.02] border-none px-6 py-4 text-[10px] font-bold text-text-secondary uppercase tracking-widest items-center">
+                    <div>Horário</div>
+                    <div>Cliente</div>
+                    <div>Procedimentos</div>
+                    <div>Observações</div>
+                    <div>Valor</div>
+                    <div>Pagamento</div>
+                    <div class="text-right pr-4">Ações</div>
                 </div>
 
-                <div id="tableBody" class="space-y-1">
+                <div id="tableBody" class="space-y-1 md:space-y-0 md:divide-y md:divide-white/[0.02]">
                     ${recordsToDisplay.map((r) => RecordRow(r)).join("")}
                 </div>
             </div>

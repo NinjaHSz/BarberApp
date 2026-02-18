@@ -48,7 +48,8 @@ export const ClientProfilePage = () => {
           if (window.render) window.render();
         }
       } else {
-        alert("Erro ao atualizar cliente.");
+        if (window.showAlert)
+          window.showAlert("Erro ao atualizar cliente.", "error");
       }
     } catch (err) {
       console.error(err);
@@ -97,29 +98,37 @@ export const ClientProfilePage = () => {
   };
 
   window.clearPreset = async (clientId) => {
-    if (!confirm("Deseja remover o preset deste cliente?")) return;
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/clientes?id=eq.${clientId}`,
-        {
-          method: "PATCH",
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: "Bearer " + SUPABASE_KEY,
-            "Content-Type": "application/json",
-            Prefer: "return=minimal",
+    const performClear = async () => {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/clientes?id=eq.${clientId}`,
+          {
+            method: "PATCH",
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: "Bearer " + SUPABASE_KEY,
+              "Content-Type": "application/json",
+              Prefer: "return=minimal",
+            },
+            body: JSON.stringify({ preset: null }),
           },
-          body: JSON.stringify({ preset: null }),
-        },
-      );
-      if (res.ok) {
-        const client = state.clients.find((c) => c.id == clientId);
-        if (client) client.preset = null;
-        fetchClients();
-        if (window.render) window.render();
+        );
+        if (res.ok) {
+          const client = state.clients.find((c) => c.id == clientId);
+          if (client) client.preset = null;
+          fetchClients();
+          if (window.render) window.render();
+        }
+      } catch (err) {
+        console.error("Erro ao remover preset:", err);
       }
-    } catch (err) {
-      console.error("Erro ao remover preset:", err);
+    };
+
+    if (window.showConfirm) {
+      window.showConfirm(
+        "Deseja remover o preset deste cliente?",
+        performClear,
+      );
     }
   };
 
@@ -274,8 +283,8 @@ export const ClientProfilePage = () => {
                                 <option value="Nenhum" ${client.plano === "Nenhum" ? "selected" : ""} class="bg-surface-page">Nenhum Plano</option>
                             </select>
                         </div>
-                        <button onclick="if(confirm('Reiniciar ciclo?')){ window.updateClientPlan('${client.id}', { plano_pagamento: new Date().toISOString().split('T')[0] }) }" 
-                                class="text-[8px] font-black text-brand-primary hover:bg-brand-primary hover:text-surface-page px-3 py-1 rounded transition-all uppercase tracking-widest">
+                    <button onclick="if(window.showConfirm){ window.showConfirm('Reiniciar ciclo?', () => window.updateClientPlan('${client.id}', { plano_pagamento: new Date().toISOString().split('T')[0] })) }" 
+                                class="text-[8px] font-black text-brand-primary hover:text-surface-page px-3 py-1 rounded transition-all uppercase tracking-widest">
                             <i class="fas fa-rotate mr-1"></i> Reset Ciclo
                         </button>
                     </div>
@@ -349,7 +358,7 @@ export const ClientProfilePage = () => {
                               const id = r.id;
                               const rowId = `hist_${r.id}`;
                               return `
-                            <div class="flex items-center gap-4 px-4 py-3 hover:bg-white/[0.02] rounded-xl transition-all group">
+                            <div class="flex items-center gap-4 px-4 py-3 rounded-xl transition-all group">
                                 <div class="w-12 text-center shrink-0">
                                     <p class="text-[10px] font-black text-brand-primary leading-tight">${r.date.split("-")[2]}</p>
                                     <p class="text-[8px] font-black text-text-muted uppercase leading-tight">${new Date(r.date + "T00:00:00").toLocaleDateString("pt-BR", { month: "short" })}</p>
