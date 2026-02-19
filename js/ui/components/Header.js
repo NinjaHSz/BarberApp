@@ -1,3 +1,4 @@
+import { PremiumSelector } from "./PremiumSelector.js";
 import { state } from "../../core/state.js";
 import { updateInternalStats } from "../../services/stats.js";
 import { syncFromSheet } from "../../api/sync.js";
@@ -55,9 +56,30 @@ export const Header = () => {
   ];
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
+  // Mapeamento de opções para os PremiumSelectors
+  const dayOptions = days.map((d) => {
+    const dayDate = new Date(state.filters.year, state.filters.month - 1, d);
+    const weekday = dayDate
+      .toLocaleDateString("pt-BR", { weekday: "short" })
+      .replace(".", "")
+      .toUpperCase()
+      .substring(0, 3);
+    return { value: d, label: `${weekday} ${String(d).padStart(2, "0")}` };
+  });
+
+  const monthOptions = months.map((m, i) => ({
+    value: i + 1,
+    label: m.substring(0, 3).toUpperCase(),
+  }));
+
+  const yearOptions = [
+    { value: 2025, label: "'25" },
+    { value: 2026, label: "'26" },
+  ];
+
   return `
         <header class="h-16 md:h-14 border-none flex items-center justify-between px-4 md:px-8 bg-surface-page sticky top-0 z-20">
-            <!-- Navegação de Data Estilo Imagem -->
+            <!-- Navegação de Data Premium -->
             <div class="flex items-center space-x-2">
                 <!-- Dia/Dia Semana -->
                 <div class="flex items-center bg-surface-section rounded-2xl p-0.5">
@@ -65,23 +87,13 @@ export const Header = () => {
                         <i class="fas fa-chevron-left text-[10px]"></i>
                     </button>
                     
-                    <select onchange="window.updateFilter('day', this.value)" class="bg-transparent border-none text-[11px] font-black px-2 py-1.5 outline-none w-[75px] text-text-primary text-center appearance-none cursor-pointer uppercase">
-                        ${days
-                          .map((d) => {
-                            const dayDate = new Date(
-                              state.filters.year,
-                              state.filters.month - 1,
-                              d,
-                            );
-                            const weekday = dayDate
-                              .toLocaleDateString("pt-BR", { weekday: "short" })
-                              .replace(".", "")
-                              .toUpperCase()
-                              .substring(0, 3);
-                            return `<option value="${d}" ${state.filters.day === d ? "selected" : ""} class="bg-surface-page">${weekday} ${String(d).padStart(2, "0")}</option>`;
-                          })
-                          .join("")}
-                    </select>
+                    ${PremiumSelector({
+                      id: "daySelector",
+                      value: state.filters.day,
+                      options: dayOptions,
+                      onSelect: "(val) => window.updateFilter('day', val)",
+                      className: "bg-transparent !px-2 !py-1.5 w-[85px]",
+                    })}
 
                     <button onclick="window.changeDay(1)" class="w-8 h-8 flex items-center justify-center text-text-muted hover:text-white transition-colors">
                         <i class="fas fa-chevron-right text-[10px]"></i>
@@ -90,17 +102,24 @@ export const Header = () => {
 
                 <!-- Mês -->
                 <div class="flex items-center bg-surface-section rounded-2xl p-0.5">
-                    <select onchange="window.updateFilter('month', this.value)" class="bg-transparent border-none text-[11px] font-black px-3 py-1.5 outline-none min-w-[50px] text-text-primary appearance-none cursor-pointer text-center uppercase">
-                        ${months.map((m, i) => `<option value="${i + 1}" ${state.filters.month === i + 1 ? "selected" : ""} class="bg-surface-page">${m.substring(0, 3).toUpperCase()}</option>`).join("")}
-                    </select>
+                    ${PremiumSelector({
+                      id: "monthSelector",
+                      value: state.filters.month,
+                      options: monthOptions,
+                      onSelect: "(val) => window.updateFilter('month', val)",
+                      className: "bg-transparent !px-3 !py-1.5 min-w-[70px]",
+                    })}
                 </div>
 
                 <!-- Ano -->
                 <div class="hidden sm:flex items-center bg-surface-section rounded-2xl p-0.5">
-                    <select onchange="window.updateFilter('year', this.value)" class="bg-transparent border-none text-[11px] font-black px-3 py-1.5 outline-none text-text-primary appearance-none cursor-pointer text-center">
-                        <option value="2025" ${state.filters.year === 2025 ? "selected" : ""} class="bg-surface-page">'25</option>
-                        <option value="2026" ${state.filters.year === 2026 ? "selected" : ""} class="bg-surface-page">'26</option>
-                    </select>
+                    ${PremiumSelector({
+                      id: "yearSelector",
+                      value: state.filters.year,
+                      options: yearOptions,
+                      onSelect: "(val) => window.updateFilter('year', val)",
+                      className: "bg-transparent !px-3 !py-1.5 min-w-[60px]",
+                    })}
                 </div>
 
                 <!-- Ano Mobile (Compact) -->

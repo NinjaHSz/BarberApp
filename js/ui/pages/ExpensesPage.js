@@ -1,6 +1,7 @@
 import { state } from "../../core/state.js";
 import { SUPABASE_URL, SUPABASE_KEY } from "../../core/config.js";
 import { fetchExpenses } from "../../api/supabase.js";
+import { PremiumSelector } from "../components/PremiumSelector.js";
 
 export const ExpensesPage = () => {
   const targetMonth = state.filters.month;
@@ -245,6 +246,20 @@ export const ExpensesPage = () => {
     "Dezembro",
   ];
 
+  const statusOptions = [
+    { value: "TODOS", label: "Todos os Status" },
+    { value: "PAGO", label: "Somente Pagos" },
+    { value: "PENDENTE", label: "Somente Pendentes" },
+  ];
+
+  const sortOptions = [
+    { value: "vencimento_asc", label: "Data (Mais Antiga)" },
+    { value: "vencimento_desc", label: "Data (Mais Recente)" },
+    { value: "valor_asc", label: "Valor (Menor Primeiro)" },
+    { value: "valor_desc", label: "Valor (Maior Primeiro)" },
+    { value: "descricao_asc", label: "Descrição (A-Z)" },
+  ];
+
   return `
         <div class="px-4 pt-6 sm:px-8 sm:pt-6 space-y-6 animate-in fade-in duration-500 pb-32">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 text-sm">
@@ -288,18 +303,22 @@ export const ExpensesPage = () => {
                            class="w-full bg-dark-950 border border-transparent pl-14 md:pl-10 pr-4 h-14 md:h-auto rounded-3xl md:rounded-xl outline-none focus:border-slate-600/50 transition-all font-bold text-sm md:text-xs uppercase text-white shadow-inner">
                 </div>
                 <div class="flex gap-2 flex-wrap sm:flex-nowrap">
-                    <select onchange="window.setExpenseFilter('expenseStatusFilter', this.value)" class="bg-dark-950 border border-transparent px-4 py-3 rounded-xl outline-none focus:border-slate-600/50 transition-all font-bold text-xs uppercase text-white cursor-pointer min-w-[160px]">
-                        <option value="TODOS" ${state.expenseStatusFilter === "TODOS" ? "selected" : ""}>Todos os Status</option>
-                        <option value="PAGO" ${state.expenseStatusFilter === "PAGO" ? "selected" : ""}>Somente Pagos</option>
-                        <option value="PENDENTE" ${state.expenseStatusFilter === "PENDENTE" ? "selected" : ""}>Somente Pendentes</option>
-                    </select>
-                    <select onchange="window.setExpenseFilter('expenseSort', this.value)" class="bg-dark-950 border border-transparent px-4 py-3 rounded-xl outline-none focus:border-slate-600/50 transition-all font-bold text-xs uppercase text-white cursor-pointer min-w-[170px]">
-                        <option value="vencimento_asc" ${state.expenseSort === "vencimento_asc" ? "selected" : ""}>Data (Mais Antiga)</option>
-                        <option value="vencimento_desc" ${state.expenseSort === "vencimento_desc" ? "selected" : ""}>Data (Mais Recente)</option>
-                        <option value="valor_asc" ${state.expenseSort === "valor_asc" ? "selected" : ""}>Valor (Menor Primeiro)</option>
-                        <option value="valor_desc" ${state.expenseSort === "valor_desc" ? "selected" : ""}>Valor (Maior Primeiro)</option>
-                        <option value="descricao_asc" ${state.expenseSort === "descricao_asc" ? "selected" : ""}>Descrição (A-Z)</option>
-                    </select>
+                    ${PremiumSelector({
+                      id: "expenseStatusSelector",
+                      value: state.expenseStatusFilter || "TODOS",
+                      options: statusOptions,
+                      onSelect:
+                        "(val) => window.setExpenseFilter('expenseStatusFilter', val)",
+                      className: "min-w-[160px] !bg-dark-950",
+                    })}
+                    ${PremiumSelector({
+                      id: "expenseSortSelector",
+                      value: state.expenseSort || "vencimento_asc",
+                      options: sortOptions,
+                      onSelect:
+                        "(val) => window.setExpenseFilter('expenseSort', val)",
+                      className: "min-w-[170px] !bg-dark-950",
+                    })}
                 </div>
                 ${state.expenseSearchTerm || state.expenseStatusFilter !== "TODOS" || state.expenseSort !== "vencimento_asc" ? `<button onclick="window.clearExpenseFilters()" class="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-slate-600 transition-colors flex items-center gap-2 px-2 animate-in fade-in slide-in-from-right-2"><i class="fas fa-times-circle"></i> Limpar Tudo</button>` : ""}
             </div>
@@ -409,11 +428,27 @@ export const ExpensesPage = () => {
                                     </div>
                                     <div class="text-center mt-2 md:mt-0 px-2">
                                         <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Status</span>
-                                        <select onchange="window.toggleExpenseStatus('${e.id}', this.value)" class="bg-white/5 border border-transparent text-[10px] font-black uppercase rounded-lg px-2 py-1 outline-none transition-all w-full ${e.paga ? "text-slate-300" : diffDays < 0 ? "text-slate-600" : "text-brand-primary"}">
-                                            <option value="PAGO" ${e.paga ? "selected" : ""}>PAGO</option>
-                                            <option value="A VENCER" ${!e.paga && diffDays >= 0 ? "selected" : ""}>A VENCER</option>
-                                            <option value="VENCIDO" ${!e.paga && diffDays < 0 ? "selected" : ""}>VENCIDO</option>
-                                        </select>
+                                        ${PremiumSelector({
+                                          id: `expenseStatus_${e.id}`,
+                                          value: e.paga
+                                            ? "PAGO"
+                                            : diffDays < 0
+                                              ? "VENCIDO"
+                                              : "A VENCER",
+                                          options: [
+                                            { value: "PAGO", label: "PAGO" },
+                                            {
+                                              value: "A VENCER",
+                                              label: "A VENCER",
+                                            },
+                                            {
+                                              value: "VENCIDO",
+                                              label: "VENCIDO",
+                                            },
+                                          ],
+                                          onSelect: `(val) => window.toggleExpenseStatus('${e.id}', val)`,
+                                          className: `bg-white/5 !px-2 !py-1 w-full ${e.paga ? "text-slate-300" : diffDays < 0 ? "text-slate-600" : "text-brand-primary"}`,
+                                        })}
                                     </div>
                                     <div class="text-center mt-2 md:mt-0">
                                         <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Pagamento</span>

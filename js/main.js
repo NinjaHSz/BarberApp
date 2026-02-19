@@ -12,7 +12,8 @@ import { render } from "./ui/render.js";
 import { setupGlobalHandlers } from "./ui/handlers.js";
 import { syncFromHash } from "./ui/navigation.js";
 import { initDialogs } from "./ui/components/Dialogs.js";
-import "./utils/dom.js"; // Registers selectAll globally
+import { PremiumSelector } from "./ui/components/PremiumSelector.js";
+import "./utils/dom.js"; // Registers selectAll and showPremiumMenu globally
 
 initDialogs();
 
