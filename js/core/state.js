@@ -38,6 +38,7 @@ export const state = {
   isClientDropdownOpen: false,
   showEmptySlots: true,
   managementSearch: "",
+  isManagementModalOpen: false,
   isEditModalOpen: false,
   planSearchTerm: "",
   selectedClientId: null,
@@ -62,3 +63,5 @@ export const state = {
   customLogo: localStorage.getItem("customLogo") || "assets/logo.png",
   isOffline: !navigator.onLine,
 };
+
+window.state = state;

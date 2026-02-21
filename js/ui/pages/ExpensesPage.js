@@ -284,11 +284,11 @@ export const ExpensesPage = () => {
                 <div class="flex flex-wrap gap-4 w-full md:w-auto">
                     <div class="bg-slate-600/10 border border-slate-600/20 px-6 py-3 rounded-2xl flex flex-col justify-center">
                         <span class="text-[9px] font-black uppercase text-slate-600/60 tracking-tighter">Total Pago</span>
-                        <span class="text-lg font-black text-slate-600">R$ ${totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                        <span class="text-lg font-black text-slate-600">${state.privacyMode ? "*****" : `R$ ${totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}</span>
                     </div>
                     <div class="bg-brand-primary/10 border border-transparent px-6 py-3 rounded-2xl flex flex-col justify-center">
                         <span class="text-[9px] font-black uppercase text-brand-primary/60 tracking-tighter">Total a Pagar</span>
-                        <span class="text-lg font-black text-brand-primary">R$ ${totalAPagar.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                        <span class="text-lg font-black text-brand-primary">${state.privacyMode ? "*****" : `R$ ${totalAPagar.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}</span>
                     </div>
                     <button onclick="window.openExpenseModal()" class="bg-slate-600 text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-600 transition-all shadow-xl shadow-slate-600/20 border border-slate-600/50 flex items-center gap-2">
                         <i class="fas fa-plus"></i> Nova Conta
@@ -361,10 +361,10 @@ export const ExpensesPage = () => {
                                     <!-- Info -->
                                     <div class="flex flex-col min-w-0">
                                         <div class="text-[13px] font-black truncate uppercase text-white leading-tight">
-                                            ${e.descricao}
+                                            ${state.privacyMode ? "*****" : e.descricao}
                                         </div>
                                         <div class="text-[10px] font-black text-brand-primary tracking-tight">
-                                            R$ ${(parseFloat(e.valor) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                            ${state.privacyMode ? "*****" : `R$ ${(parseFloat(e.valor) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
                                         </div>
                                     </div>
 
@@ -400,7 +400,7 @@ export const ExpensesPage = () => {
                                             <div class="flex items-center gap-1.5">
                                                 <i class="fas fa-credit-card text-[10px] text-slate-500/50"></i>
                                                 <div contenteditable="true" data-id="${e.id}" data-field="cartao" onfocus="window.selectAll(this)" onblur="window.saveExpenseInline(this)" onkeydown="window.handleInlineKey(event)" oninput="window.showExpenseAutocomplete(this)" class="text-[10px] font-black text-brand-primary uppercase tracking-tight outline-none focus:bg-white/5 px-1 rounded transition-all truncate cursor-text">
-                                                    ${e.cartao || "OUTROS"}
+                                                    ${state.privacyMode ? "*****" : e.cartao || "OUTROS"}
                                                 </div>
                                             </div>
                                             ${(() => {
@@ -408,7 +408,7 @@ export const ExpensesPage = () => {
                                                 (c) => c.nome === e.cartao,
                                               );
                                               return card && card.titular
-                                                ? `<div class="flex items-center gap-1.5 ml-0.5 opacity-60"><i class="fas fa-user-circle text-[9px] text-slate-500/80"></i><span class="text-[9px] font-bold text-slate-400 uppercase truncate">${card.titular}</span></div>`
+                                                ? `<div class="flex items-center gap-1.5 ml-0.5 opacity-60"><i class="fas fa-user-circle text-[9px] text-slate-500/80"></i><span class="text-[9px] font-bold text-slate-400 uppercase truncate">${state.privacyMode ? "*****" : card.titular}</span></div>`
                                                 : "";
                                             })()}
                                         </div>
@@ -417,13 +417,13 @@ export const ExpensesPage = () => {
                                     <div class="w-full md:w-auto px-4 mt-2 md:mt-0 min-w-0">
                                         <span class="md:hidden text-[9px] font-black text-slate-500 uppercase block mb-1">Descrição</span>
                                         <div contenteditable="true" data-id="${e.id}" data-field="descricao" onfocus="window.selectAll(this)" onblur="window.saveExpenseInline(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="font-black text-xs text-white uppercase tracking-wider outline-none focus:bg-white/5 px-1 rounded transition-all truncate hover:whitespace-normal cursor-text w-full">
-                                            ${e.descricao}
+                                            ${state.privacyMode ? "*****" : e.descricao}
                                         </div>
                                     </div>
                                     <div class="text-center mt-2 md:mt-0">
                                         <span class="md:hidden text-[9px] font-black text-slate-500 uppercase">Valor</span>
-                                        <div contenteditable="true" data-id="${e.id}" data-field="valor" onfocus="window.selectAll(this)" onblur="window.saveExpenseInline(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="font-black text-[12px] text-white outline-none focus:bg-white/5 px-1 rounded transition-all cursor-text inline-block">
-                                            ${(parseFloat(e.valor) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                        <div contenteditable="true" data-id="${e.id}" data-field="valor" onfocus="window.selectAll(this); if(window.state.privacyMode) this.blur();" onblur="window.saveExpenseInline(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" class="font-black text-[12px] text-white outline-none focus:bg-white/5 px-1 rounded transition-all cursor-text inline-block">
+                                            ${state.privacyMode ? "*****" : (parseFloat(e.valor) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                                         </div>
                                     </div>
                                     <div class="text-center mt-2 md:mt-0 px-2">
@@ -465,7 +465,7 @@ export const ExpensesPage = () => {
                             })
                             .join("")
                     }
-                    ${filteredExpenses.length > 0 ? `<div class="bg-white/[0.01] px-8 py-6 flex justify-between items-center border-t border-transparent"><span class="text-xs font-black uppercase tracking-widest text-slate-500">Total do Período</span><span class="text-xl font-black text-white">R$ ${totalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div>` : ""}
+                    ${filteredExpenses.length > 0 ? `<div class="bg-white/[0.01] px-8 py-6 flex justify-between items-center border-t border-transparent"><span class="text-xs font-black uppercase tracking-widest text-slate-500">Total do Período</span><span class="text-xl font-black text-white">${state.privacyMode ? "*****" : `R$ ${totalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}</span></div>` : ""}
                 </div>
             </div>
 

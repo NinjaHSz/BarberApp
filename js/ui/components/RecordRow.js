@@ -43,7 +43,7 @@ export const RecordRow = (record) => {
                      onblur="window.saveInlineEdit(this)" onkeydown="window.handleInlineKey(event)" oninput="window.showInlineAutocomplete(this)" onfocus="window.clearPlaceholder(this)"
                      placeholder="${isEmpty && !isBreak ? "Adicionar Nome..." : ""}"
                      class="outline-none rounded px-3 py-1.5 w-full md:w-auto border-none focus:bg-brand-primary/10 focus:ring-1 focus:ring-brand-primary/50 text-left truncate ${isBreak ? "text-text-muted font-black" : isEmpty ? "text-text-secondary uppercase" : "text-text-primary uppercase"}">
-                    ${isBreak ? '<i class="fas fa-circle-minus mr-2"></i> PAUSA' : record.client}
+                    ${isBreak ? '<i class="fas fa-circle-minus mr-2"></i> PAUSA' : state.privacyMode ? "*****" : record.client}
                 </div>
             </div>
             ${
@@ -65,7 +65,7 @@ export const RecordRow = (record) => {
             <div contenteditable="true" id="edit_service_${rowId}" spellcheck="false" data-id="${id}" data-ui-id="${rowId}" data-field="service" data-time="${record.time}" data-date="${record.date}"
                  onblur="window.saveInlineEdit(this)" onkeydown="window.handleInlineKey(event)" oninput="window.showInlineAutocomplete(this)" onfocus="window.clearPlaceholder(this)"
                  class="outline-none rounded px-1 focus:bg-brand-primary/10 focus:ring-1 focus:ring-brand-primary/50 text-left truncate w-full ${isBreak ? "text-text-muted italic" : isEmpty ? "text-text-secondary" : record.service === "A DEFINIR" ? "text-status-error font-black animate-pulse" : "text-text-primary font-medium"} uppercase">
-                ${isBreak ? "RESERVADO" : record.service}
+                ${isBreak ? "RESERVADO" : state.privacyMode ? "*****" : record.service}
             </div>
             <div id="inlineAutocomplete_service_${rowId}" class="hidden absolute left-0 right-0 top-full mt-2 bg-surface-elevated border-none rounded-xl shadow-lg max-h-48 overflow-y-auto p-1.5 z-[500] backdrop-blur-3xl min-w-[200px]"></div>
         </div>
@@ -76,16 +76,16 @@ export const RecordRow = (record) => {
                  onblur="window.saveInlineEdit(this)" onkeydown="window.handleInlineKey(event)" onfocus="window.clearPlaceholder(this)"
                  class="outline-none rounded px-1 focus:bg-surface-subtle focus:ring-1 focus:ring-border-focus text-text-secondary hover:text-text-primary transition-all italic truncate focus:whitespace-normal focus:break-words w-full cursor-text"
                  title="${record.observations || ""}">
-                ${isBreak || isEmpty ? "---" : record.observations || "Nenhuma obs..."}
+                ${isBreak || isEmpty ? "---" : state.privacyMode ? "*****" : record.observations || "Nenhuma obs..."}
             </div>
         </div>
 
         <!-- VALOR -->
         <div class="w-full text-sm font-bold ${isBreak ? "text-text-muted/50" : "text-brand-primary/90"} relative">
             <div contenteditable="true" id="edit_value_${rowId}" spellcheck="false" autocomplete="off" data-id="${id}" data-ui-id="${rowId}" data-field="value" data-time="${record.time}" data-date="${record.date}"
-                 onblur="window.saveInlineEdit(this)" onkeydown="window.handleInlineKey(event)" onfocus="window.clearPlaceholder(this)"
+                 onblur="window.saveInlineEdit(this)" onkeydown="window.handleInlineKey(event)" onfocus="window.clearPlaceholder(this); if(window.state.privacyMode) this.blur()"
                  class="outline-none rounded px-1 focus:bg-brand-primary/10 focus:ring-1 focus:ring-brand-primary/50 text-left">
-                ${isEmpty || isBreak ? "---" : record.value.toFixed(2)}
+                ${isEmpty || isBreak ? "---" : state.privacyMode ? "*****" : record.value.toFixed(2)}
             </div>
         </div>
 
@@ -138,7 +138,7 @@ export const RecordRow = (record) => {
       </div>
       <!-- Cliente -->
       <div class="text-[13px] font-black truncate uppercase ${isEmpty ? "text-text-muted" : "text-white"}">
-        ${record.client}
+        ${state.privacyMode ? "*****" : record.client}
       </div>
       <!-- Ações (Aumentadas) -->
       <div class="flex justify-end items-center gap-2">

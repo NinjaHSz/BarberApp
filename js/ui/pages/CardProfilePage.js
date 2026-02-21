@@ -119,7 +119,7 @@ export const CardProfilePage = () => {
                     </div>
                     <div class="flex-1 text-center md:text-left space-y-2">
                         <div class="flex flex-wrap justify-center md:justify-start items-center gap-3">
-                            <input type="text" value="${card.nome}" 
+                            <input type="text" value="${state.privacyMode ? "*****" : card.nome}" 
                                    onblur="window.saveCardEdit('nome', this.value.toUpperCase())"
                                    onkeydown="if(event.key==='Enter')this.blur()"
                                    class="text-3xl md:text-5xl font-display font-black text-white bg-transparent outline-none transition-all p-0 uppercase tracking-tighter hover:text-brand-primary focus:text-brand-primary w-full md:w-auto text-center md:text-left">
@@ -128,13 +128,13 @@ export const CardProfilePage = () => {
                         <div class="flex flex-col md:flex-row md:items-center justify-center md:justify-start gap-4 md:gap-8 pt-1">
                             <div class="flex items-center gap-2 group cursor-text">
                                 <i class="fas fa-university text-text-muted text-[10px] group-hover:text-brand-primary transition-colors"></i>
-                                <input type="text" value="${card.banco || ""}" placeholder="BANCO..." 
+                                <input type="text" value="${state.privacyMode ? "*****" : card.banco || ""}" placeholder="BANCO..." 
                                        onblur="window.saveCardEdit('banco', this.value.toUpperCase())"
                                        class="bg-transparent text-[10px] font-black text-text-muted uppercase tracking-widest outline-none hover:text-white focus:text-white transition-all w-32">
                             </div>
                             <div class="flex items-center gap-2 group cursor-text">
                                 <i class="fas fa-user-circle text-text-muted text-[10px] group-hover:text-brand-primary transition-colors"></i>
-                                <input type="text" value="${card.titular || ""}" placeholder="TITULAR..." 
+                                <input type="text" value="${state.privacyMode ? "*****" : card.titular || ""}" placeholder="TITULAR..." 
                                        onblur="window.saveCardEdit('titular', this.value.toUpperCase())"
                                        class="bg-transparent text-[10px] font-black text-text-muted uppercase tracking-widest outline-none hover:text-white focus:text-white transition-all w-48">
                             </div>
@@ -186,7 +186,7 @@ export const CardProfilePage = () => {
                               .join("")}
                         </div>
                     </div>
-                    <h4 class="text-3xl font-display font-black text-white mt-4 tracking-tighter">R$ ${totalSpentPeriod.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</h4>
+                    <h4 class="text-3xl font-display font-black text-white mt-4 tracking-tighter">${state.privacyMode ? "*****" : `R$ ${totalSpentPeriod.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}</h4>
                 </div>
             </div>
 
@@ -214,14 +214,14 @@ export const CardProfilePage = () => {
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2">
-                                    <h4 class="text-[11px] font-black text-white uppercase truncate group-hover:text-brand-primary transition-colors">${e.descricao}</h4>
+                                    <h4 class="text-[11px] font-black text-white uppercase truncate group-hover:text-brand-primary transition-colors">${state.privacyMode ? "*****" : e.descricao}</h4>
                                     <span class="w-1 h-1 rounded-full bg-white/10"></span>
                                     <span class="text-[8px] font-black text-text-muted uppercase tracking-widest">${new Date(e.vencimento + "T12:00:00").toLocaleDateString("pt-BR")}</span>
                                 </div>
                                 <p class="text-[9px] text-text-muted font-bold uppercase tracking-tighter mt-0.5">${e.paga ? "Compensado" : "Aguardando pagamento"}</p>
                             </div>
                             <div class="text-right shrink-0">
-                                <p class="text-sm font-display font-black ${e.paga ? "text-text-muted" : "text-white"}">R$ ${(parseFloat(e.valor) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                                <p class="text-sm font-display font-black ${e.paga ? "text-text-muted" : "text-white"}">${state.privacyMode ? "*****" : `R$ ${(parseFloat(e.valor) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}</p>
                                 <span class="text-[8px] font-black uppercase tracking-widest ${e.paga ? "text-brand-primary/40" : "text-rose-500/50"}">${e.paga ? "PAGO" : "PENDENTE"}</span>
                             </div>
                         </div>

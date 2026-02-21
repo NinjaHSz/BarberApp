@@ -194,7 +194,7 @@ export const PlansPage = () => {
                         <div class="w-10 h-10 rounded-xl bg-brand-primary/5 flex items-center justify-center text-text-muted"><i class="fas fa-sack-dollar text-sm"></i></div>
                         <div>
                             <p class="text-[8px] font-black text-text-muted uppercase tracking-widest">Receita Mensal</p>
-                            <h3 class="text-xl font-display font-black text-brand-primary">R$ ${mrrTotal.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}</h3>
+                            <h3 class="text-xl font-display font-black text-brand-primary">${state.privacyMode ? "*****" : `R$ ${mrrTotal.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`}</h3>
                         </div>
                     </div>
                 </div>
@@ -247,7 +247,7 @@ export const PlansPage = () => {
                                         ${c.nome.charAt(0)}
                                     </div>
                                     <div class="min-w-0">
-                                        <h4 class="text-[11px] font-black text-white uppercase tracking-tighter truncate group-hover:text-brand-primary transition-colors cursor-pointer" onclick="navigate('client-profile', '${c.id}')">${c.nome}</h4>
+                                        <h4 class="text-[11px] font-black text-white uppercase tracking-tighter truncate group-hover:text-brand-primary transition-colors cursor-pointer" onclick="navigate('client-profile', '${c.id}')">${state.privacyMode ? "*****" : c.nome}</h4>
                                         <select onchange="window.updateClientPlan('${c.id}', { plano: this.value })" 
                                                 class="bg-transparent border-none text-[8px] font-bold text-text-muted uppercase tracking-widest p-0 outline-none cursor-pointer hover:text-white transition-colors appearance-none">
                                             <option value="Mensal" ${c.plano === "Mensal" ? "selected" : ""} class="bg-surface-page">Mensal</option>
@@ -291,7 +291,7 @@ export const PlansPage = () => {
                                         <span class="text-[10px] text-text-muted font-black">R$</span>
                                         <div contenteditable="true" onblur="window.updateClientPlan('${c.id}', { valor_plano: parseFloat(this.innerText) || 0 })"
                                              class="text-[10px] font-black text-white outline-none focus:text-brand-primary transition-colors min-w-[20px]">
-                                            ${(c.valor_plano || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                            ${state.privacyMode ? "*****" : (c.valor_plano || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                                         </div>
                                     </div>
                                 </div>
@@ -300,7 +300,7 @@ export const PlansPage = () => {
                                 <div class="flex-1 min-w-0 w-full">
                                     <div contenteditable="true" onblur="window.updateClientPlan('${c.id}', { observacoes_plano: this.innerText.trim() })"
                                          class="text-[10px] text-text-muted hover:text-white transition-colors italic outline-none truncate max-w-sm">
-                                        ${!c.observacoes_plano || c.observacoes_plano.includes("...") ? "Adicionar nota..." : c.observacoes_plano}
+                                        ${state.privacyMode ? "*****" : !c.observacoes_plano || c.observacoes_plano.includes("...") ? "Adicionar nota..." : c.observacoes_plano}
                                     </div>
                                 </div>
 

@@ -13,7 +13,25 @@ export const ClientsPage = () => {
     state.clientView = view;
     state.editingClient = null;
     state.editingProcedure = null;
+    state.isManagementModalOpen = false;
     state.managementSearch = "";
+    if (window.render) window.render();
+  };
+
+  window.openManagementModal = (item = null) => {
+    if (state.clientView === "clients") {
+      state.editingClient = item || { nome: "", novo_cliente: false };
+    } else {
+      state.editingProcedure = item || { nome: "", preco: 0 };
+    }
+    state.isManagementModalOpen = true;
+    if (window.render) window.render();
+  };
+
+  window.closeManagementModal = () => {
+    state.isManagementModalOpen = false;
+    state.editingClient = null;
+    state.editingProcedure = null;
     if (window.render) window.render();
   };
 
@@ -64,8 +82,8 @@ export const ClientsPage = () => {
       });
 
       if (res.ok) {
+        state.isManagementModalOpen = false;
         state.editingClient = null;
-        e.target.reset();
         fetchClients();
       } else {
         const errorData = await res.json();
@@ -87,9 +105,7 @@ export const ClientsPage = () => {
 
   window.editClient = (client) => {
     state.clientView = "clients";
-    state.editingClient = client;
-    if (window.render) window.render();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.openManagementModal(client);
   };
 
   window.cancelEditClient = () => {
@@ -160,8 +176,8 @@ export const ClientsPage = () => {
       });
 
       if (res.ok) {
+        state.isManagementModalOpen = false;
         state.editingProcedure = null;
-        e.target.reset();
         fetchProcedures();
       } else {
         if (window.showAlert)
@@ -179,9 +195,7 @@ export const ClientsPage = () => {
 
   window.editProcedure = (proc) => {
     state.clientView = "procedures";
-    state.editingProcedure = proc;
-    if (window.render) window.render();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.openManagementModal(proc);
   };
 
   window.cancelEditProcedure = () => {
@@ -222,102 +236,32 @@ export const ClientsPage = () => {
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div class="space-y-1">
-                    <h2 class="text-4xl md:text-3xl font-display font-black tracking-tight text-white">Central de Gestão</h2>
+                    <h2 class="text-4xl md:text-3xl font-display font-black tracking-tight text-white uppercase italic">Central de Gestão</h2>
                     <p class="text-[10px] md:text-[8px] font-black uppercase tracking-[0.2em] text-text-muted">Controle sua base de dados e serviços</p>
                 </div>
                 
-                <!-- Tab Control -->
-                <div class="flex bg-surface-section/50 p-1 rounded-2xl w-full md:w-auto shadow-2xl">
-                    <button onclick="window.switchClientView('clients')" 
-                            class="flex-1 md:flex-none px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300
-                            ${isClients ? "bg-brand-primary text-surface-page shadow-xl" : "text-text-muted hover:text-white"}">
-                        Clientes
-                    </button>
-                    <button onclick="window.switchClientView('procedures')" 
-                            class="flex-1 md:flex-none px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300
-                            ${!isClients ? "bg-brand-primary text-surface-page shadow-xl" : "text-text-muted hover:text-white"}">
-                        Serviços
+                <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                    <!-- Tab Control -->
+                    <div class="flex bg-surface-section/50 p-1 rounded-2xl shadow-2xl">
+                        <button onclick="window.switchClientView('clients')" 
+                                class="flex-1 md:flex-none px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300
+                                ${isClients ? "bg-brand-primary text-surface-page shadow-xl" : "text-text-muted hover:text-white"}">
+                            Clientes
+                        </button>
+                        <button onclick="window.switchClientView('procedures')" 
+                                class="flex-1 md:flex-none px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300
+                                ${!isClients ? "bg-brand-primary text-surface-page shadow-xl" : "text-text-muted hover:text-white"}">
+                            Serviços
+                        </button>
+                    </div>
+
+                    <button onclick="window.openManagementModal()" class="px-8 py-3 bg-brand-primary text-surface-page rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i> Novo ${isClients ? "Cliente" : "Serviço"}
                     </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                <!-- Action Form Card -->
-                <div class="lg:col-span-4 lg:sticky lg:top-6">
-                    <div class="bg-surface-section/30 p-8 rounded-[2.5rem] space-y-8 group transition-all duration-500">
-                        <div class="flex justify-between items-center">
-                            <div class="space-y-1">
-                                <h3 class="text-[11px] font-black text-brand-primary uppercase tracking-[0.2em]">
-                                    ${isClients ? (state.editingClient ? "Atualizar" : "Novo") : state.editingProcedure ? "Refinar" : "Novo"}
-                                </h3>
-                                <p class="text-xl font-display font-black text-white">
-                                    ${isClients ? "Cadastro de Cliente" : "Tabela de Preços"}
-                                </p>
-                            </div>
-                            ${
-                              (isClients && state.editingClient) ||
-                              (!isClients && state.editingProcedure)
-                                ? `
-                                <button onclick="${isClients ? "window.cancelEditClient()" : "window.cancelEditProcedure()"}" 
-                                        class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-muted hover:text-white transition-all">
-                                    <i class="fas fa-times text-xs"></i>
-                                </button>
-                            `
-                                : ""
-                            }
-                        </div>
-
-                        ${
-                          isClients
-                            ? `
-                            <form onsubmit="window.saveNewClient(event)" class="space-y-6">
-                                <div class="space-y-2 group">
-                                    <label class="text-[9px] font-black uppercase text-text-muted tracking-widest ml-1 group-focus-within:text-brand-primary transition-colors">Nome Completo</label>
-                                    <input type="text" name="nome" required placeholder="NOME DO CLIENTE..." 
-                                           value="${state.editingClient?.nome || ""}"
-                                           class="w-full bg-surface-page/50 border-none p-4 rounded-2xl outline-none font-black text-white uppercase text-sm tracking-tight placeholder:text-text-muted/30 focus:bg-surface-page transition-all">
-                                </div>
-                                <div class="flex items-center gap-4 bg-surface-page/30 p-4 rounded-2xl cursor-pointer transition-all relative">
-                                    <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in pointer-events-none">
-                                        <input type="checkbox" name="novo_cliente" id="novo_cliente_toggle" 
-                                               class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer translate-x-1 top-1 transition-transform checked:translate-x-5 checked:border-brand-primary" 
-                                               ${state.editingClient?.novo_cliente ? "checked" : ""}/>
-                                        <label for="novo_cliente_toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-section cursor-pointer border-none"></label>
-                                    </div>
-                                    <label for="novo_cliente_toggle" class="text-[10px] font-black text-white uppercase tracking-widest cursor-pointer flex-1">
-                                        Destaque como Novo
-                                    </label>
-                                </div>
-                                <button type="submit" class="w-full bg-brand-primary text-surface-page font-black py-5 rounded-2xl transition-all uppercase tracking-[0.2em] text-[10px] shadow-2xl active:scale-[0.98] group-hover:scale-[1.01]">
-                                    ${state.editingClient ? "Salvar Alterações" : "Efetivar Cadastro"}
-                                </button>
-                            </form>
-                        `
-                            : `
-                            <form onsubmit="window.saveProcedure(event)" class="space-y-6">
-                                <div class="space-y-2 group">
-                                    <label class="text-[9px] font-black uppercase text-text-muted tracking-widest ml-1 group-focus-within:text-brand-primary transition-colors">Descrição do Serviço</label>
-                                    <input type="text" name="nome" required placeholder="EX: CORTE DEGRADÊ..." 
-                                           value="${state.editingProcedure?.nome || ""}"
-                                           class="w-full bg-surface-page/50 border-none p-4 rounded-2xl outline-none font-black text-white uppercase text-sm tracking-tight placeholder:text-text-muted/30 focus:bg-surface-page transition-all">
-                                </div>
-                                <div class="space-y-2 group">
-                                    <label class="text-[9px] font-black uppercase text-text-muted tracking-widest ml-1 group-focus-within:text-brand-primary transition-colors">Preço Sugerido (R$)</label>
-                                    <input type="number" step="0.01" name="preco" placeholder="0,00" 
-                                           value="${state.editingProcedure?.preco || ""}"
-                                           class="w-full bg-surface-page/50 border-none p-4 rounded-2xl outline-none font-black text-brand-primary text-lg tracking-tight placeholder:text-brand-primary/20 focus:bg-surface-page transition-all">
-                                </div>
-                                <button type="submit" class="w-full bg-brand-primary text-surface-page font-black py-5 rounded-2xl transition-all uppercase tracking-[0.2em] text-[10px] shadow-2xl active:scale-[0.98] group-hover:scale-[1.01]">
-                                    ${state.editingProcedure ? "Aplicar Mudanças" : "Adicionar à Lista"}
-                                </button>
-                            </form>
-                        `
-                        }
-                    </div>
-                </div>
-
-                <!-- List Content -->
-                <div class="lg:col-span-8 space-y-6">
+            <div class="space-y-6">
                     <!-- Search & Tools -->
                     <div class="bg-surface-section/20 p-4 rounded-[2rem] flex flex-col md:flex-row items-center gap-4">
                         <div class="relative flex-1 group w-full">
@@ -364,7 +308,7 @@ export const ClientsPage = () => {
                                                         </div>
                                                         <div>
                                                             <p class="text-[12px] font-black text-white uppercase tracking-tight group-hover:text-brand-primary transition-colors">
-                                                                ${c.nome}
+                                                                ${state.privacyMode ? "*****" : c.nome}
                                                             </p>
                                                             ${c.novo_cliente ? '<span class="text-[7px] font-black text-brand-primary uppercase tracking-[0.2em] animate-pulse">NOVO INTEGRANTE</span>' : '<span class="text-[7px] font-black text-text-muted uppercase tracking-[0.2em]">MEMBRO ATIVO</span>'}
                                                         </div>
@@ -380,7 +324,7 @@ export const ClientsPage = () => {
                                                          onblur="window.updateClientField('${c.id}', 'observacoes_cliente', this.innerText.trim())" 
                                                          onfocus="window.selectAll(this)"
                                                          class="text-[9px] text-text-muted font-bold uppercase tracking-tighter outline-none hover:text-white focus:text-white transition-all max-w-[240px] truncate cursor-text">
-                                                        ${!c.observacoes_cliente || c.observacoes_cliente.includes("...") ? "ADICIONAR NOTA..." : c.observacoes_cliente}
+                                                        ${state.privacyMode ? "*****" : !c.observacoes_cliente || c.observacoes_cliente.includes("...") ? "ADICIONAR NOTA..." : c.observacoes_cliente}
                                                     </div>
                                                 </td>
                                                 <td class="px-8 ${isCompact ? "py-3" : "py-6"} text-right">
@@ -420,7 +364,7 @@ export const ClientsPage = () => {
                                                     ${c.nome.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <p class="text-sm font-black text-white uppercase tracking-tight">${c.nome}</p>
+                                                    <p class="text-sm font-black text-white uppercase tracking-tight">${state.privacyMode ? "*****" : c.nome}</p>
                                                     <p class="text-[8px] font-black text-brand-primary uppercase tracking-widest">${c.plano || "SEM PLANO"}</p>
                                                 </div>
                                             </div>
@@ -468,7 +412,7 @@ export const ClientsPage = () => {
                                                 </td>
                                                 <td class="px-6 ${isCompact ? "py-3" : "py-6"} text-center">
                                                     <span class="text-xs font-black text-brand-primary tracking-tighter">
-                                                        R$ ${p.preco.toFixed(2).replace(".", ",")}
+                                                        ${state.privacyMode ? "*****" : `R$ ${p.preco.toFixed(2).replace(".", ",")}`}
                                                     </span>
                                                 </td>
                                                 <td class="px-8 ${isCompact ? "py-3" : "py-6"} text-right">
@@ -511,6 +455,78 @@ export const ClientsPage = () => {
                     </div>
                 </div>
             </div>
+
+            <!-- Management Modal -->
+            ${
+              state.isManagementModalOpen
+                ? `
+                <div class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-surface-page/90 backdrop-blur-md animate-in fade-in duration-300">
+                    <div class="bg-surface-section w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300 space-y-6">
+                        <div class="flex justify-between items-center">
+                            <div class="space-y-1">
+                                <h3 class="text-[10px] font-black text-brand-primary uppercase tracking-widest">
+                                    ${isClients ? (state.editingClient?.id ? "Refinar Perfil" : "Novo Cadastro") : state.editingProcedure?.id ? "Ajustar Preço" : "Novo Serviço"}
+                                </h3>
+                                <p class="text-xl font-display font-black text-white">
+                                    ${isClients ? "Dados do Cliente" : "Tabela de Preços"}
+                                </p>
+                            </div>
+                            <button onclick="window.closeManagementModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-muted hover:text-white transition-all">
+                                <i class="fas fa-times text-[10px]"></i>
+                            </button>
+                        </div>
+
+                        ${
+                          isClients
+                            ? `
+                            <form onsubmit="window.saveNewClient(event)" class="space-y-6">
+                                <div class="space-y-2 group">
+                                    <label class="text-[9px] font-black uppercase text-text-muted tracking-widest ml-1">Nome Completo</label>
+                                    <input type="text" name="nome" required placeholder="NOME DO CLIENTE..." 
+                                           value="${state.editingClient?.nome || ""}"
+                                           class="w-full bg-surface-page/50 border-none p-4 rounded-2xl outline-none font-black text-white uppercase text-sm tracking-tight focus:bg-surface-page transition-all">
+                                </div>
+                                <div class="flex items-center gap-4 bg-surface-page/30 p-4 rounded-2xl cursor-pointer transition-all relative">
+                                    <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in pointer-events-none">
+                                        <input type="checkbox" name="novo_cliente" id="novo_cliente_toggle" 
+                                               class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer translate-x-1 top-1 transition-transform checked:translate-x-5 checked:border-brand-primary" 
+                                               ${state.editingClient?.novo_cliente ? "checked" : ""}/>
+                                        <label for="novo_cliente_toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-section cursor-pointer border-none"></label>
+                                    </div>
+                                    <label for="novo_cliente_toggle" class="text-[10px] font-black text-white uppercase tracking-widest cursor-pointer flex-1">
+                                        Destaque como Novo
+                                    </label>
+                                </div>
+                                <button type="submit" class="w-full bg-brand-primary text-surface-page font-black py-4 rounded-xl transition-all active:scale-[0.98] uppercase tracking-widest text-[10px] shadow-xl">
+                                    ${state.editingClient?.id ? "Salvar Alterações" : "Efetivar Cadastro"}
+                                </button>
+                            </form>
+                        `
+                            : `
+                            <form onsubmit="window.saveProcedure(event)" class="space-y-6">
+                                <div class="space-y-2 group">
+                                    <label class="text-[9px] font-black uppercase text-text-muted tracking-widest ml-1">Descrição</label>
+                                    <input type="text" name="nome" required placeholder="EX: CORTE DEGRADÊ..." 
+                                           value="${state.editingProcedure?.nome || ""}"
+                                           class="w-full bg-surface-page/50 border-none p-4 rounded-2xl outline-none font-black text-white uppercase text-sm tracking-tight focus:bg-surface-page transition-all">
+                                </div>
+                                <div class="space-y-2 group">
+                                    <label class="text-[9px] font-black uppercase text-text-muted tracking-widest ml-1">Valor base (R$)</label>
+                                    <input type="number" step="0.01" name="preco" placeholder="0,00" 
+                                           value="${state.editingProcedure?.preco || ""}"
+                                           class="w-full bg-surface-page/50 border-none p-4 rounded-2xl outline-none font-black text-brand-primary text-lg focus:bg-surface-page transition-all">
+                                </div>
+                                <button type="submit" class="w-full bg-brand-primary text-surface-page font-black py-4 rounded-xl transition-all active:scale-[0.98] uppercase tracking-widest text-[10px] shadow-xl">
+                                    ${state.editingProcedure?.id ? "Salvar Alterações" : "Adicionar Serviço"}
+                                </button>
+                            </form>
+                        `
+                        }
+                    </div>
+                </div>
+                `
+                : ""
+            }
         </div>
     `;
 };

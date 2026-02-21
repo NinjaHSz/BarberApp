@@ -159,8 +159,8 @@ export const ClientProfilePage = () => {
                     ${(client.nome || "?").charAt(0)}
                 </div>
                 <div class="flex-1 text-center sm:text-left space-y-1">
-                    <div class="flex flex-wrap justify-center sm:justify-start items-center gap-3">
-                        <input type="text" value="${client.nome}" 
+                     <div class="flex flex-wrap justify-center sm:justify-start items-center gap-3">
+                        <input type="text" value="${state.privacyMode ? "*****" : client.nome}" 
                                onfocus="window.selectAll(this)" 
                                onblur="window.saveClientEdit('nome', this.value)"
                                onkeydown="if(event.key==='Enter')this.blur()"
@@ -172,7 +172,7 @@ export const ClientProfilePage = () => {
                          onblur="window.saveClientEdit('observacoes_cliente', this.innerText.trim())" 
                          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" 
                          class="text-xs text-text-muted font-medium outline-none hover:text-white transition-all cursor-text italic truncate max-w-md mx-auto sm:mx-0">
-                        ${!client.observacoes_cliente || client.observacoes_cliente.includes("...") ? "Adicionar nota..." : client.observacoes_cliente}
+                        ${state.privacyMode ? "*****" : !client.observacoes_cliente || client.observacoes_cliente.includes("...") ? "Adicionar nota..." : client.observacoes_cliente}
                     </div>
                     <div class="flex items-center gap-2 pt-2">
                         <button onclick="navigate('plans')" class="text-[9px] font-black text-text-muted hover:text-white uppercase tracking-widest flex items-center gap-2 group mx-auto sm:mx-0">
@@ -190,7 +190,7 @@ export const ClientProfilePage = () => {
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div class="bg-surface-section/50 p-4 rounded-2xl flex flex-col justify-center">
                     <p class="text-[9px] font-black text-text-muted uppercase tracking-widest mb-1">Faturamento</p>
-                    <h3 class="text-xl font-display font-black text-brand-primary">R$ ${totalSpent.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</h3>
+                    <h3 class="text-xl font-display font-black text-brand-primary">${state.privacyMode ? "*****" : `R$ ${totalSpent.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}</h3>
                 </div>
                 <div class="bg-surface-section/50 p-4 rounded-2xl flex flex-col justify-center">
                     <p class="text-[9px] font-black text-text-muted uppercase tracking-widest mb-1">Frequência</p>
@@ -198,7 +198,7 @@ export const ClientProfilePage = () => {
                 </div>
                 <div class="bg-surface-section/50 p-4 rounded-2xl flex flex-col justify-center">
                     <p class="text-[9px] font-black text-text-muted uppercase tracking-widest mb-1">Ticket Médio</p>
-                    <h3 class="text-xl font-display font-black text-white">R$ ${(pastRecords.length ? totalSpent / pastRecords.length : 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</h3>
+                    <h3 class="text-xl font-display font-black text-white">${state.privacyMode ? "*****" : `R$ ${(pastRecords.length ? totalSpent / pastRecords.length : 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}</h3>
                 </div>
                 <div class="bg-surface-section/50 p-4 rounded-2xl flex flex-col justify-center">
                     <p class="text-[9px] font-black text-text-muted uppercase tracking-widest mb-1">Última Vez</p>
@@ -221,7 +221,7 @@ export const ClientProfilePage = () => {
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-surface-page/50 p-4 rounded-xl space-y-1 group focus-within:ring-1 ring-brand-primary/30 transition-all">
                         <p class="text-[8px] font-black text-text-muted uppercase tracking-widest">Serviço Padrão</p>
-                        <input type="text" value="${client.preset?.service || ""}" 
+                        <input type="text" value="${state.privacyMode ? "*****" : client.preset?.service || ""}" 
                                placeholder="EX: CORTE"
                                onblur="window.savePresetField('${client.id}', 'service', this.value)"
                                class="bg-transparent border-none text-[11px] font-black text-white uppercase outline-none w-full p-0 placeholder:text-text-muted/20">
@@ -230,9 +230,10 @@ export const ClientProfilePage = () => {
                         <p class="text-[8px] font-black text-text-muted uppercase tracking-widest">Valor Padrão</p>
                         <div class="flex items-center gap-1">
                             <span class="text-[9px] font-bold text-text-muted">R$</span>
-                            <input type="number" step="0.01" value="${client.preset?.value || ""}" 
+                            <input type="text" value="${state.privacyMode ? "*****" : client.preset?.value || ""}" 
                                    placeholder="0,00"
                                    onblur="window.savePresetField('${client.id}', 'value', this.value)"
+                                   onfocus="if(!window.state.privacyMode) this.type='number'; else this.blur();"
                                    class="bg-transparent border-none text-[11px] font-black text-white outline-none w-full p-0 placeholder:text-text-muted/20">
                         </div>
                     </div>
@@ -315,8 +316,9 @@ export const ClientProfilePage = () => {
                                 <p class="text-[8px] font-black text-text-muted uppercase tracking-widest">Recorrência</p>
                                 <div class="flex items-center gap-1">
                                     <span class="text-[10px] font-bold text-text-muted">R$</span>
-                                    <input type="number" step="0.01" value="${client.valor_plano || ""}" 
+                                    <input type="text" value="${state.privacyMode ? "*****" : client.valor_plano || ""}" 
                                            onblur="window.saveClientEdit('valor_plano', this.value)"
+                                           onfocus="if(!window.state.privacyMode) this.type='number'; else this.blur();"
                                            class="bg-transparent border-none text-lg font-black text-white outline-none w-24 p-0">
                                 </div>
                             </div>
@@ -331,7 +333,7 @@ export const ClientProfilePage = () => {
                             <p class="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1">Notas Gestão</p>
                             <div contenteditable="true" onfocus="window.selectAll(this)" onblur="window.saveClientEdit('observacoes_plano', this.innerText.trim())" 
                                  class="text-[11px] text-text-secondary outline-none hover:text-white transition-all min-h-[1.5rem] italic">
-                                ${!client.observacoes_plano || client.observacoes_plano.includes("...") ? "Sem observações..." : client.observacoes_plano}
+                                ${state.privacyMode ? "*****" : !client.observacoes_plano || client.observacoes_plano.includes("...") ? "Sem observações..." : client.observacoes_plano}
                             </div>
                         </div>
                     </div>
@@ -371,21 +373,21 @@ export const ClientProfilePage = () => {
                                     <div class="flex items-center gap-2">
                                         <div contenteditable="true" data-id="${id}" data-ui-id="${rowId}" data-field="service" 
                                              onblur="window.saveInlineEdit(this)" class="text-[11px] font-black text-white uppercase outline-none truncate hover:text-brand-primary focus:text-brand-primary">
-                                            ${r.service}
+                                            ${state.privacyMode ? "*****" : r.service}
                                         </div>
                                         <span class="w-1 h-1 rounded-full bg-white/10"></span>
                                         <span class="text-[9px] font-bold text-text-muted uppercase truncate w-20">${r.paymentMethod}</span>
                                     </div>
                                     <div contenteditable="true" data-id="${id}" data-ui-id="${rowId}" data-field="observations" 
                                          onblur="window.saveInlineEdit(this)" class="text-[10px] text-text-muted outline-none hover:text-white transition-all italic truncate max-w-sm">
-                                        ${r.observations || "..."}
+                                        ${state.privacyMode ? "*****" : r.observations || "..."}
                                     </div>
                                 </div>
                                 <div class="text-right flex items-center gap-4 shrink-0">
                                     <div class="flex items-center gap-0.5">
                                         <span class="text-[9px] font-bold text-text-muted">R$</span>
                                         <div contenteditable="true" data-id="${id}" data-ui-id="${rowId}" data-field="value" 
-                                             onblur="window.saveInlineEdit(this)" class="text-xs font-black text-white outline-none w-10">${(parseFloat(r.value) || 0).toFixed(0)}</div>
+                                             onblur="window.saveInlineEdit(this)" class="text-xs font-black text-white outline-none w-10">${state.privacyMode ? "*****" : (parseFloat(r.value) || 0).toFixed(0)}</div>
                                     </div>
                                     <button onclick="window.cancelAppointment('${r.id}')" 
                                             class="opacity-0 group-hover:opacity-100 transition-all text-text-muted hover:text-rose-500">

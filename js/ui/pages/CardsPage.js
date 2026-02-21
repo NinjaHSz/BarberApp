@@ -154,8 +154,8 @@ export const CardsPage = () => {
                         <!-- Card Branding -->
                         <div class="flex justify-between items-start">
                             <div class="flex-1 space-y-0.5">
-                                <div contenteditable="true" onclick="event.stopPropagation()" onblur="window.saveCardInline(this)" data-id="${c.id}" data-field="banco" class="text-[9px] font-black text-brand-primary uppercase tracking-widest outline-none truncate hover:text-white transition-colors">${c.banco || "EMISSOR"}</div>
-                                <div contenteditable="true" onclick="event.stopPropagation()" onblur="window.saveCardInline(this)" data-id="${c.id}" data-field="titular" class="text-[10px] font-bold text-text-muted uppercase tracking-tighter outline-none truncate italic">${c.titular || "TITULAR"}</div>
+                                <div contenteditable="true" onclick="event.stopPropagation()" onblur="window.saveCardInline(this)" data-id="${c.id}" data-field="banco" class="text-[9px] font-black text-brand-primary uppercase tracking-widest outline-none truncate hover:text-white transition-colors">${state.privacyMode ? "*****" : c.banco || "EMISSOR"}</div>
+                                <div contenteditable="true" onclick="event.stopPropagation()" onblur="window.saveCardInline(this)" data-id="${c.id}" data-field="titular" class="text-[10px] font-bold text-text-muted uppercase tracking-tighter outline-none truncate italic">${state.privacyMode ? "*****" : c.titular || "TITULAR"}</div>
                             </div>
                             <div class="flex gap-2">
                                 <button onclick="event.stopPropagation(); window.openCardModal(${JSON.stringify(c).replace(/"/g, "&quot;")})" class="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg bg-white/5 text-text-muted hover:text-white transition-all flex items-center justify-center">
@@ -169,7 +169,7 @@ export const CardsPage = () => {
 
                         <!-- Card Name -->
                         <div class="mt-4">
-                            <div contenteditable="true" onclick="event.stopPropagation()" onblur="window.saveCardInline(this)" data-id="${c.id}" data-field="nome" class="text-lg font-display font-black text-white uppercase tracking-tighter outline-none hover:text-brand-primary transition-colors">${c.nome}</div>
+                            <div contenteditable="true" onclick="event.stopPropagation()" onblur="window.saveCardInline(this)" data-id="${c.id}" data-field="nome" class="text-lg font-display font-black text-white uppercase tracking-tighter outline-none hover:text-brand-primary transition-colors">${state.privacyMode ? "*****" : c.nome}</div>
                         </div>
 
                         <!-- Card Meta -->
