@@ -321,11 +321,11 @@ export const ClientsPage = () => {
                     <!-- Search & Tools -->
                     <div class="bg-surface-section/20 p-4 rounded-[2rem] flex flex-col md:flex-row items-center gap-4">
                         <div class="relative flex-1 group w-full">
-                            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-text-muted text-lg md:text-xs group-focus-within:text-brand-primary transition-colors"></i>
+                            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-xs md:text-xs group-focus-within:text-brand-primary transition-colors"></i>
                             <input type="text" id="managementSearchInput" 
                                    placeholder="BUSCAR ${isClients ? "CLIENTE..." : "SERVIÇO..."}" 
                                    oninput="window.handleManagementSearch(this.value)" value="${state.managementSearch}"
-                                   class="w-full bg-surface-page/40 border-none h-14 md:py-4 pl-14 pr-6 rounded-3xl md:rounded-2xl text-base md:text-[10px] font-black uppercase tracking-widest outline-none focus:bg-surface-page/60 transition-all text-white placeholder:opacity-30">
+                                   class="w-full bg-surface-page/40 border-none h-11 md:h-10 pl-10 pr-6 rounded-2xl md:rounded-xl text-[13px] md:text-[10px] font-black uppercase tracking-widest outline-none focus:bg-surface-page/60 transition-all text-white placeholder:opacity-30">
                         </div>
                     </div>
 

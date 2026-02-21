@@ -31,15 +31,17 @@ export const showPremiumMenu = (event, options, onSelect, activeValue) => {
   menu.className = "premium-menu custom-scroll fixed h-auto min-w-[140px]";
 
   menu.innerHTML = options
-    .map(
-      (opt) => `
-    <div class="premium-item ${opt.value == activeValue ? "active" : ""}" 
-         onmousedown="window.selectPremiumOption(this, '${opt.value}', '${opt.label}')">
-        <span>${opt.label}</span>
-        ${opt.value == activeValue ? '<i class="fas fa-check"></i>' : ""}
-    </div>
-  `,
-    )
+    .map((opt) => {
+      const safeValue = String(opt.value).replace(/'/g, "\\'");
+      const safeLabel = String(opt.label).replace(/'/g, "\\'");
+      return `
+        <div class="premium-item ${opt.value == activeValue ? "active" : ""}" 
+             onmousedown="window.selectPremiumOption(this, '${safeValue}', '${safeLabel}')">
+            <span>${opt.label}</span>
+            ${opt.value == activeValue ? '<i class="fas fa-check"></i>' : ""}
+        </div>
+      `;
+    })
     .join("");
 
   document.body.appendChild(menu);

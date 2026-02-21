@@ -207,11 +207,11 @@ export const PlansPage = () => {
                         <h3 class="text-[10px] font-black text-white uppercase tracking-widest italic">Lista de Assinantes</h3>
                         <span class="px-2 py-0.5 bg-white/5 rounded text-[8px] font-black text-text-muted uppercase">${filteredPlans.length} resultados</span>
                     </div>
-                    <div class="relative w-full sm:w-64">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[10px]"></i>
+                    <div class="relative w-full sm:w-64 group">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[10px] group-focus-within:text-brand-primary transition-colors"></i>
                         <input type="text" id="planSearchInput" placeholder="BUSCAR..." 
                                oninput="window.handlePlanSearch(this.value)" value="${state.planSearchTerm || ""}"
-                               class="w-full bg-surface-section/50 border-none py-2 pl-9 pr-4 rounded-lg text-[10px] font-black uppercase tracking-widest text-white outline-none focus:bg-surface-section transition-all">
+                               class="w-full bg-surface-section/50 border-none h-10 pl-9 pr-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white outline-none focus:bg-surface-section transition-all">
                     </div>
                 </div>
 

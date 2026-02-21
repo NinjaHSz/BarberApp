@@ -298,9 +298,9 @@ export const ExpensesPage = () => {
 
             <div class="flex flex-wrap gap-4 items-center bg-dark-900/50 p-4 rounded-[1.5rem] border border-transparent shadow-2xl">
                 <div class="flex-1 min-w-[240px] relative group w-full">
-                    <i class="fas fa-search absolute left-5 md:left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg md:text-xs group-focus-within:text-slate-600 transition-colors"></i>
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs md:text-xs group-focus-within:text-slate-600 transition-colors"></i>
                     <input type="text" id="expenseSearchInput" placeholder="Buscar por descrição ou cartão..." value="${state.expenseSearchTerm || ""}" oninput="window.setExpenseFilter('expenseSearchTerm', this.value)"
-                           class="w-full bg-dark-950 border border-transparent pl-14 md:pl-10 pr-4 h-14 md:h-auto rounded-3xl md:rounded-xl outline-none focus:border-slate-600/50 transition-all font-bold text-sm md:text-xs uppercase text-white shadow-inner">
+                           class="w-full bg-dark-950 border border-transparent pl-10 pr-4 h-11 md:h-9 rounded-2xl md:rounded-xl outline-none focus:border-slate-600/50 transition-all font-bold text-[13px] md:text-xs uppercase text-white shadow-inner">
                 </div>
                 <div class="flex gap-2 flex-wrap sm:flex-nowrap">
                     ${PremiumSelector({
