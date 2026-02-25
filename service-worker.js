@@ -1,4 +1,4 @@
-const CACHE_NAME = "barber-app-v3";
+const CACHE_NAME = "barber-app-v4";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -18,6 +18,8 @@ const ASSETS_TO_CACHE = [
   "./js/ui/components/Autocomplete.js",
   "./js/ui/components/ExpenseAutocomplete.js",
   "./js/ui/components/InlineAutocomplete.js",
+  "./js/ui/components/PremiumSelector.js",
+  "./js/ui/components/Dialogs.js",
   "./js/ui/pages/Dashboard.js",
   "./js/ui/pages/RecordsPage.js",
   "./js/ui/pages/ClientsPage.js",
@@ -28,6 +30,11 @@ const ASSETS_TO_CACHE = [
   "./js/ui/pages/CardProfilePage.js",
   "./js/ui/pages/ClientProfilePage.js",
   "./js/ui/pages/ManagePage.js",
+  "./js/ui/pages/index.js",
+  "./js/ui/modals/EditModal.js",
+  "./js/services/appointments.js",
+  "./js/services/clients.js",
+  "./js/services/stats.js",
   "./js/utils/dom.js",
   "./manifest.json",
   "./assets/logo.png",
